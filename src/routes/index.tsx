@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Perkirakan biaya renovasi dan laba jual kembali rumah lelang dalam satu simulasi. Coba tiga rumah contoh di Jabodetabek tanpa login.",
+          "Perkirakan biaya renovasi dan laba jual kembali rumah lelang dalam satu simulasi. Coba tiga rumah contoh di Bodetabek tanpa login.",
       },
       { property: "og:title", content: "Pomah Living — Hitung batas tawar sebelum ikut lelang" },
       {
@@ -90,7 +90,7 @@ function Index() {
               number: "01",
               icon: House,
               title: "Pilih aset",
-              description: "Rumah contoh di Jabodetabek dengan nilai limit lelang.",
+              description: "Rumah contoh di Bodetabek dengan nilai limit lelang.",
             },
             {
               number: "02",
