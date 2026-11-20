@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Perkirakan biaya renovasi dan laba jual kembali rumah lelang dalam satu simulasi. Coba tiga rumah contoh di Semarang tanpa login.",
+          "Perkirakan biaya renovasi dan laba jual kembali rumah lelang dalam satu simulasi. Coba tiga rumah contoh di Bodetabek tanpa login.",
       },
       { property: "og:title", content: "Pomah Living — Hitung batas tawar sebelum ikut lelang" },
       {
@@ -33,7 +33,7 @@ function Index() {
         <img
           className="hero-photo"
           src={houseImage.url}
-          alt="Rumah contoh Banyumanik dengan teras dan taman hijau"
+          alt="Rumah contoh Cibinong dengan teras dan taman hijau"
           fetchPriority="high"
         />
         <div className="hero-shade" />
@@ -68,7 +68,7 @@ function Index() {
         </div>
         <div className="absolute bottom-6 right-8 hidden items-center gap-2 text-[11px] text-hero-foreground md:flex">
           <MapPin className="size-3.5" />
-          Banyumanik, Semarang
+          Cibinong, Kabupaten Bogor
           <span className="mx-2 h-3 border-l border-hero-line" />
           Ilustrasi aset
         </div>
@@ -90,7 +90,7 @@ function Index() {
               number: "01",
               icon: House,
               title: "Pilih aset",
-              description: "Rumah contoh di Semarang dengan nilai limit lelang.",
+              description: "Rumah contoh di Bodetabek dengan nilai limit lelang.",
             },
             {
               number: "02",

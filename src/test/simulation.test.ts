@@ -13,7 +13,7 @@ import {
 import { getProperty, properties } from "@/lib/properties";
 
 const complete = { occupancy: true, access: true, documents: true };
-describe("Banyumanik scenarios", () => {
+describe("Cibinong scenarios", () => {
   it("has a Rp315 million base bid limit", () => {
     expect(calculateSimulation(baseScenario).bidLimit).toBe(315_000_000);
   });
@@ -85,24 +85,31 @@ describe("Property data", () => {
   it("provides three simulation properties", () => {
     expect(properties).toHaveLength(3);
   });
-  it("sets Banyumanik auction limit to Rp280 million", () => {
-    expect(getProperty("banyumanik")?.auctionLimit).toBe(280_000_000);
+  it("sets Cibinong auction limit to Rp280 million", () => {
+    expect(getProperty("cibinong")?.auctionLimit).toBe(280_000_000);
   });
-  it("sets Tembalang auction limit to Rp250 million", () => {
-    expect(getProperty("tembalang")?.auctionLimit).toBe(250_000_000);
+  it("sets Sawangan auction limit to Rp250 million", () => {
+    expect(getProperty("sawangan")?.auctionLimit).toBe(250_000_000);
   });
-  it("starts Tembalang with base scenario and unverified occupancy", () => {
-    expect(getProperty("tembalang")?.initialValues).toEqual(baseScenario);
-    expect(getProperty("tembalang")?.verification.occupancy).toBe(false);
+  it("starts Sawangan with base scenario and unverified occupancy", () => {
+    expect(getProperty("sawangan")?.initialValues).toEqual(baseScenario);
+    expect(getProperty("sawangan")?.verification.occupancy).toBe(false);
   });
-  it("sets Ngaliyan auction limit to Rp320 million", () => {
-    expect(getProperty("ngaliyan")?.auctionLimit).toBe(320_000_000);
+  it("sets Jatiasih auction limit to Rp320 million", () => {
+    expect(getProperty("jatiasih")?.auctionLimit).toBe(320_000_000);
   });
-  it("starts Ngaliyan stressed with Rp320 million winning price", () => {
-    expect(getProperty("ngaliyan")?.initialValues).toEqual({
+  it("starts Jatiasih stressed with Rp320 million winning price", () => {
+    expect(getProperty("jatiasih")?.initialValues).toEqual({
       ...stressedScenario,
       winningPrice: 320_000_000,
     });
+  });
+  it.each([
+    ["banyumanik", "cibinong"],
+    ["tembalang", "sawangan"],
+    ["ngaliyan", "jatiasih"],
+  ])("keeps the previous %s analysis link working", (oldId, newId) => {
+    expect(getProperty(oldId)?.id).toBe(newId);
   });
   it("returns no property for an unknown id", () => {
     expect(getProperty("unknown")).toBeUndefined();

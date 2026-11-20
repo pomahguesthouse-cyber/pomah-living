@@ -20,7 +20,7 @@ const initialSimulations = Object.fromEntries(
     {
       inputs: toInputs(property.initialValues),
       verification: { ...property.verification },
-      scenario: property.id === "ngaliyan" ? "stressed" : "base",
+      scenario: property.id === "jatiasih" ? "stressed" : "base",
     },
   ]),
 ) as Record<PropertyId, AssetSimulation>;

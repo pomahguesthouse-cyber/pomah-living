@@ -19,13 +19,13 @@ export const Route = createFileRoute("/pilih-aset")({
       {
         name: "description",
         content:
-          "Pilih rumah contoh Banyumanik, Tembalang, atau Ngaliyan di Semarang untuk menghitung batas tawar lelang dan biaya renovasi.",
+          "Pilih rumah contoh Cibinong, Sawangan, atau Jatiasih di Bodetabek untuk menghitung batas tawar lelang dan biaya renovasi.",
       },
       { property: "og:title", content: "Pilih aset simulasi — Pomah Living" },
       {
         property: "og:description",
         content:
-          "Tiga rumah contoh di Semarang dengan nilai limit dan status pemeriksaan untuk simulasi lelang.",
+          "Tiga rumah contoh di Bodetabek dengan nilai limit dan status pemeriksaan untuk simulasi lelang.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -54,7 +54,7 @@ function SelectAsset() {
         </div>
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <MapPin className="size-3.5 text-brand" />
-          Semarang, Jawa Tengah<span className="ml-2 border-l border-border pl-3">3 aset</span>
+          Bodetabek<span className="ml-2 border-l border-border pl-3">3 aset</span>
         </span>
       </div>
       <div className="mt-9 grid gap-6 md:grid-cols-3">
