@@ -37,7 +37,9 @@ that the first user's projects are private.
 ## Edit akun dan preferensi wilayah
 
 Jalankan `database/pomah-account-preferences.sql` sekali sebelum deploy fitur
-Edit akun. Skrip menambah kolom pada profil yang sudah ada dengan kebijakan
+Edit akun, lalu jalankan `database/pomah-account-occupation.sql`. Jika skrip
+pertama sudah dijalankan, cukup jalankan skrip pekerjaan. Keduanya menambah
+kolom pada profil yang sudah ada dengan kebijakan
 akses pemilik yang sama. Email masuk ditampilkan sebagai referensi.
 
 Data pilihan wilayah merujuk pada Kepmendagri 300.2.2-2138/2025. Data diringkas

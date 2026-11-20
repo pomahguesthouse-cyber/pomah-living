@@ -123,6 +123,7 @@ function AccountDetailsForm({
       {
         full_name,
         age: age === null ? null : Number(age),
+        occupation: value("occupation"),
         display_name: value("display_name"),
         avatar_url: value("avatar_url"),
         contact_phone: value("contact_phone"),
@@ -185,6 +186,10 @@ function AccountDetailsForm({
             max={130}
             defaultValue={initial?.age ?? ""}
           />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span>Pekerjaan (opsional)</span>
+          <Input name="occupation" defaultValue={initial?.occupation ?? ""} maxLength={120} />
         </label>
         <label className="space-y-1 text-sm">
           <span>Nomor telepon</span>
