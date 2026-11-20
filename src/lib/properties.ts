@@ -13,6 +13,7 @@ export type Property = {
   id: PropertyId;
   name: string;
   location: string;
+  regionCode: string;
   image: string;
   auctionLimit: number;
   initialValues: SimulationValues;
@@ -24,6 +25,7 @@ export const properties: Property[] = [
     id: "cibinong",
     name: "Rumah Cibinong",
     location: "Cibinong, Kabupaten Bogor",
+    regionCode: "3201",
     image: cibinongImage.url,
     auctionLimit: 280_000_000,
     initialValues: baseScenario,
@@ -34,6 +36,7 @@ export const properties: Property[] = [
     id: "sawangan",
     name: "Rumah Sawangan",
     location: "Sawangan, Depok",
+    regionCode: "3276",
     image: sawanganImage.url,
     auctionLimit: 250_000_000,
     initialValues: baseScenario,
@@ -44,6 +47,7 @@ export const properties: Property[] = [
     id: "jatiasih",
     name: "Rumah Jatiasih",
     location: "Jatiasih, Kota Bekasi",
+    regionCode: "3275",
     image: jatiasihImage.url,
     auctionLimit: 320_000_000,
     initialValues: { ...stressedScenario, winningPrice: 320_000_000 },
