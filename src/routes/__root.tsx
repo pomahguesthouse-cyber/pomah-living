@@ -13,8 +13,9 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AccountMenu } from "@/components/account-menu";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, FlaskConical, UserRound } from "lucide-react";
+import { ArrowUpRight, FlaskConical } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { useSession, useSessionSync } from "@/hooks/use-session";
 import logo from "@/assets/pomah-logo-original.svg.asset.json";
@@ -160,18 +161,23 @@ function RootComponent() {
                   <ArrowUpRight className="hidden sm:block" />
                 </Link>
               </Button>
-              {ready && (
-                <Button asChild variant="nav" data-active={pathname === "/auth" || pathname === "/profil"} className="px-2 text-xs sm:px-4 sm:text-sm">
-                  {session ? (
-                    <Link to="/profil">
-                      <UserRound className="hidden sm:block" />
-                      Profil
-                    </Link>
-                  ) : (
-                    <Link to="/auth">Masuk</Link>
-                  )}
+              {ready && (session ? (
+                <AccountMenu
+                  key={session.user.id}
+                  userId={session.user.id}
+                  email={session.user.email ?? ""}
+                  active={pathname === "/profil"}
+                />
+              ) : (
+                <Button
+                  asChild
+                  variant="nav"
+                  data-active={pathname === "/auth"}
+                  className="px-2 text-xs sm:px-4 sm:text-sm"
+                >
+                  <Link to="/auth">Masuk</Link>
                 </Button>
-              )}
+              ))}
             </nav>
             <span className="hidden items-center gap-2 border-l border-border pl-6 text-xs text-muted-foreground md:flex">
               <FlaskConical className="size-4 text-brand" />
