@@ -73,17 +73,26 @@ function AccountDetailsLoader({ id, email }: { id: string; email: string }) {
         </Button>
       </div>
     );
-  return <AccountDetailsForm id={id} email={email} initial={query.data} />;
+  return (
+    <AccountDetailsForm
+      id={id}
+      email={email}
+      initial={query.data.details}
+      experienceAvailable={query.data.experienceAvailable}
+    />
+  );
 }
 
 function AccountDetailsForm({
   id,
   email,
   initial,
+  experienceAvailable,
 }: {
   id: string;
   email: string;
   initial: AccountDetails | null;
+  experienceAvailable: boolean;
 }) {
   const cache = useQueryClient();
   const [regions, setRegions] = useState(initial?.preferred_regions ?? []);
@@ -97,7 +106,7 @@ function AccountDetailsForm({
   const mutation = useMutation({
     mutationFn: (values: AccountDetails) => saveAccountDetails(id, values),
     onSuccess: (values) => {
-      cache.setQueryData(accountDetailsKey(id), values);
+      cache.setQueryData(accountDetailsKey(id), { details: values, experienceAvailable });
       cache.setQueryData(preferredRegionsKey(id), values.preferred_regions);
       void cache.invalidateQueries({ queryKey: preferredRegionsKey(id), exact: true });
     },
@@ -118,12 +127,16 @@ function AccountDetailsForm({
     const value = (name: string) => String(form.get(name) ?? "").trim() || null;
     const full_name = value("full_name");
     if (!full_name) return;
+    const experience = value("property_experience");
     const savedRegions = canAdd ? [...regions, selectedRegion] : regions;
     mutation.mutate(
       {
         full_name,
         birth_date: value("birth_date"),
         occupation: value("occupation"),
+        ...(experienceAvailable && {
+          has_property_experience: experience === null ? null : experience === "yes",
+        }),
         display_name: value("display_name"),
         avatar_url: value("avatar_url"),
         contact_phone: value("contact_phone"),
@@ -208,6 +221,34 @@ function AccountDetailsForm({
           <span>Tautan foto akun</span>
           <Input name="avatar_url" type="url" defaultValue={initial?.avatar_url ?? ""} />
         </label>
+        <fieldset disabled={!experienceAvailable} className="space-y-2 sm:col-span-2">
+          <legend className="text-sm">Pengalaman di bidang properti (opsional)</legend>
+          <div className="flex flex-wrap gap-5 text-sm">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="property_experience"
+                value="yes"
+                defaultChecked={initial?.has_property_experience === true}
+              />
+              Ada
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="property_experience"
+                value="no"
+                defaultChecked={initial?.has_property_experience === false}
+              />
+              Tidak ada
+            </label>
+          </div>
+          {!experienceAvailable && (
+            <p className="text-xs text-muted-foreground">
+              Pilihan pengalaman properti sedang disiapkan.
+            </p>
+          )}
+        </fieldset>
         <label className="space-y-1 text-sm sm:col-span-2">
           <span>Alamat</span>
           <Textarea

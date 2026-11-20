@@ -6,6 +6,7 @@ export type AccountDetails = {
   full_name: string | null;
   birth_date: string | null;
   occupation: string | null;
+  has_property_experience?: boolean | null;
   display_name: string | null;
   avatar_url: string | null;
   address: string | null;
@@ -36,14 +37,29 @@ const accountColumns =
 export const accountDetailsKey = (id: string) => ["account-details", id] as const;
 export const preferredRegionsKey = (id: string | undefined) => ["preferred-regions", id] as const;
 
+const accountColumnsWithExperience = `${accountColumns},has_property_experience` as const;
+
 export async function fetchAccountDetails(id: string) {
   const { data, error } = await accounts
+    .from("profiles")
+    .select(accountColumnsWithExperience)
+    .eq("id", id)
+    .maybeSingle();
+  if (!error) return { details: data, experienceAvailable: true };
+  // Keep the existing form usable during an app-first rollout of the new column.
+  if (
+    !["42703", "PGRST204"].includes(error.code) ||
+    !error.message.includes("has_property_experience")
+  )
+    throw error;
+
+  const fallback = await accounts
     .from("profiles")
     .select(accountColumns)
     .eq("id", id)
     .maybeSingle();
-  if (error) throw error;
-  return data;
+  if (fallback.error) throw fallback.error;
+  return { details: fallback.data, experienceAvailable: false };
 }
 
 export async function fetchPreferredRegions(id: string, signal: AbortSignal) {
@@ -61,8 +77,13 @@ export async function saveAccountDetails(id: string, values: AccountDetails) {
   const { data, error } = await accounts
     .from("profiles")
     .upsert({ id, ...values })
-    .select(accountColumns)
-    .single();
+    .select(
+      Object.hasOwn(values, "has_property_experience")
+        ? accountColumnsWithExperience
+        : accountColumns,
+    )
+    .single()
+    .overrideTypes<AccountDetails, { merge: false }>();
   if (error) throw error;
   return data;
 }

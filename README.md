@@ -46,6 +46,9 @@ Untuk revisi tanggal lahir dan provinsi domisili, jalankan juga
 `database/pomah-account-birth-residence.sql`. Umur lama tetap tersimpan,
 dan tanggal lahir diisi melalui formulir akun.
 
+Untuk mengaktifkan pilihan pengalaman properti, jalankan
+`database/pomah-account-property-experience.sql` sekali.
+
 Data pilihan wilayah merujuk pada Kepmendagri 300.2.2-2138/2025. Data diringkas
 dari [dataset-wilayah-indonesia](https://github.com/prodhokter/dataset-wilayah-indonesia/tree/6c3b0fab94d4600cf33a428753d8df5cbe592b75)
 dan sumber hulunya cahyadsn/wilayah. Lisensi ada di
