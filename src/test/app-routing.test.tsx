@@ -14,12 +14,13 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
-  it("places Proyek Saya under the existing authenticated layout", () => {
+  it("keeps Profil and the previous project URL under the authenticated layout", () => {
     const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
 
-    const matches = router.matchRoutes("/proyek-saya");
-
-    expect(matches.map(({ routeId }) => routeId)).toContain("/_authenticated");
-    expect(matches.at(-1)?.routeId).toBe("/_authenticated/proyek-saya");
+    for (const path of ["/profil", "/proyek-saya"]) {
+      const matches = router.matchRoutes(path);
+      expect(matches.map(({ routeId }) => routeId)).toContain("/_authenticated");
+      expect(matches.at(-1)?.routeId).toBe(`/_authenticated${path}`);
+    }
   });
 });

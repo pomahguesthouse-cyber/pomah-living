@@ -160,16 +160,6 @@ function RootComponent() {
                   <ArrowUpRight className="hidden sm:block" />
                 </Link>
               </Button>
-              {ready && session && (
-                <Button
-                  asChild
-                  variant="nav"
-                  data-active={pathname === "/proyek-saya"}
-                  className="px-2 text-xs sm:px-4 sm:text-sm"
-                >
-                  <Link to="/proyek-saya">Proyek Saya</Link>
-                </Button>
-              )}
               {ready && (
                 <Button asChild variant="nav" data-active={pathname === "/auth" || pathname === "/profil"} className="px-2 text-xs sm:px-4 sm:text-sm">
                   {session ? (
