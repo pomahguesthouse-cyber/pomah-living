@@ -83,6 +83,20 @@ function SelectAsset() {
           )}
         </span>
       </div>
+      <section className="mt-7 flex flex-wrap items-center justify-between gap-4 border-y border-border py-5">
+        <div>
+          <h2 className="text-base font-semibold">Proyek flipping demo</h2>
+          <p className="mt-1 text-xs leading-6 text-muted-foreground">
+            Analisis investasi, renovasi, dokumen, dan timeline. Contoh fiktif, tersedia tanpa
+            login.
+          </p>
+        </div>
+        <Button asChild>
+          <Link to="/proyek/$id" params={{ id: "demo" }}>
+            Buka proyek demo <ArrowRight />
+          </Link>
+        </Button>
+      </section>
       {id && preferences.length > 0 && (
         <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
           <span>{isFiltering ? "Sesuai preferensi wilayah" : "Semua wilayah"}</span>
@@ -176,6 +190,11 @@ function SelectAsset() {
                     <Link to="/analisis/$assetId" params={{ assetId: property.id }}>
                       Analisis aset
                       <ArrowUpRight />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className="mt-2 w-full justify-between">
+                    <Link to="/proyek/$id" params={{ id: property.id }}>
+                      Proyek flipping demo <ArrowRight />
                     </Link>
                   </Button>
                 </div>

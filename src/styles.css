@@ -302,6 +302,112 @@
 .reveal {
   animation: reveal 600ms ease-out both;
 }
+.project-tab[data-state="inactive"] {
+  display: none;
+}
+.print-value {
+  display: none;
+}
+.rab-table th,
+.rab-table td {
+  padding: 12px 8px;
+  vertical-align: top;
+}
+.rab-table th:nth-child(1) {
+  width: 190px;
+}
+.rab-table th:nth-child(2) {
+  width: 140px;
+}
+.rab-table th:nth-child(3) {
+  width: 100px;
+}
+.rab-table th:nth-child(4) {
+  width: 75px;
+}
+.rab-table th:nth-child(5) {
+  width: 150px;
+}
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  body {
+    background: var(--card);
+    font-size: 10pt;
+  }
+  body > div {
+    min-height: 0;
+  }
+  header,
+  footer,
+  .no-print,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+  .page-container {
+    width: 100%;
+  }
+  .flipping-project {
+    display: block;
+  }
+  .flipping-project input,
+  .flipping-project select,
+  .flipping-project button,
+  .flipping-project [role="switch"] {
+    display: none !important;
+  }
+  .flipping-project .print-value {
+    display: block;
+    margin-top: 4px;
+    font-weight: 600;
+  }
+  .flipping-project .project-tab {
+    display: none !important;
+  }
+  .flipping-project[data-print-mode="rab"]
+    [data-state].project-tab[role="tabpanel"][id$="-content-rab"] {
+    display: block !important;
+  }
+  .flipping-project[data-print-mode="summary"]
+    [data-state].project-tab[role="tabpanel"][id$="-content-analysis"] {
+    display: block !important;
+  }
+  .flipping-project[data-print-mode="rab"] .investment-summary {
+    display: none;
+  }
+  .investment-summary {
+    position: static;
+    box-shadow: none;
+    break-inside: avoid;
+    margin-top: 20px;
+  }
+  .rab-table {
+    min-width: 0;
+    font-size: 8pt;
+  }
+  .rab-table th,
+  .rab-table td {
+    padding: 6px 3px;
+  }
+  .rab-table td label > span:first-child {
+    display: none;
+  }
+  .flipping-project .overflow-x-auto {
+    overflow: visible;
+  }
+  .property-summary img {
+    max-height: 120px;
+    width: auto;
+  }
+  .flipping-project tr {
+    break-inside: avoid;
+  }
+  .flipping-project h3 {
+    break-after: avoid;
+  }
+}
 @keyframes reveal {
   from {
     opacity: 0;

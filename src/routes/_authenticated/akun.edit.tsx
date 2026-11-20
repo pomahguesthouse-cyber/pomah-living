@@ -24,7 +24,21 @@ import {
 
 export const Route = createFileRoute("/_authenticated/akun/edit")({
   head: () => ({
-    meta: [{ title: "Edit akun — Pomah Living" }, { name: "robots", content: "noindex" }],
+    meta: [
+      { title: "Edit akun — Pomah Living" },
+      {
+        name: "description",
+        content: "Perbarui profil pribadi dan preferensi wilayah properti di Pomah Living.",
+      },
+      { property: "og:title", content: "Edit akun — Pomah Living" },
+      {
+        property: "og:description",
+        content: "Perbarui profil dan preferensi wilayah properti Anda.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
   }),
   component: EditAccountPage,
 });

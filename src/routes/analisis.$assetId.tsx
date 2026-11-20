@@ -61,10 +61,32 @@ export const Route = createFileRoute("/analisis/$assetId")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      ...(loaderData?.property.image.startsWith("https://")
+        ? [
+            { property: "og:image", content: loaderData.property.image },
+            { name: "twitter:image", content: loaderData.property.image },
+          ]
+        : []),
       ...(!loaderData ? [{ name: "robots", content: "noindex" }] : []),
     ],
   }),
   component: AnalyzeAsset,
+  errorComponent: () => (
+    <main className="page-container py-12">
+      <h1 className="text-xl font-semibold">Analisis belum bisa dimuat</h1>
+      <Button asChild className="mt-5">
+        <Link to="/pilih-aset">Kembali ke aset</Link>
+      </Button>
+    </main>
+  ),
+  notFoundComponent: () => (
+    <main className="page-container py-12">
+      <h1 className="text-xl font-semibold">Aset tidak ditemukan</h1>
+      <Button asChild className="mt-5">
+        <Link to="/pilih-aset">Kembali ke aset</Link>
+      </Button>
+    </main>
+  ),
 });
 
 function AnalyzeAsset() {

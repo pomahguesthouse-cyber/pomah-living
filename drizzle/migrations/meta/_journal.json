@@ -8,6 +8,13 @@
       "when": 1795178095204,
       "tag": "0000_create_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795213961753,
+      "tag": "0001_project_flipping_details",
+      "breakpoints": true
     }
   ]
 }

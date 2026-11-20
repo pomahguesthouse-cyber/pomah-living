@@ -4,7 +4,21 @@ import { useSession } from "@/hooks/use-session";
 
 export const Route = createFileRoute("/_authenticated/profil")({
   head: () => ({
-    meta: [{ title: "Akun Saya — Pomah Living" }, { name: "robots", content: "noindex" }],
+    meta: [
+      { title: "Akun Saya — Pomah Living" },
+      {
+        name: "description",
+        content: "Kelola proyek rumah dan akses rincian investasi pribadi di Pomah Living.",
+      },
+      { property: "og:title", content: "Akun Saya — Pomah Living" },
+      {
+        property: "og:description",
+        content: "Kelola proyek rumah dan rincian investasi pribadi Anda.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
   }),
   component: AccountPage,
 });

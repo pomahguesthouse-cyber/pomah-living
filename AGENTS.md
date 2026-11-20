@@ -38,3 +38,7 @@ use the editor.
 - Keep visual tokens and reusable styles in the global design system and use shadcn controls, so branding and interaction remain consistent.
 
 - Route auth and profile calls through src/services/auth-service.ts and share the session via one Zustand store synced in the root route, so components never call the auth client directly.
+- Keep flipping formulas and validated payloads separate from the legacy auction simulation, so expanded cost assumptions never change existing decisions.
+- Store detailed flipping payloads in an owner-protected companion table keyed to existing projects; do not overwrite legacy project totals or status.
+- Scope flipping state by project and account; persist only explicitly fictional demo projects to localStorage after hydration, so private project data never enters browser persistence.
+- Use one public project-detail route with an inline sign-in state for private IDs and owner-scoped service reads; show fictional fixtures independently of asset preferences.

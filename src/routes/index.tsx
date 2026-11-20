@@ -21,6 +21,12 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      ...(houseImage.url.startsWith("https://")
+        ? [
+            { property: "og:image", content: houseImage.url },
+            { name: "twitter:image", content: houseImage.url },
+          ]
+        : []),
     ],
   }),
   component: Index,
@@ -53,6 +59,11 @@ function Index() {
             <Link to="/pilih-aset">
               Coba simulasi lelang
               <ArrowRight />
+            </Link>
+          </Button>
+          <Button asChild variant="hero" size="lg" className="ml-0 mt-3 sm:ml-3 sm:mt-8">
+            <Link to="/proyek/$id" params={{ id: "demo" }}>
+              Jelajahi proyek flipping <ArrowRight />
             </Link>
           </Button>
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-hero-muted">

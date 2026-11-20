@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -115,6 +116,11 @@ export function ProjectWorkspace({ userId }: { userId: string }) {
                     {projectStatuses[status]}
                   </span>
                 </button>
+                <Button asChild variant="link" size="sm" className="mb-2">
+                  <Link to="/proyek/$id" params={{ id }}>
+                    Buka halaman proyek flipping
+                  </Link>
+                </Button>
               </li>
             ))}
           </ul>

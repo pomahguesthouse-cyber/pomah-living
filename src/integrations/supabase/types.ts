@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      pomah_project_details: {
+        Row: {
+          payload: Json
+          project_id: string
+          revision: number
+          updated_at: string
+        }
+        Insert: {
+          payload: Json
+          project_id: string
+          revision?: number
+          updated_at?: string
+        }
+        Update: {
+          payload?: Json
+          project_id?: string
+          revision?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pomah_project_details_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "pomah_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pomah_projects: {
         Row: {
           actual_cost: number | null
