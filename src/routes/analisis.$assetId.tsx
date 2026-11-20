@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -11,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { NearbyAskingPrices } from "@/components/nearby-asking-prices";
 import { SimulationResults } from "@/components/simulation-results";
 import { getProperty } from "@/lib/properties";
 import {
@@ -70,6 +72,7 @@ function AnalyzeAsset() {
   const setField = useSimulationStore((state) => state.setField);
   const setCheck = useSimulationStore((state) => state.setCheck);
   const setScenario = useSimulationStore((state) => state.setScenario);
+  const salePriceInput = useRef<HTMLInputElement>(null);
   const values = parseInputs(simulation.inputs);
   const verifiedCount = Object.values(simulation.verification).filter(Boolean).length;
   return (
@@ -167,6 +170,14 @@ function AnalyzeAsset() {
               ))}
             </div>
           </section>
+          {property.id === "cibinong" && (
+            <NearbyAskingPrices
+              onUseMedian={(askingPrice) => {
+                setField(property.id, "salePrice", String(askingPrice));
+                salePriceInput.current?.focus();
+              }}
+            />
+          )}
           <section className="border-t border-border py-7" aria-labelledby="form-title">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <h2 id="form-title" className="flex items-center gap-2 text-base font-semibold">
@@ -217,6 +228,7 @@ function AnalyzeAsset() {
                       </span>
                       <Input
                         id={key}
+                        ref={key === "salePrice" ? salePriceInput : null}
                         className="sim-field"
                         type="text"
                         inputMode="numeric"
