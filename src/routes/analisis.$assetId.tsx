@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { ConditionPhotoPilot } from "@/components/condition-photo-pilot";
 import { NearbyAskingPrices } from "@/components/nearby-asking-prices";
 import { SimulationResults } from "@/components/simulation-results";
 import { getProperty } from "@/lib/properties";
@@ -170,6 +171,7 @@ function AnalyzeAsset() {
               ))}
             </div>
           </section>
+          {property.id === "cibinong" && <ConditionPhotoPilot />}
           {property.id === "cibinong" && (
             <NearbyAskingPrices
               onUseMedian={(askingPrice) => {
