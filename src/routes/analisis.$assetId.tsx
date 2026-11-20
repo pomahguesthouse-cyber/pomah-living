@@ -42,7 +42,7 @@ export const Route = createFileRoute("/analisis/$assetId")({
       {
         name: "description",
         content: loaderData
-          ? `Simulasi biaya renovasi, laba jual kembali, dan batas tawar ${loaderData.property.name} di Semarang.`
+          ? `Simulasi biaya renovasi, laba jual kembali, dan batas tawar ${loaderData.property.name} di ${loaderData.property.location}.`
           : "Aset simulasi tidak tersedia.",
       },
       {
@@ -173,8 +173,8 @@ function AnalyzeAsset() {
                 <SlidersHorizontal className="size-5 text-brand" />
                 Simulasi keuangan
               </h2>
-              {property.id === "banyumanik" && (
-                <div className="flex gap-2" aria-label="Skenario Banyumanik">
+              {property.id === "cibinong" && (
+                <div className="flex gap-2" aria-label="Skenario Cibinong">
                   <Button
                     variant="scenario"
                     size="sm"
