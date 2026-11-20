@@ -22,3 +22,14 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Proyek Saya
+
+Proyek Saya uses the same Supabase database and session as the existing account
+and profile pages. For a fresh database, run `database/pomah-projects.sql` once
+in the database used by the app. The existing Google and email sign-in setup is
+used for this feature.
+
+For acceptance testing, sign in and create two projects. Record a sale price and
+project costs in a project detail page. Sign in with a different user and verify
+that the first user's projects are private.

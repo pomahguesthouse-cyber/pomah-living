@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PilihAsetRouteImport } from './routes/pilih-aset'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
+import { Route as AuthenticatedProyekSayaRouteImport } from './routes/_authenticated/proyek-saya'
 import { Route as AnalisisAssetIdRouteImport } from './routes/analisis.$assetId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -40,6 +41,11 @@ const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
   path: '/profil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProyekSayaRoute = AuthenticatedProyekSayaRouteImport.update({
+  id: '/proyek-saya',
+  path: '/proyek-saya',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AnalisisAssetIdRoute = AnalisisAssetIdRouteImport.update({
   id: '/analisis/$assetId',
   path: '/analisis/$assetId',
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/pilih-aset': typeof PilihAsetRoute
   '/profil': typeof AuthenticatedProfilRoute
+  '/proyek-saya': typeof AuthenticatedProyekSayaRoute
   '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRoutesByTo {
@@ -58,6 +65,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/pilih-aset': typeof PilihAsetRoute
   '/profil': typeof AuthenticatedProfilRoute
+  '/proyek-saya': typeof AuthenticatedProyekSayaRoute
   '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRoutesById {
@@ -67,13 +75,26 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/pilih-aset': typeof PilihAsetRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
+  '/_authenticated/proyek-saya': typeof AuthenticatedProyekSayaRoute
   '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/pilih-aset' | '/profil' | '/analisis/$assetId'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/pilih-aset'
+    | '/profil'
+    | '/proyek-saya'
+    | '/analisis/$assetId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/pilih-aset' | '/profil' | '/analisis/$assetId'
+  to:
+    | '/'
+    | '/auth'
+    | '/pilih-aset'
+    | '/profil'
+    | '/proyek-saya'
+    | '/analisis/$assetId'
   id:
     | '__root__'
     | '/'
@@ -81,6 +102,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/pilih-aset'
     | '/_authenticated/profil'
+    | '/_authenticated/proyek-saya'
     | '/analisis/$assetId'
   fileRoutesById: FileRoutesById
 }
@@ -129,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/proyek-saya': {
+      id: '/_authenticated/proyek-saya'
+      path: '/proyek-saya'
+      fullPath: '/proyek-saya'
+      preLoaderRoute: typeof AuthenticatedProyekSayaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/analisis/$assetId': {
       id: '/analisis/$assetId'
       path: '/analisis/$assetId'
@@ -141,10 +170,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
+  AuthenticatedProyekSayaRoute: typeof AuthenticatedProyekSayaRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
+  AuthenticatedProyekSayaRoute: AuthenticatedProyekSayaRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

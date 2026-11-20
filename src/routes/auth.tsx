@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LovableMark } from "@lovable.dev/cloud-auth-js/react";
 import { useSession } from "@/hooks/use-session";
 import { signInWithEmail, signInWithProvider, signUpWithEmail } from "@/services/auth-service";
 
@@ -80,9 +79,9 @@ function AuthPage() {
     }
   }
 
-  async function handleProvider(provider: "google" | "lovable") {
+  async function handleGoogleSignIn() {
     try {
-      await signInWithProvider(provider);
+      await signInWithProvider("google");
     } catch (error) {
       toast.error(errorMessage(error));
     }
@@ -105,14 +104,10 @@ function AuthPage() {
                 type="button"
                 variant="outline"
                 className="border-[#747775] bg-[#FFFFFF] text-[#1F1F1F] hover:bg-[#F2F2F2]"
-                onClick={() => void handleProvider("google")}
+                onClick={() => void handleGoogleSignIn()}
               >
                 <GoogleLogo />
                 Lanjutkan dengan Google
-              </Button>
-              <Button type="button" variant="outline" onClick={() => void handleProvider("lovable")}>
-                <LovableMark className="size-[18px]" />
-                Lanjutkan dengan Lovable
               </Button>
             </div>
             <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
