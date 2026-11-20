@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ProjectWorkspace } from "@/components/project-workspace";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,9 +13,9 @@ export const Route = createFileRoute("/_authenticated/profil")({
   head: () => ({
     meta: [
       { title: "Profil saya — Pomah Living" },
-      { name: "description", content: "Kelola nama tampilan dan foto profil akun Pomah Living Anda." },
+      { name: "description", content: "Kelola profil dan proyek properti Anda di Pomah Living." },
       { property: "og:title", content: "Profil saya — Pomah Living" },
-      { property: "og:description", content: "Kelola nama tampilan dan foto profil akun Pomah Living Anda." },
+      { property: "og:description", content: "Kelola profil dan proyek properti Anda di Pomah Living." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -59,8 +60,8 @@ function ProfilePage() {
   }
 
   return (
-    <main className="page-container flex justify-center py-14">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
+    <main className="page-container grid items-start gap-8 py-8 sm:py-12 lg:grid-cols-[minmax(16rem,1fr)_minmax(0,2fr)]">
+      <div className="min-w-0 rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="flex items-center gap-4">
           {avatar ? (
             <img src={avatar} alt="" className="size-14 rounded-full object-cover" />
@@ -89,6 +90,7 @@ function ProfilePage() {
           Keluar
         </Button>
       </div>
+      {userId && <ProjectWorkspace key={userId} userId={userId} />}
     </main>
   );
 }
