@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PilihAsetRouteImport } from './routes/pilih-aset'
+import { Route as ProyekSayaRouteImport } from './routes/proyek-saya'
 import { Route as AnalisisAssetIdRouteImport } from './routes/analisis.$assetId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const PilihAsetRoute = PilihAsetRouteImport.update({
   path: '/pilih-aset',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProyekSayaRoute = ProyekSayaRouteImport.update({
+  id: '/proyek-saya',
+  path: '/proyek-saya',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalisisAssetIdRoute = AnalisisAssetIdRouteImport.update({
   id: '/analisis/$assetId',
   path: '/analisis/$assetId',
@@ -32,30 +38,34 @@ const AnalisisAssetIdRoute = AnalisisAssetIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/pilih-aset': typeof PilihAsetRoute
+  '/proyek-saya': typeof ProyekSayaRoute
   '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/pilih-aset': typeof PilihAsetRoute
+  '/proyek-saya': typeof ProyekSayaRoute
   '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/pilih-aset': typeof PilihAsetRoute
+  '/proyek-saya': typeof ProyekSayaRoute
   '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/pilih-aset' | '/analisis/$assetId'
+  fullPaths: '/' | '/pilih-aset' | '/proyek-saya' | '/analisis/$assetId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/pilih-aset' | '/analisis/$assetId'
-  id: '__root__' | '/' | '/pilih-aset' | '/analisis/$assetId'
+  to: '/' | '/pilih-aset' | '/proyek-saya' | '/analisis/$assetId'
+  id: '__root__' | '/' | '/pilih-aset' | '/proyek-saya' | '/analisis/$assetId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PilihAsetRoute: typeof PilihAsetRoute
+  ProyekSayaRoute: typeof ProyekSayaRoute
   AnalisisAssetIdRoute: typeof AnalisisAssetIdRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PilihAsetRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/proyek-saya': {
+      id: '/proyek-saya'
+      path: '/proyek-saya'
+      fullPath: '/proyek-saya'
+      preLoaderRoute: typeof ProyekSayaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/analisis/$assetId': {
       id: '/analisis/$assetId'
       path: '/analisis/$assetId'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PilihAsetRoute: PilihAsetRoute,
+  ProyekSayaRoute: ProyekSayaRoute,
   AnalisisAssetIdRoute: AnalisisAssetIdRoute,
 }
 export const routeTree = rootRouteImport

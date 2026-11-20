@@ -148,13 +148,21 @@ function RootComponent() {
               <Button
                 asChild
                 variant="nav"
-                data-active={pathname !== "/"}
+                data-active={pathname === "/pilih-aset" || pathname.startsWith("/analisis/")}
                 className="px-2 text-xs sm:px-4 sm:text-sm"
               >
                 <Link to="/pilih-aset">
                   Pilih aset
                   <ArrowUpRight className="hidden sm:block" />
                 </Link>
+              </Button>
+              <Button
+                asChild
+                variant="nav"
+                data-active={pathname === "/proyek-saya"}
+                className="px-2 text-xs sm:px-4 sm:text-sm"
+              >
+                <Link to="/proyek-saya">Proyek Saya</Link>
               </Button>
             </nav>
             <span className="hidden items-center gap-2 border-l border-border pl-6 text-xs text-muted-foreground md:flex">
