@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PilihAsetRouteImport } from './routes/pilih-aset'
+import { Route as AnalisisAssetIdRouteImport } from './routes/analisis.$assetId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PilihAsetRoute = PilihAsetRouteImport.update({
+  id: '/pilih-aset',
+  path: '/pilih-aset',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalisisAssetIdRoute = AnalisisAssetIdRouteImport.update({
+  id: '/analisis/$assetId',
+  path: '/analisis/$assetId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/pilih-aset': typeof PilihAsetRoute
+  '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/pilih-aset': typeof PilihAsetRoute
+  '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/pilih-aset': typeof PilihAsetRoute
+  '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/pilih-aset' | '/analisis/$assetId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/pilih-aset' | '/analisis/$assetId'
+  id: '__root__' | '/' | '/pilih-aset' | '/analisis/$assetId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PilihAsetRoute: typeof PilihAsetRoute
+  AnalisisAssetIdRoute: typeof AnalisisAssetIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pilih-aset': {
+      id: '/pilih-aset'
+      path: '/pilih-aset'
+      fullPath: '/pilih-aset'
+      preLoaderRoute: typeof PilihAsetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analisis/$assetId': {
+      id: '/analisis/$assetId'
+      path: '/analisis/$assetId'
+      fullPath: '/analisis/$assetId'
+      preLoaderRoute: typeof AnalisisAssetIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PilihAsetRoute: PilihAsetRoute,
+  AnalisisAssetIdRoute: AnalisisAssetIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

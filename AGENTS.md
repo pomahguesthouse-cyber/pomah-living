@@ -28,3 +28,11 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Application architecture
+
+- Keep fixture properties and scenarios in a browser-safe local data module; the first version is a no-login, in-memory demo.
+- Keep financial formulas, validation, and decision precedence in pure functions with concrete unit tests, so all pages apply the same investment rules.
+- Use an asset-keyed Zustand store for editable form and checklist state, so navigating between properties preserves each simulation without browser persistence.
+- Use the root route for the shared header and footer and leaf routes for home, asset selection, and asset analysis, so navigation remains typed and each page has its own metadata.
+- Keep visual tokens and reusable styles in the global design system and use shadcn controls, so branding and interaction remain consistent.

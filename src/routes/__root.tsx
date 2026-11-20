@@ -6,29 +6,30 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  useRouterState,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Button } from "@/components/ui/button";
+import { ArrowUpRight, FlaskConical } from "lucide-react";
+import logo from "@/assets/pomah-logo-original.svg.asset.json";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Halaman tidak ditemukan</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          Halaman yang Anda cari tidak tersedia atau telah dipindahkan.
         </p>
         <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Go home
-          </Link>
+          <Button asChild>
+            <Link to="/">Kembali ke beranda</Link>
+          </Button>
         </div>
       </div>
     </div>
@@ -46,27 +47,23 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          Halaman belum bisa dimuat
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Terjadi kendala. Silakan coba lagi atau kembali ke beranda.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
+          <Button
             onClick={() => {
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
-          </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Go home
-          </a>
+            Coba lagi
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/">Kembali ke beranda</Link>
+          </Button>
         </div>
       </div>
     </div>
@@ -75,27 +72,36 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
-    // Replace these placeholders with the app's name and description when first building the app.
-    // Each content route, / included, must still set its own head(). Never add og:image or
-    // twitter:image here: every page without its own would inherit the root's preview image.
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Pomah Living — Simulasi rumah lelang" },
+      {
+        name: "description",
+        content: "Penilaian rumah lelang dan simulasi renovasi untuk renovator dan investor lokal.",
+      },
+      { name: "author", content: "Pomah Living" },
+      { property: "og:title", content: "Pomah Living — Simulasi rumah lelang" },
+      {
+        property: "og:description",
+        content:
+          "Pertimbangkan biaya renovasi, batas tawar, dan laba jual kembali sebelum menawar rumah lelang.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;450;500;550;600;650;700;750;800&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -106,7 +112,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="id">
       <head>
         <HeadContent />
       </head>
@@ -120,11 +126,55 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="flex min-h-screen flex-col">
+        <header className="relative z-20 border-b border-border bg-card">
+          <div className="page-container flex h-20 items-center justify-between gap-3">
+            <Link to="/" aria-label="Pomah Living — Beranda">
+              <img className="brand-logo" src={logo.url} alt="Pomah Living" />
+            </Link>
+            <nav aria-label="Navigasi utama" className="flex items-center gap-1 sm:gap-3">
+              <Button
+                asChild
+                variant="nav"
+                data-active={pathname === "/"}
+                className="px-2 text-xs sm:px-4 sm:text-sm"
+              >
+                <Link to="/">Beranda</Link>
+              </Button>
+              <Button
+                asChild
+                variant="nav"
+                data-active={pathname !== "/"}
+                className="px-2 text-xs sm:px-4 sm:text-sm"
+              >
+                <Link to="/pilih-aset">
+                  Pilih aset
+                  <ArrowUpRight className="hidden sm:block" />
+                </Link>
+              </Button>
+            </nav>
+            <span className="hidden items-center gap-2 border-l border-border pl-6 text-xs text-muted-foreground md:flex">
+              <FlaskConical className="size-4 text-brand" />
+              Versi demo
+            </span>
+          </div>
+        </header>
+        <div className="flex-1">
+          <Outlet />
+        </div>
+        <footer className="border-t border-border bg-card py-7">
+          <div className="page-container flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs font-medium text-brand-deep">© 2026 Pomah Living</p>
+            <p className="max-w-lg text-[11px] leading-5 text-muted-foreground sm:text-right">
+              Pomah Living adalah prototipe independen. Data aset dalam demo adalah simulasi.
+            </p>
+          </div>
+        </footer>
+      </div>
     </QueryClientProvider>
   );
 }

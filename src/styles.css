@@ -6,8 +6,8 @@
  *   src/routes/__root.tsx and name the family in a --font-* token in @theme inline below.
  */
 @import "tailwindcss" source(none);
-@source "../src";
 @import "tw-animate-css";
+@source "../src";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -30,6 +30,18 @@
  */
 
 @theme inline {
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-soft: var(--brand-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-hero-foreground: var(--hero-foreground);
+  --color-hero-muted: var(--hero-muted);
+  --color-hero-line: var(--hero-line);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -73,26 +85,45 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --radius: 0.5rem;
+  --brand: oklch(0.647 0.055 195.4);
+  --brand-deep: oklch(0.32 0.048 184);
+  --brand-soft: oklch(0.96 0.014 180);
+  --success: oklch(0.43 0.085 167);
+  --success-soft: oklch(0.95 0.024 163);
+  --warning: oklch(0.5 0.12 65);
+  --warning-soft: oklch(0.97 0.037 80);
+  --danger-soft: oklch(0.97 0.018 28);
+  --hero-foreground: oklch(0.99 0.003 85);
+  --hero-muted: oklch(0.88 0.011 170);
+  --hero-line: oklch(1 0 0 / 22%);
+  --hero-overlay: linear-gradient(
+    90deg,
+    oklch(0.21 0.036 182 / 96%) 0%,
+    oklch(0.21 0.036 182 / 89%) 30%,
+    oklch(0.21 0.036 182 / 42%) 57%,
+    oklch(0.21 0.036 182 / 5%) 100%
+  );
+  --shadow-card: 0 5px 25px oklch(0.25 0.02 180 / 4%);
+  --background: oklch(0.988 0.004 90);
+  --foreground: oklch(0.265 0.022 182);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
+  --card-foreground: var(--foreground);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.696 0.204 43.5);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: var(--brand-soft);
+  --secondary-foreground: var(--brand-deep);
+  --muted: oklch(0.965 0.006 150);
+  --muted-foreground: oklch(0.52 0.015 180);
+  --accent: var(--brand-soft);
+  --accent-foreground: var(--brand-deep);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --border: oklch(0.91 0.009 170);
+  --input: var(--border);
+  --ring: var(--brand);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -151,5 +182,180 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: 0;
+  }
+
+  button,
+  input,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+  ::selection {
+    background: var(--brand-soft);
+    color: var(--brand-deep);
+  }
+}
+
+.page-container {
+  width: min(100% - 64px, 1160px);
+  margin-inline: auto;
+}
+.brand-logo {
+  width: 158px;
+  height: 60px;
+  object-fit: contain;
+}
+.hero-scene {
+  position: relative;
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  color: var(--hero-foreground);
+}
+.hero-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 65% 55%;
+}
+.hero-shade {
+  position: absolute;
+  inset: 0;
+  background: var(--hero-overlay);
+}
+.hero-content {
+  position: relative;
+  padding-block: 68px 76px;
+}
+.hero-title {
+  font-size: 56px;
+  font-weight: 650;
+  line-height: 1.2;
+  max-width: 640px;
+}
+.eyebrow {
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+.section-title {
+  font-size: 32px;
+  line-height: 1.35;
+  font-weight: 650;
+}
+.property-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform 200ms,
+    box-shadow 200ms;
+}
+.property-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px oklch(0.25 0.02 180 / 8%);
+}
+.property-photo {
+  aspect-ratio: 1.6;
+  width: 100%;
+  object-fit: cover;
+}
+.sim-field {
+  height: 48px;
+  padding-left: 46px;
+  background: var(--card);
+  font-size: 15px;
+  box-shadow: none;
+  font-variant-numeric: tabular-nums;
+}
+.sim-field[aria-invalid="true"] {
+  border-color: var(--destructive);
+}
+.verification-switch[data-state="checked"] {
+  background-color: var(--brand);
+}
+.result-panel {
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--brand);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+.result-figure {
+  font-size: 35px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.step-number {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
+}
+.reveal {
+  animation: reveal 600ms ease-out both;
+}
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (min-width: 1600px) {
+  .hero-scene {
+    min-height: 660px;
+  }
+}
+@media (max-width: 767px) {
+  .page-container {
+    width: calc(100% - 40px);
+  }
+  .brand-logo {
+    width: 132px;
+    height: 48px;
+  }
+  .hero-scene {
+    min-height: 570px;
+  }
+  .hero-content {
+    padding-block: 60px;
+  }
+  .hero-title {
+    font-size: 40px;
+    max-width: 440px;
+  }
+  .hero-photo {
+    object-position: 62% center;
+  }
+  .hero-shade {
+    background: linear-gradient(90deg, oklch(0.21 0.036 182 / 92%), oklch(0.21 0.036 182 / 58%));
+  }
+  .section-title {
+    font-size: 27px;
+  }
+  .result-figure {
+    font-size: 31px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+  }
+  .property-card {
+    transition: none;
+  }
+  .property-card:hover {
+    transform: none;
   }
 }
