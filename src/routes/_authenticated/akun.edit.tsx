@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { format } from "date-fns";
 import { ArrowLeft, MapPin, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,17 +118,17 @@ function AccountDetailsForm({
     const value = (name: string) => String(form.get(name) ?? "").trim() || null;
     const full_name = value("full_name");
     if (!full_name) return;
-    const age = value("age");
     const savedRegions = canAdd ? [...regions, selectedRegion] : regions;
     mutation.mutate(
       {
         full_name,
-        age: age === null ? null : Number(age),
+        birth_date: value("birth_date"),
         occupation: value("occupation"),
         display_name: value("display_name"),
         avatar_url: value("avatar_url"),
         contact_phone: value("contact_phone"),
         address: value("address"),
+        residence_province: value("residence_province"),
         preferred_regions: savedRegions,
       },
       {
@@ -176,15 +177,13 @@ function AccountDetailsForm({
           />
         </label>
         <label className="space-y-1 text-sm">
-          <span>Umur (tahun, opsional)</span>
+          <span>Tanggal lahir (opsional)</span>
           <Input
-            name="age"
-            type="number"
-            inputMode="numeric"
-            step={1}
-            min={0}
-            max={130}
-            defaultValue={initial?.age ?? ""}
+            name="birth_date"
+            type="date"
+            autoComplete="bday"
+            max={format(new Date(), "yyyy-MM-dd")}
+            defaultValue={initial?.birth_date ?? ""}
           />
         </label>
         <label className="space-y-1 text-sm">
@@ -217,6 +216,22 @@ function AccountDetailsForm({
             autoComplete="street-address"
             maxLength={500}
           />
+        </label>
+        <label className="space-y-1 text-sm sm:col-span-2">
+          <span>Provinsi domisili</span>
+          <select
+            name="residence_province"
+            className={selectClass}
+            autoComplete="address-level1"
+            defaultValue={initial?.residence_province ?? ""}
+          >
+            <option value="">Pilih provinsi domisili</option>
+            {provinceOptions.map(({ code, name }) => (
+              <option value={code} key={code}>
+                {name}
+              </option>
+            ))}
+          </select>
         </label>
       </fieldset>
       <fieldset

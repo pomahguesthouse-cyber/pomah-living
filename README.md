@@ -42,6 +42,10 @@ pertama sudah dijalankan, cukup jalankan skrip pekerjaan. Keduanya menambah
 kolom pada profil yang sudah ada dengan kebijakan
 akses pemilik yang sama. Email masuk ditampilkan sebagai referensi.
 
+Untuk revisi tanggal lahir dan provinsi domisili, jalankan juga
+`database/pomah-account-birth-residence.sql`. Umur lama tetap tersimpan,
+dan tanggal lahir diisi melalui formulir akun.
+
 Data pilihan wilayah merujuk pada Kepmendagri 300.2.2-2138/2025. Data diringkas
 dari [dataset-wilayah-indonesia](https://github.com/prodhokter/dataset-wilayah-indonesia/tree/6c3b0fab94d4600cf33a428753d8df5cbe592b75)
 dan sumber hulunya cahyadsn/wilayah. Lisensi ada di
