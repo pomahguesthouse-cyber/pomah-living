@@ -25,7 +25,7 @@ npm run dev
 
 ## Proyek Saya
 
-Proyek Saya lives inside Profil and uses the existing Supabase database and
+Proyek Saya lives inside Akun Saya and uses the existing Supabase database and
 account session. For a fresh database, run `database/pomah-projects.sql` once
 in the database used by the app. The existing Google and email sign-in setup is
 used for this feature.
