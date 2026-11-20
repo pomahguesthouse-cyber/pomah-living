@@ -164,9 +164,7 @@ function RootComponent() {
               {ready && (session ? (
                 <AccountMenu
                   key={session.user.id}
-                  userId={session.user.id}
-                  email={session.user.email ?? ""}
-                  active={pathname === "/profil"}
+                  active={pathname === "/profil" || pathname === "/akun/edit"}
                 />
               ) : (
                 <Button

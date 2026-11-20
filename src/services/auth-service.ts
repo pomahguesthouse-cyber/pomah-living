@@ -2,13 +2,6 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 
-// Lapisan layanan untuk semua pemanggilan autentikasi dan profil.
-export type Profile = {
-  id: string;
-  display_name: string | null;
-  avatar_url: string | null;
-};
-
 export async function signUpWithEmail(email: string, password: string, displayName: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -44,21 +37,4 @@ export async function signOut() {
 export async function getSession(): Promise<Session | null> {
   const { data } = await supabase.auth.getSession();
   return data.session;
-}
-
-export async function fetchProfile(userId: string): Promise<Profile | null> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, display_name, avatar_url")
-    .eq("id", userId)
-    .maybeSingle();
-  if (error) throw error;
-  return data;
-}
-
-export async function updateProfile(userId: string, values: { display_name: string; avatar_url: string }) {
-  const { error } = await supabase
-    .from("profiles")
-    .upsert({ id: userId, display_name: values.display_name, avatar_url: values.avatar_url || null });
-  if (error) throw error;
 }
