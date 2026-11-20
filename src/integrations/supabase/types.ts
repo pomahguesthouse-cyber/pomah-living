@@ -14,26 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: {
+      pomah_projects: {
         Row: {
-          avatar_url: string | null
+          actual_cost: number | null
+          actual_sale: number | null
           created_at: string
-          display_name: string | null
+          expected_cost: number | null
+          expected_sale: number | null
           id: string
+          location: string
+          name: string
+          owner_id: string
+          status: string
           updated_at: string
         }
         Insert: {
-          avatar_url?: string | null
+          actual_cost?: number | null
+          actual_sale?: number | null
           created_at?: string
-          display_name?: string | null
-          id: string
+          expected_cost?: number | null
+          expected_sale?: number | null
+          id?: string
+          location?: string
+          name: string
+          owner_id?: string
+          status?: string
           updated_at?: string
         }
         Update: {
+          actual_cost?: number | null
+          actual_sale?: number | null
+          created_at?: string
+          expected_cost?: number | null
+          expected_sale?: number | null
+          id?: string
+          location?: string
+          name?: string
+          owner_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          age: number | null
+          avatar_url: string | null
+          birth_date: string | null
+          contact_phone: string | null
+          created_at: string
+          display_name: string | null
+          full_name: string | null
+          has_property_experience: boolean | null
+          id: string
+          occupation: string | null
+          preferred_regions: string[]
+          residence_province: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          age?: number | null
           avatar_url?: string | null
+          birth_date?: string | null
+          contact_phone?: string | null
           created_at?: string
           display_name?: string | null
+          full_name?: string | null
+          has_property_experience?: boolean | null
+          id: string
+          occupation?: string | null
+          preferred_regions?: string[]
+          residence_province?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          age?: number | null
+          avatar_url?: string | null
+          birth_date?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          display_name?: string | null
+          full_name?: string | null
+          has_property_experience?: boolean | null
           id?: string
+          occupation?: string | null
+          preferred_regions?: string[]
+          residence_province?: string | null
           updated_at?: string
         }
         Relationships: []
