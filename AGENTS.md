@@ -36,3 +36,5 @@ use the editor.
 - Use an asset-keyed Zustand store for editable form and checklist state, so navigating between properties preserves each simulation without browser persistence.
 - Use the root route for the shared header and footer and leaf routes for home, asset selection, and asset analysis, so navigation remains typed and each page has its own metadata.
 - Keep visual tokens and reusable styles in the global design system and use shadcn controls, so branding and interaction remain consistent.
+
+- Route auth and profile calls through src/services/auth-service.ts and share the session via one Zustand store synced in the root route, so components never call the auth client directly.

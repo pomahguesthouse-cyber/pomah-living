@@ -10,7 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PilihAsetRouteImport } from './routes/pilih-aset'
+import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as AnalisisAssetIdRouteImport } from './routes/analisis.$assetId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -18,10 +21,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PilihAsetRoute = PilihAsetRouteImport.update({
   id: '/pilih-aset',
   path: '/pilih-aset',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AnalisisAssetIdRoute = AnalisisAssetIdRouteImport.update({
   id: '/analisis/$assetId',
@@ -31,30 +48,46 @@ const AnalisisAssetIdRoute = AnalisisAssetIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/pilih-aset': typeof PilihAsetRoute
+  '/profil': typeof AuthenticatedProfilRoute
   '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/pilih-aset': typeof PilihAsetRoute
+  '/profil': typeof AuthenticatedProfilRoute
   '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
   '/pilih-aset': typeof PilihAsetRoute
+  '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/pilih-aset' | '/analisis/$assetId'
+  fullPaths: '/' | '/auth' | '/pilih-aset' | '/profil' | '/analisis/$assetId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/pilih-aset' | '/analisis/$assetId'
-  id: '__root__' | '/' | '/pilih-aset' | '/analisis/$assetId'
+  to: '/' | '/auth' | '/pilih-aset' | '/profil' | '/analisis/$assetId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/pilih-aset'
+    | '/_authenticated/profil'
+    | '/analisis/$assetId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
   PilihAsetRoute: typeof PilihAsetRoute
   AnalisisAssetIdRoute: typeof AnalisisAssetIdRoute
 }
@@ -68,12 +101,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pilih-aset': {
       id: '/pilih-aset'
       path: '/pilih-aset'
       fullPath: '/pilih-aset'
       preLoaderRoute: typeof PilihAsetRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/profil': {
+      id: '/_authenticated/profil'
+      path: '/profil'
+      fullPath: '/profil'
+      preLoaderRoute: typeof AuthenticatedProfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/analisis/$assetId': {
       id: '/analisis/$assetId'
@@ -85,8 +139,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedProfilRoute: AuthenticatedProfilRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
   PilihAsetRoute: PilihAsetRoute,
   AnalisisAssetIdRoute: AnalisisAssetIdRoute,
 }
