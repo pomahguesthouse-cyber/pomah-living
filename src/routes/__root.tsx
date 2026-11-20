@@ -14,7 +14,9 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, FlaskConical } from "lucide-react";
+import { ArrowUpRight, FlaskConical, UserRound } from "lucide-react";
+import { Toaster } from "@/components/ui/sonner";
+import { useSession, useSessionSync } from "@/hooks/use-session";
 import logo from "@/assets/pomah-logo-original.svg.asset.json";
 
 function NotFoundComponent() {
@@ -127,6 +129,8 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  useSessionSync();
+  const { session, ready } = useSession();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -148,7 +152,7 @@ function RootComponent() {
               <Button
                 asChild
                 variant="nav"
-                data-active={pathname === "/pilih-aset" || pathname.startsWith("/analisis/")}
+                data-active={pathname.startsWith("/pilih-aset") || pathname.startsWith("/analisis")}
                 className="px-2 text-xs sm:px-4 sm:text-sm"
               >
                 <Link to="/pilih-aset">
@@ -156,14 +160,28 @@ function RootComponent() {
                   <ArrowUpRight className="hidden sm:block" />
                 </Link>
               </Button>
-              <Button
-                asChild
-                variant="nav"
-                data-active={pathname === "/proyek-saya"}
-                className="px-2 text-xs sm:px-4 sm:text-sm"
-              >
-                <Link to="/proyek-saya">Proyek Saya</Link>
-              </Button>
+              {ready && session && (
+                <Button
+                  asChild
+                  variant="nav"
+                  data-active={pathname === "/proyek-saya"}
+                  className="px-2 text-xs sm:px-4 sm:text-sm"
+                >
+                  <Link to="/proyek-saya">Proyek Saya</Link>
+                </Button>
+              )}
+              {ready && (
+                <Button asChild variant="nav" data-active={pathname === "/auth" || pathname === "/profil"} className="px-2 text-xs sm:px-4 sm:text-sm">
+                  {session ? (
+                    <Link to="/profil">
+                      <UserRound className="hidden sm:block" />
+                      Profil
+                    </Link>
+                  ) : (
+                    <Link to="/auth">Masuk</Link>
+                  )}
+                </Button>
+              )}
             </nav>
             <span className="hidden items-center gap-2 border-l border-border pl-6 text-xs text-muted-foreground md:flex">
               <FlaskConical className="size-4 text-brand" />
@@ -183,6 +201,7 @@ function RootComponent() {
           </div>
         </footer>
       </div>
+      <Toaster />
     </QueryClientProvider>
   );
 }

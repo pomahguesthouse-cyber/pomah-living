@@ -14,4 +14,12 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+  it("places Proyek Saya under the existing authenticated layout", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+
+    const matches = router.matchRoutes("/proyek-saya");
+
+    expect(matches.map(({ routeId }) => routeId)).toContain("/_authenticated");
+    expect(matches.at(-1)?.routeId).toBe("/_authenticated/proyek-saya");
+  });
 });

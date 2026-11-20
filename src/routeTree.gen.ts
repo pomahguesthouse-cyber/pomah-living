@@ -10,8 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PilihAsetRouteImport } from './routes/pilih-aset'
-import { Route as ProyekSayaRouteImport } from './routes/proyek-saya'
+import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
+import { Route as AuthenticatedProyekSayaRouteImport } from './routes/_authenticated/proyek-saya'
 import { Route as AnalisisAssetIdRouteImport } from './routes/analisis.$assetId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -19,15 +22,29 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PilihAsetRoute = PilihAsetRouteImport.update({
   id: '/pilih-aset',
   path: '/pilih-aset',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProyekSayaRoute = ProyekSayaRouteImport.update({
+const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProyekSayaRoute = AuthenticatedProyekSayaRouteImport.update({
   id: '/proyek-saya',
   path: '/proyek-saya',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AnalisisAssetIdRoute = AnalisisAssetIdRouteImport.update({
   id: '/analisis/$assetId',
@@ -37,35 +54,63 @@ const AnalisisAssetIdRoute = AnalisisAssetIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/pilih-aset': typeof PilihAsetRoute
-  '/proyek-saya': typeof ProyekSayaRoute
+  '/profil': typeof AuthenticatedProfilRoute
+  '/proyek-saya': typeof AuthenticatedProyekSayaRoute
   '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/pilih-aset': typeof PilihAsetRoute
-  '/proyek-saya': typeof ProyekSayaRoute
+  '/profil': typeof AuthenticatedProfilRoute
+  '/proyek-saya': typeof AuthenticatedProyekSayaRoute
   '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
   '/pilih-aset': typeof PilihAsetRoute
-  '/proyek-saya': typeof ProyekSayaRoute
+  '/_authenticated/profil': typeof AuthenticatedProfilRoute
+  '/_authenticated/proyek-saya': typeof AuthenticatedProyekSayaRoute
   '/analisis/$assetId': typeof AnalisisAssetIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/pilih-aset' | '/proyek-saya' | '/analisis/$assetId'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/pilih-aset'
+    | '/profil'
+    | '/proyek-saya'
+    | '/analisis/$assetId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/pilih-aset' | '/proyek-saya' | '/analisis/$assetId'
-  id: '__root__' | '/' | '/pilih-aset' | '/proyek-saya' | '/analisis/$assetId'
+  to:
+    | '/'
+    | '/auth'
+    | '/pilih-aset'
+    | '/profil'
+    | '/proyek-saya'
+    | '/analisis/$assetId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/pilih-aset'
+    | '/_authenticated/profil'
+    | '/_authenticated/proyek-saya'
+    | '/analisis/$assetId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
   PilihAsetRoute: typeof PilihAsetRoute
-  ProyekSayaRoute: typeof ProyekSayaRoute
   AnalisisAssetIdRoute: typeof AnalisisAssetIdRoute
 }
 
@@ -78,6 +123,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pilih-aset': {
       id: '/pilih-aset'
       path: '/pilih-aset'
@@ -85,12 +144,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PilihAsetRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/proyek-saya': {
-      id: '/proyek-saya'
+    '/_authenticated/profil': {
+      id: '/_authenticated/profil'
+      path: '/profil'
+      fullPath: '/profil'
+      preLoaderRoute: typeof AuthenticatedProfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/proyek-saya': {
+      id: '/_authenticated/proyek-saya'
       path: '/proyek-saya'
       fullPath: '/proyek-saya'
-      preLoaderRoute: typeof ProyekSayaRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedProyekSayaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/analisis/$assetId': {
       id: '/analisis/$assetId'
@@ -102,10 +168,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
+  AuthenticatedProyekSayaRoute: typeof AuthenticatedProyekSayaRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedProfilRoute: AuthenticatedProfilRoute,
+  AuthenticatedProyekSayaRoute: AuthenticatedProyekSayaRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
   PilihAsetRoute: PilihAsetRoute,
-  ProyekSayaRoute: ProyekSayaRoute,
   AnalisisAssetIdRoute: AnalisisAssetIdRoute,
 }
 export const routeTree = rootRouteImport

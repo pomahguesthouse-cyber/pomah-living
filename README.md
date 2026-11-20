@@ -23,16 +23,13 @@ npm i
 npm run dev
 ```
 
-## Akun dan Proyek Saya
+## Proyek Saya
 
-Gunakan proyek Supabase terpisah untuk mengaktifkan penyimpanan akun dan proyek.
-Jalankan `database/pomah-projects.sql` sekali via SQL Editor di proyek tersebut.
-Konfigurasikan dua variabel build berikut, lalu build/deploy ulang aplikasi.
+Proyek Saya uses the same Supabase database and session as the existing account
+and profile pages. For a fresh database, run `database/pomah-projects.sql` once
+in the database used by the app. The existing Google and email sign-in setup is
+used for this feature.
 
-- `VITE_SUPABASE_URL` berisi URL HTTPS proyek.
-- `VITE_SUPABASE_PUBLISHABLE_KEY` berisi publishable key berawalan `sb_publishable_`.
-
-Aktifkan login email di Supabase Auth dan atur URL situs serta URL redirect
-`https://pomahliving.com/proyek-saya`. Siapkan pengiriman email konfirmasi untuk
-pendaftaran produksi. Gunakan dua akun uji untuk memverifikasi pendaftaran,
-login, penyimpanan beberapa proyek, dan isolasi data antar akun sebelum publikasi.
+For acceptance testing, sign in and create two projects. Record a sale price and
+project costs in a project detail page. Sign in with a different user and verify
+that the first user's projects are private.

@@ -1,11 +1,11 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import type { Session } from "@supabase/supabase-js";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getAccountsClient } from "@/lib/accounts-client";
+import { useSession } from "@/hooks/use-session";
+import { projectsClient } from "@/lib/projects-client";
 import {
   moneyFields,
   projectProfit,
@@ -15,141 +15,36 @@ import {
 } from "@/lib/project-records";
 import { formatRupiah } from "@/lib/simulation";
 
-export const Route = createFileRoute("/proyek-saya")({
+export const Route = createFileRoute("/_authenticated/proyek-saya")({
   head: () => ({
     meta: [{ title: "Proyek Saya — Pomah Living" }, { name: "robots", content: "noindex" }],
   }),
   component: AccountPage,
 });
 
-type AccountsClient = NonNullable<ReturnType<typeof getAccountsClient>>;
 const projectColumns =
   "id,name,location,status,expected_sale,expected_cost,actual_sale,actual_cost,updated_at";
 
 function AccountPage() {
-  const [client, setClient] = useState<AccountsClient | null | undefined>(undefined);
-  const [session, setSession] = useState<Session | null | undefined>(undefined);
-  const cache = useQueryClient();
-
-  useEffect(() => {
-    const accounts = getAccountsClient();
-    setClient(accounts);
-    const listener = accounts?.auth.onAuthStateChange((event, nextSession) => {
-      if (event === "SIGNED_OUT") cache.removeQueries({ queryKey: ["pomah-projects"] });
-      setSession(nextSession);
-    });
-    return () => listener?.data.subscription.unsubscribe();
-  }, [cache]);
+  const { session } = useSession();
 
   return (
     <main className="page-container py-8 sm:py-12">
       <h1 className="section-title">Proyek Saya</h1>
-      {client === null ? (
-        <p className="mt-4 text-sm text-muted-foreground">Akun belum tersedia di situs ini.</p>
-      ) : !client || session === undefined ? (
-        <p className="mt-4 text-sm text-muted-foreground" role="status">
-          Memeriksa sesi…
-        </p>
-      ) : session ? (
-        <ProjectWorkspace key={session.user.id} client={client} userId={session.user.id} />
-      ) : (
-        <AccountForm client={client} />
-      )}
+      {session && <ProjectWorkspace key={session.user.id} userId={session.user.id} />}
     </main>
   );
 }
 
-function AccountForm({ client }: { client: AccountsClient }) {
-  const [registering, setRegistering] = useState(false);
-  const [pending, setPending] = useState(false);
-  const [notice, setNotice] = useState("");
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (pending) return;
-    const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") ?? "").trim();
-    const password = String(form.get("password") ?? "");
-    setPending(true);
-    setNotice("");
-    try {
-      if (registering) {
-        const { data, error } = await client.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: new URL("/proyek-saya", window.location.origin).href },
-        });
-        if (error) throw error;
-        if (!data.session) setNotice("Periksa email untuk konfirmasi akun, lalu masuk.");
-      } else {
-        const { error } = await client.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      }
-    } catch {
-      setNotice(
-        registering
-          ? "Pendaftaran belum berhasil. Periksa email dan kata sandi, lalu coba lagi."
-          : "Gagal masuk. Periksa email, konfirmasi akun, dan kata sandi.",
-      );
-    } finally {
-      setPending(false);
-    }
-  }
-
-  return (
-    <form
-      className="mt-6 max-w-sm space-y-4 rounded-md border border-border bg-card p-5"
-      onSubmit={submit}
-    >
-      <h2 className="text-base font-semibold">{registering ? "Buat akun" : "Masuk ke akun"}</h2>
-      <label className="block space-y-1 text-sm">
-        <span>Email</span>
-        <Input type="email" name="email" autoComplete="email" required />
-      </label>
-      <label className="block space-y-1 text-sm">
-        <span>Kata sandi</span>
-        <Input
-          type="password"
-          name="password"
-          autoComplete={registering ? "new-password" : "current-password"}
-          minLength={registering ? 8 : undefined}
-          required
-        />
-      </label>
-      {notice && (
-        <p role="status" className="text-sm">
-          {notice}
-        </p>
-      )}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button type="submit" disabled={pending}>
-          {registering ? "Daftar" : "Masuk"}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          disabled={pending}
-          onClick={() => {
-            setRegistering(!registering);
-            setNotice("");
-          }}
-        >
-          {registering ? "Kembali ke masuk" : "Buat akun"}
-        </Button>
-      </div>
-    </form>
-  );
-}
-
-function ProjectWorkspace({ client, userId }: { client: AccountsClient; userId: string }) {
-  const [selection, setSelection] = useState<string | "new" | null>(null);
-  const [logoutError, setLogoutError] = useState(false);
+function ProjectWorkspace({ userId }: { userId: string }) {
+  const [selection, setSelection] = useState<string | null>(null);
   const cache = useQueryClient();
   const queryKey = ["pomah-projects", userId];
   const projects = useQuery({
     queryKey,
+    gcTime: 0,
     queryFn: async ({ signal }) => {
-      const { data, error } = await client
+      const { data, error } = await projectsClient
         .from("pomah_projects")
         .select(projectColumns)
         .order("updated_at", { ascending: false })
@@ -163,7 +58,7 @@ function ProjectWorkspace({ client, userId }: { client: AccountsClient; userId: 
 
   async function save(fields: FormData, baseline: ProjectRecord | undefined) {
     const values = readProjectFields(fields);
-    const table = client.from("pomah_projects");
+    const table = projectsClient.from("pomah_projects");
     const response = baseline
       ? await table
           .update(values)
@@ -197,22 +92,7 @@ function ProjectWorkspace({ client, userId }: { client: AccountsClient; userId: 
         <Button type="button" onClick={() => setSelection("new")}>
           Buat proyek
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={async () => {
-            const { error } = await client.auth.signOut({ scope: "local" });
-            setLogoutError(Boolean(error));
-          }}
-        >
-          Keluar
-        </Button>
       </div>
-      {logoutError && (
-        <p role="alert" className="mt-3 text-sm text-destructive">
-          Gagal keluar. Coba lagi.
-        </p>
-      )}
       <div className="mt-6 grid items-start gap-6 md:grid-cols-[minmax(15rem,1fr)_minmax(0,2fr)]">
         <section aria-label="Daftar proyek" className="rounded-md border border-border bg-card p-4">
           {projects.isPending && (
