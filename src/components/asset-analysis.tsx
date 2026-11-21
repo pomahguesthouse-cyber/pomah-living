@@ -2,26 +2,8 @@ import { useState } from "react";
 import { ClipboardCheck, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { workGroups, type FlippingProject } from "@/lib/flipping";
+import { type FlippingProject, type AssetAssessment } from "@/lib/flipping";
 
-type Assessment = {
-  area: string;
-  group: (typeof workGroups)[number];
-  condition: string;
-  finding: string;
-  recommendation: string;
-};
-const sections: Pick<Assessment, "area" | "group">[] = [
-  { area: "Atap dan talang", group: "Arsitektur" },
-  { area: "Struktur (kolom, balok, pelat)", group: "Struktur" },
-  { area: "Dinding dan cat", group: "Finishing" },
-  { area: "Lantai dan keramik", group: "Arsitektur" },
-  { area: "Plafon", group: "Arsitektur" },
-  { area: "Pintu dan jendela", group: "Arsitektur" },
-  { area: "Listrik", group: "MEP" },
-  { area: "Air bersih, sanitasi, drainase", group: "MEP" },
-  { area: "Fasad dan tampilan jual", group: "Finishing" },
-];
 export function AssetAnalysis({
   project,
   onChange,
@@ -31,16 +13,15 @@ export function AssetAnalysis({
   onChange: (next: FlippingProject) => void;
   onNavigate: (tab: string) => void;
 }) {
-  const [rows, setRows] = useState<Assessment[]>(() =>
-    sections.map(({ area, group }) => ({
-      area, group, condition: "Belum diperiksa", finding: "", recommendation: "",
-    })),
-  );
+  const rows = project.assetAssessments;
   const [message, setMessage] = useState("");
-  const edit = (area: string, patch: Partial<Assessment>) =>
-    setRows((previous) => previous.map((row) => row.area === area ? { ...row, ...patch } : row));
+  const edit = (area: string, patch: Partial<AssetAssessment>) =>
+    onChange({
+      ...project,
+      assetAssessments: rows.map((row) => row.area === area ? { ...row, ...patch } : row),
+    });
 
-  function sendToRab(row: Assessment) {
+  function sendToRab(row: AssetAssessment) {
     if (!row.finding.trim() || !row.recommendation.trim()) {
       setMessage("Isi temuan dan rekomendasi perbaikan terlebih dahulu.");
       return;
@@ -79,10 +60,10 @@ export function AssetAnalysis({
         </p>
       </div>
       <div className="rounded-md border border-border bg-muted/30 p-4 text-xs leading-6 text-muted-foreground">
-        Formulir pemeriksaan manual, belum menggunakan AI. Seluruh bagian diawali “Belum diperiksa”;
-        tidak ada temuan yang otomatis dianggap benar. Catatan pemeriksaan dalam tab ini
-        sementara dan belum tersimpan permanen. Setelah disetujui, usulan pekerjaan masuk ke RAB proyek.
-        Penyebab kerusakan tersembunyi dan kondisi struktur perlu verifikasi tenaga ahli di lapangan.
+        Formulir pemeriksaan manual, belum menggunakan AI. Catatan disimpan bersama rincian proyek:
+        proyek demo otomatis di perangkat ini, sedangkan proyek pribadi setelah menekan “Simpan rincian”.
+        Usulan pekerjaan yang disetujui masuk ke RAB. Penyebab kerusakan tersembunyi dan kondisi
+        struktur tetap perlu verifikasi tenaga ahli di lapangan.
       </div>
       <div className="space-y-3">
         {rows.map((row) => (
