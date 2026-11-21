@@ -117,7 +117,7 @@ function ProjectPage() {
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [revision, setRevision] = useState(0);
-  const [tab, setTab] = useState("analysis");
+  const [tab, setTab] = useState("asset");
   const form = useRef<HTMLFormElement>(null);
   const detail = useQuery({
     queryKey: ["flipping-project", userId, id],
@@ -440,14 +440,14 @@ function ProjectPage() {
               <div className="no-print max-w-full overflow-x-auto border-b border-border pb-2">
                 <TabsList className="h-11 w-max justify-start gap-0 rounded-none bg-transparent p-0">
                   {[
-                    ["analysis", "Analisis investasi", "bg-blue-100 text-blue-900 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white dark:bg-blue-950 dark:text-blue-200"],
                     ["asset", "Analisis Aset", "bg-orange-100 text-orange-900 data-[state=active]:!bg-orange-600 data-[state=active]:!text-white dark:bg-orange-950 dark:text-orange-200"],
-                    ["rab", "RAB renovasi", "bg-green-100 text-green-900 data-[state=active]:!bg-green-700 data-[state=active]:!text-white dark:bg-green-950 dark:text-green-200"],
-                    ["photos", "Foto & before-after", "bg-purple-100 text-purple-900 data-[state=active]:!bg-purple-600 data-[state=active]:!text-white dark:bg-purple-950 dark:text-purple-200"],
                     ["market", "Harga pasar", "bg-cyan-100 text-cyan-900 data-[state=active]:!bg-cyan-700 data-[state=active]:!text-white dark:bg-cyan-950 dark:text-cyan-200"],
                     ["risks", "Dokumen & risiko", "bg-red-100 text-red-900 data-[state=active]:!bg-red-600 data-[state=active]:!text-white dark:bg-red-950 dark:text-red-200"],
-                    ["timeline", "Timeline", "bg-indigo-100 text-indigo-900 data-[state=active]:!bg-indigo-600 data-[state=active]:!text-white dark:bg-indigo-950 dark:text-indigo-200"],
+                    ["rab", "RAB renovasi", "bg-green-100 text-green-900 data-[state=active]:!bg-green-700 data-[state=active]:!text-white dark:bg-green-950 dark:text-green-200"],
+                    ["analysis", "Analisis investasi", "bg-blue-100 text-blue-900 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white dark:bg-blue-950 dark:text-blue-200"],
                     ["scenarios", "Skenario", "bg-amber-100 text-amber-900 data-[state=active]:!bg-amber-600 data-[state=active]:!text-white dark:bg-amber-950 dark:text-amber-200"],
+                    ["timeline", "Timeline", "bg-indigo-100 text-indigo-900 data-[state=active]:!bg-indigo-600 data-[state=active]:!text-white dark:bg-indigo-950 dark:text-indigo-200"],
+                    ["photos", "Foto & before-after", "bg-purple-100 text-purple-900 data-[state=active]:!bg-purple-600 data-[state=active]:!text-white dark:bg-purple-950 dark:text-purple-200"],
                   ].map(([value, label, color]) => (
                     <TabsTrigger key={value} value={value} className={`rounded-b-none rounded-t-lg border border-b-0 border-white/60 px-3 text-xs shadow-none first:rounded-tl-lg last:rounded-tr-lg ${color}`}>
                       {label}
@@ -455,17 +455,8 @@ function ProjectPage() {
                   ))}
                 </TabsList>
               </div>
-              <TabsContent forceMount value="analysis" className="project-tab mt-6">
-                <FinanceEditor project={project} onChange={update} />
-              </TabsContent>
               <TabsContent forceMount value="asset" className="project-tab mt-6">
                 <AssetAnalysis project={project} onChange={update} onNavigate={setTab} />
-              </TabsContent>
-              <TabsContent forceMount value="rab" className="project-tab mt-6">
-                <RabEditor project={project} onChange={update} />
-              </TabsContent>
-              <TabsContent forceMount value="photos" className="project-tab mt-6">
-                <PropertyPhotoWorkspace />
               </TabsContent>
               <TabsContent forceMount value="market" className="project-tab mt-6">
                 <ProjectMarketAnalysis project={project} demo={demo} onUseTarget={(sale) => update({ ...project, finance: { ...project.finance, sale } })} />
@@ -473,11 +464,20 @@ function ProjectPage() {
               <TabsContent forceMount value="risks" className="project-tab mt-6">
                 <RiskEditor project={project} onChange={update} />
               </TabsContent>
-              <TabsContent forceMount value="timeline" className="project-tab mt-6">
-                <TimelineEditor project={project} onChange={update} />
+              <TabsContent forceMount value="rab" className="project-tab mt-6">
+                <RabEditor project={project} onChange={update} />
+              </TabsContent>
+              <TabsContent forceMount value="analysis" className="project-tab mt-6">
+                <FinanceEditor project={project} onChange={update} />
               </TabsContent>
               <TabsContent forceMount value="scenarios" className="project-tab mt-6">
                 <ScenarioEditor project={project} onChange={update} />
+              </TabsContent>
+              <TabsContent forceMount value="timeline" className="project-tab mt-6">
+                <TimelineEditor project={project} onChange={update} />
+              </TabsContent>
+              <TabsContent forceMount value="photos" className="project-tab mt-6">
+                <PropertyPhotoWorkspace />
               </TabsContent>
             </Tabs>
           </div>
