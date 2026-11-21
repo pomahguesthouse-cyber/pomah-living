@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Award, LockKeyhole, RotateCcw, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ const missions = [
   { question: "Harga jual perkiraan Rp500 juta, harga beli Rp350 juta, renovasi Rp80 juta, biaya lain Rp30 juta. Berapa perkiraan laba?", options: ["Rp150 juta", "Rp70 juta", "Rp40 juta"], correct: 2, explanation: "Rp500 juta − Rp350 juta − Rp80 juta − Rp30 juta = Rp40 juta, sebelum biaya tambahan yang belum dimasukkan." },
 ];
 const levels = ["Pemula", "Praktik Dasar", "Menengah", "Simulasi Lengkap"];
-const storageKey = (id: string) => `pomah-academy-v1:${id}`;
+
 
 function Academy() {
   const { session, ready } = useSession();
@@ -24,19 +25,43 @@ function Academy() {
   const [selected, setSelected] = useState<number | null>(null);
   const [completed, setCompleted] = useState(false);
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   useEffect(() => {
     if (!userId) { setCompleted(false); setLoadedFor(null); return; }
-    try { setCompleted(window.localStorage.getItem(storageKey(userId)) === "complete"); }
-    catch { setCompleted(false); }
-    setStep(0); setSelected(null); setLoadedFor(userId);
+    let cancelled = false;
+    setLoadedFor(null);
+    void supabase.from("academy_progress" as never).select("mission_index,xp,completed").eq("user_id", userId).maybeSingle().then(({ data, error }) => {
+      if (cancelled) return;
+      if (error) setSaveError("Progres belum dapat dimuat. Pastikan tabel Academy sudah disiapkan.");
+      else {
+        const progress = data as { mission_index: number; completed: boolean } | null;
+        setCompleted(Boolean(progress?.completed));
+        setStep(Math.min(2, Math.max(0, progress?.mission_index ?? 0)));
+        setSaveError(null);
+      }
+      setSelected(null);
+      setLoadedFor(userId);
+    });
+    return () => { cancelled = true; };
   }, [userId]);
+  const saveProgress = async (nextStep: number, isComplete: boolean) => {
+    if (!userId) return false;
+    const { error } = await supabase.from("academy_progress" as never).upsert({
+      user_id: userId, level: 1, mission_index: nextStep,
+      xp: isComplete ? 100 : nextStep * 25, completed: isComplete,
+      updated_at: new Date().toISOString(),
+    } as never);
+    if (error) { setSaveError("Gagal menyimpan progres ke database. Coba lagi."); return false; }
+    setSaveError(null);
+    return true;
+  };
   const question = missions[step];
   const correct = selected === question.correct;
   const xp = completed ? 100 : step * 25 + (correct ? 25 : 0);
-  const finish = () => {
-    if (!userId) return;
-    setCompleted(true);
-    try { window.localStorage.setItem(storageKey(userId), "complete"); } catch { /* browser storage unavailable */ }
+  const finish = async () => { if (await saveProgress(3, true)) setCompleted(true); };
+  const advance = async () => {
+    if (step === missions.length - 1) { await finish(); return; }
+    if (await saveProgress(step + 1, false)) { setStep(step + 1); setSelected(null); }
   };
   const restart = () => { setStep(0); setSelected(null); };
   return (
@@ -57,6 +82,7 @@ function Academy() {
       <section className="mt-8 max-w-3xl rounded-2xl border border-border bg-card p-6 sm:p-8">
         <div className="flex items-center justify-between gap-4"><h2 className="text-xl font-semibold">Level 1 — Pemula</h2><span className="text-sm font-semibold text-brand-deep">{xp} / 100 XP</span></div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={xp} aria-label="Progres XP"><div className="h-full rounded-full bg-brand transition-all" style={{ width: `${xp}%` }} /></div>
+        {saveError && <p role="alert" className="mt-4 text-sm text-destructive">{saveError}</p>}
         {!ready || (userId && loadedFor !== userId) ? <p className="mt-6">Memuat progres…</p> : !userId ? (
           <div className="mt-6 space-y-4"><p className="text-sm">Masuk ke akun untuk memainkan misi dan menyimpan pencapaian.</p><Button asChild><Link to="/auth">Masuk untuk mulai <ArrowRight /></Link></Button></div>
         ) : completed ? (
@@ -68,11 +94,11 @@ function Academy() {
             <div className="mt-5 space-y-3">{question.options.map((option, index) => (
               <button key={option} type="button" disabled={selected !== null} onClick={() => setSelected(index)} className={`block w-full rounded-lg border p-4 text-left text-sm transition-colors ${selected === index ? "border-brand bg-brand/10" : "border-border hover:border-brand"} disabled:cursor-default`}>{String.fromCharCode(65 + index)}. {option}</button>
             ))}</div>
-            {selected !== null && <div role="status" className="mt-5 rounded-lg bg-muted/60 p-4 text-sm"><p className="font-semibold">{correct ? "Tepat! +25 XP" : "Belum tepat. Coba lagi agar bisa lanjut."}</p><p className="mt-2 leading-6">{question.explanation}</p>{correct ? <Button className="mt-4" onClick={() => { if (step === missions.length - 1) finish(); else { setStep(step + 1); setSelected(null); } }}>{step === missions.length - 1 ? "Selesaikan Level 1" : "Misi berikutnya"} <ArrowRight /></Button> : <Button className="mt-4" variant="outline" onClick={() => setSelected(null)}>Coba lagi</Button>}</div>}
+            {selected !== null && <div role="status" className="mt-5 rounded-lg bg-muted/60 p-4 text-sm"><p className="font-semibold">{correct ? "Tepat! +25 XP" : "Belum tepat. Coba lagi agar bisa lanjut."}</p><p className="mt-2 leading-6">{question.explanation}</p>{correct ? <Button className="mt-4" onClick={() => void advance()}>{step === missions.length - 1 ? "Selesaikan Level 1" : "Misi berikutnya"} <ArrowRight /></Button> : <Button className="mt-4" variant="outline" onClick={() => setSelected(null)}>Coba lagi</Button>}</div>}
           </div>
         )}
       </section>
-      <p className="mt-5 text-xs leading-6 text-muted-foreground">Progres MVP disimpan pada browser perangkat ini untuk akun yang sedang masuk; belum tersinkron ke database atau perangkat lain. Badge merupakan pencapaian permainan, bukan sertifikasi profesi.</p>
+      <p className="mt-5 text-xs leading-6 text-muted-foreground">Progres tersimpan di database akun setelah setiap misi selesai dan dapat dilanjutkan di perangkat lain. Badge merupakan pencapaian permainan, bukan sertifikasi profesi.</p>
     </main>
   );
 }
