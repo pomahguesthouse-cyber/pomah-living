@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Check, ClipboardCheck, House, TrendingUp } from "lucide-react";
@@ -65,17 +68,63 @@ const heroSlides = [
   },
 ];
 
+type PublishedSlide = {
+  id: string;
+  sort_order: number;
+  eyebrow: string;
+  title: string;
+  description: string;
+  image_url: string;
+  image_alt: string;
+  button_label: string;
+  button_href: string;
+};
+type SliderDatabase = {
+  public: {
+    Tables: {
+      hero_slides: {
+        Row: PublishedSlide & { published: boolean };
+        Insert: Partial<PublishedSlide>;
+        Update: Partial<PublishedSlide>;
+        Relationships: [];
+      };
+    };
+    Views: { [_ in never]: never };
+    Functions: { [_ in never]: never };
+  };
+};
+const sliderClient = supabase as unknown as SupabaseClient<SliderDatabase>;
+
 function Index() {
+  const publicSlides = useQuery({
+    queryKey: ["public-hero-slides"],
+    queryFn: async () => {
+      const { data, error } = await sliderClient
+        .from("hero_slides")
+        .select("id,sort_order,eyebrow,title,description,image_url,image_alt,button_label,button_href")
+        .eq("published", true)
+        .order("sort_order");
+      // Prior to running the migration, retain the static demo slides.
+      if (error) return [];
+      return (data ?? []).filter((item) => item.image_url.startsWith("https://")).map((item) => ({
+        image: item.image_url, eyebrow: item.eyebrow, title: item.title,
+        description: item.description, action: item.button_label,
+        href: item.button_href, alt: item.image_alt,
+      }));
+    },
+    staleTime: 60_000,
+  });
+  const slides = publicSlides.data?.length ? publicSlides.data : heroSlides;
   const [activeSlide, setActiveSlide] = useState(0);
   const [paused, setPaused] = useState(false);
   useEffect(() => {
     if (paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(() => {
-      setActiveSlide((current) => (current + 1) % heroSlides.length);
+      setActiveSlide((current) => (current + 1) % slides.length);
     }, 6500);
     return () => window.clearInterval(timer);
-  }, [paused, activeSlide]);
-  const slide = heroSlides[activeSlide];
+  }, [paused, activeSlide, slides.length]);
+  const slide = slides[activeSlide % slides.length];
   return (
     <main>
       <section
@@ -89,7 +138,7 @@ function Index() {
           if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
         }}
       >
-        {heroSlides.map((item, index) => (
+        {slides.map((item, index) => (
           <img
             key={item.alt}
             className={`hero-photo transition-opacity duration-700 ${activeSlide === index ? "opacity-100" : "opacity-0"}`}
@@ -130,12 +179,12 @@ function Index() {
         <div className="absolute bottom-5 left-0 right-0 z-10">
           <div className="page-container flex items-center justify-between gap-4">
             <div className="flex items-center gap-2" aria-label="Pilih slide">
-              {heroSlides.map((item, index) => (
+              {slides.map((item, index) => (
                 <button
                   key={item.eyebrow}
                   type="button"
                   onClick={() => setActiveSlide(index)}
-                  aria-label={`Tampilkan slide ${index + 1} dari ${heroSlides.length}`}
+                  aria-label={`Tampilkan slide ${index + 1} dari ${slides.length}`}
                   aria-current={index === activeSlide ? "true" : undefined}
                   className={`h-2 rounded-full transition-all ${index === activeSlide ? "w-9 bg-white" : "w-2 bg-white/50 hover:bg-white/80"}`}
                 />
