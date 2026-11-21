@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchPublishedSlides } from "@/services/admin-service";
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Check, ClipboardCheck, House, TrendingUp } from "lucide-react";
@@ -43,7 +42,8 @@ const heroSlides = [
     image: houseImage.url,
     eyebrow: "POMAH Living · Temukan peluang",
     title: "Temukan aset.\nUkur potensinya.",
-    description: "Jelajahi aset contoh dan mulai evaluasi harga, kondisi, serta risikonya sebelum mengambil keputusan.",
+    description:
+      "Jelajahi aset contoh dan mulai evaluasi harga, kondisi, serta risikonya sebelum mengambil keputusan.",
     action: "Jelajahi aset",
     href: "/pilih-aset" as const,
     alt: "Ilustrasi rumah untuk simulasi pencarian aset",
@@ -52,7 +52,8 @@ const heroSlides = [
     image: secondHouse.url,
     eyebrow: "POMAH Living · Analisis investasi",
     title: "Hitung modal.\nKendalikan risiko.",
-    description: "Perkirakan biaya akuisisi, renovasi, holding, hingga potensi laba rumah flipping dalam satu alur.",
+    description:
+      "Perkirakan biaya akuisisi, renovasi, holding, hingga potensi laba rumah flipping dalam satu alur.",
     action: "Coba kalkulator flipping",
     href: "/proyek/$id" as const,
     alt: "Ilustrasi rumah untuk analisis investasi properti",
@@ -61,57 +62,28 @@ const heroSlides = [
     image: thirdHouse.url,
     eyebrow: "POMAH Living · Rencanakan renovasi",
     title: "Dari RAB hingga\nsiap dipasarkan.",
-    description: "Susun rencana renovasi, uji skenario harga jual, pantau risiko, dan kelola tahapan proyek.",
+    description:
+      "Susun rencana renovasi, uji skenario harga jual, pantau risiko, dan kelola tahapan proyek.",
     action: "Lihat proyek demo",
     href: "/proyek/$id" as const,
     alt: "Ilustrasi rumah untuk perencanaan proyek flipping",
   },
 ];
 
-type PublishedSlide = {
-  id: string;
-  sort_order: number;
-  eyebrow: string;
-  title: string;
-  description: string;
-  image_url: string;
-  image_alt: string;
-  button_label: string;
-  button_href: string;
-};
-type SliderDatabase = {
-  public: {
-    Tables: {
-      hero_slides: {
-        Row: PublishedSlide & { published: boolean };
-        Insert: Partial<PublishedSlide>;
-        Update: Partial<PublishedSlide>;
-        Relationships: [];
-      };
-    };
-    Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
-  };
-};
-const sliderClient = supabase as unknown as SupabaseClient<SliderDatabase>;
-
 function Index() {
   const publicSlides = useQuery({
     queryKey: ["public-hero-slides"],
-    queryFn: async () => {
-      const { data, error } = await sliderClient
-        .from("hero_slides")
-        .select("id,sort_order,eyebrow,title,description,image_url,image_alt,button_label,button_href")
-        .eq("published", true)
-        .order("sort_order");
-      // Prior to running the migration, retain the static demo slides.
-      if (error) return [];
-      return (data ?? []).filter((item) => item.image_url.startsWith("https://")).map((item) => ({
-        image: item.image_url, eyebrow: item.eyebrow, title: item.title,
-        description: item.description, action: item.button_label,
-        href: item.button_href, alt: item.image_alt,
-      }));
-    },
+    queryFn: async () =>
+      (await fetchPublishedSlides()).map((item) => ({
+        image: item.image_url,
+        eyebrow: item.eyebrow,
+        title: item.title,
+        description: item.description,
+        action: item.button_label,
+        href: item.button_href,
+        alt: item.image_alt,
+      })),
+    retry: false,
     staleTime: 60_000,
   });
   const slides = publicSlides.data?.length ? publicSlides.data : heroSlides;
@@ -124,7 +96,9 @@ function Index() {
     }, 6500);
     return () => window.clearInterval(timer);
   }, [paused, activeSlide, slides.length]);
-  const slide = slides[activeSlide % slides.length];
+  const currentSlide = activeSlide % slides.length;
+  const slide = slides[currentSlide] ?? heroSlides[0];
+  if (!slide) return null;
   return (
     <main>
       <section
@@ -141,10 +115,10 @@ function Index() {
         {slides.map((item, index) => (
           <img
             key={item.alt}
-            className={`hero-photo transition-opacity duration-700 ${activeSlide === index ? "opacity-100" : "opacity-0"}`}
+            className={`hero-photo transition-opacity duration-700 motion-reduce:transition-none ${currentSlide === index ? "opacity-100" : "opacity-0"}`}
             src={item.image}
-            alt={activeSlide === index ? item.alt : ""}
-            aria-hidden={activeSlide !== index}
+            alt={currentSlide === index ? item.alt : ""}
+            aria-hidden={currentSlide !== index}
             fetchPriority={index === 0 ? "high" : undefined}
             loading={index === 0 ? "eager" : "lazy"}
           />
@@ -162,37 +136,71 @@ function Index() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild variant="hero" size="lg" className="gap-3">
               {slide.href === "/pilih-aset" ? (
-                <Link to="/pilih-aset">{slide.action}<ArrowRight /></Link>
+                <Link to="/pilih-aset">
+                  {slide.action}
+                  <ArrowRight />
+                </Link>
               ) : (
-                <Link to="/proyek/$id" params={{ id: "demo" }}>{slide.action}<ArrowRight /></Link>
+                <Link to="/proyek/$id" params={{ id: "demo" }}>
+                  {slide.action}
+                  <ArrowRight />
+                </Link>
               )}
             </Button>
             <Button asChild variant="hero" size="lg" className="gap-3">
-              <Link to="/pilih-aset">Pilih aset <ArrowRight /></Link>
+              <Link to="/pilih-aset">
+                Pilih aset <ArrowRight />
+              </Link>
             </Button>
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-hero-muted">
-            <span className="flex items-center gap-2"><Check className="size-3.5 text-brand" /> Tanpa login untuk demo</span>
-            <span className="flex items-center gap-2"><Check className="size-3.5 text-brand" /> Data simulasi, bukan listing BTN</span>
+            <span className="flex items-center gap-2">
+              <Check className="size-3.5 text-brand" /> Tanpa login untuk demo
+            </span>
+            <span className="flex items-center gap-2">
+              <Check className="size-3.5 text-brand" /> Data simulasi, bukan listing BTN
+            </span>
           </div>
         </div>
         <div className="absolute bottom-5 left-0 right-0 z-10">
           <div className="page-container flex items-center justify-between gap-4">
             <div className="flex items-center gap-2" aria-label="Pilih slide">
               {slides.map((item, index) => (
-                <button
+                <Button
                   key={item.eyebrow}
                   type="button"
                   onClick={() => setActiveSlide(index)}
                   aria-label={`Tampilkan slide ${index + 1} dari ${slides.length}`}
                   aria-current={index === activeSlide ? "true" : undefined}
                   className={`h-2 rounded-full transition-all ${index === activeSlide ? "w-9 bg-white" : "w-2 bg-white/50 hover:bg-white/80"}`}
-                />
+                >
+                  {index + 1}
+                </Button>
               ))}
             </div>
             <div className="flex gap-2">
-              <button type="button" aria-label="Slide sebelumnya" onClick={() => setActiveSlide((current) => (current - 1 + heroSlides.length) % heroSlides.length)} className="rounded-full border border-white/50 p-2 text-white hover:bg-white/20"><ArrowLeft className="size-4" /></button>
-              <button type="button" aria-label="Slide berikutnya" onClick={() => setActiveSlide((current) => (current + 1) % heroSlides.length)} className="rounded-full border border-white/50 p-2 text-white hover:bg-white/20"><ArrowRight className="size-4" /></button>
+              <Button
+                type="button"
+                aria-label="Slide sebelumnya"
+                onClick={() =>
+                  setActiveSlide((current) => (current - 1 + slides.length) % slides.length)
+                }
+                variant="ghost"
+                size="icon"
+                className="rounded-full border border-hero-line text-hero-foreground hover:bg-hero-line hover:text-hero-foreground"
+              >
+                <ArrowLeft className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                aria-label="Slide berikutnya"
+                onClick={() => setActiveSlide((current) => (current + 1) % slides.length)}
+                variant="ghost"
+                size="icon"
+                className="rounded-full border border-hero-line text-hero-foreground hover:bg-hero-line hover:text-hero-foreground"
+              >
+                <ArrowRight className="size-4" />
+              </Button>
             </div>
           </div>
         </div>

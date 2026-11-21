@@ -446,17 +446,23 @@ function ProjectPage() {
             penawaran.
           </p>
         )}
-        <section aria-labelledby="flipping-progress-title" className="no-print mt-6 rounded-lg border border-border bg-white p-4 sm:p-5">
+        <section
+          aria-labelledby="flipping-progress-title"
+          className="no-print mt-6 rounded-lg border border-border bg-white p-4 sm:p-5"
+        >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 id="flipping-progress-title" className="text-sm font-semibold">
                 Progres peninjauan tahapan
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                Tandai tahap setelah Anda meninjau isinya. Bukan verifikasi resmi atau progres pekerjaan fisik.
+                Tandai tahap setelah Anda meninjau isinya. Bukan verifikasi resmi atau progres
+                pekerjaan fisik.
               </p>
             </div>
-            <strong className="text-sm tabular-nums">{reviewed}/{stages.length} tahap · {progressPercent}%</strong>
+            <strong className="text-sm tabular-nums">
+              {reviewed}/{stages.length} tahap · {progressPercent}%
+            </strong>
           </div>
           <div
             role="progressbar"
@@ -466,13 +472,19 @@ function ProjectPage() {
             aria-valuenow={progressPercent}
             className="mt-4 h-2.5 overflow-hidden rounded-full bg-muted"
           >
-            <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progressPercent}%` }} />
+            <div
+              className="h-full rounded-full bg-brand transition-all"
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {stages.map((stage, index) => {
               const checked = Boolean(project.stageReviews?.[stage.id]);
               return (
-                <div key={stage.id} className="flex items-center gap-2 rounded-md border border-border p-2">
+                <div
+                  key={stage.id}
+                  className="flex items-center gap-2 rounded-md border border-border p-2"
+                >
                   <button
                     type="button"
                     onClick={() => setTab(stage.id)}
@@ -511,16 +523,52 @@ function ProjectPage() {
               <div className="no-print max-w-full overflow-x-auto border-b border-border pb-2">
                 <TabsList className="h-11 w-max justify-start gap-0 rounded-none bg-transparent p-0">
                   {[
-                    ["asset", "Analisis Aset", "bg-orange-100 text-orange-900 data-[state=active]:!bg-orange-600 data-[state=active]:!text-white dark:bg-orange-950 dark:text-orange-200"],
-                    ["market", "Harga pasar", "bg-cyan-100 text-cyan-900 data-[state=active]:!bg-cyan-700 data-[state=active]:!text-white dark:bg-cyan-950 dark:text-cyan-200"],
-                    ["risks", "Dokumen & risiko", "bg-red-100 text-red-900 data-[state=active]:!bg-red-600 data-[state=active]:!text-white dark:bg-red-950 dark:text-red-200"],
-                    ["rab", "RAB renovasi", "bg-green-100 text-green-900 data-[state=active]:!bg-green-700 data-[state=active]:!text-white dark:bg-green-950 dark:text-green-200"],
-                    ["analysis", "Analisis investasi", "bg-blue-100 text-blue-900 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white dark:bg-blue-950 dark:text-blue-200"],
-                    ["scenarios", "Skenario", "bg-amber-100 text-amber-900 data-[state=active]:!bg-amber-600 data-[state=active]:!text-white dark:bg-amber-950 dark:text-amber-200"],
-                    ["timeline", "Timeline", "bg-indigo-100 text-indigo-900 data-[state=active]:!bg-indigo-600 data-[state=active]:!text-white dark:bg-indigo-950 dark:text-indigo-200"],
-                    ["photos", "Foto & before-after", "bg-purple-100 text-purple-900 data-[state=active]:!bg-purple-600 data-[state=active]:!text-white dark:bg-purple-950 dark:text-purple-200"],
-                  ].map(([value, label, color]) => (
-                    <TabsTrigger key={value} value={value} className={`rounded-b-none rounded-t-lg border border-b-0 border-white/60 px-3 text-xs shadow-none first:rounded-tl-lg last:rounded-tr-lg ${color}`}>
+                    [
+                      "asset",
+                      "Analisis Aset",
+                      "bg-orange-100 text-orange-900 data-[state=active]:!bg-orange-600 data-[state=active]:!text-white dark:bg-orange-950 dark:text-orange-200",
+                    ],
+                    [
+                      "market",
+                      "Harga pasar",
+                      "bg-cyan-100 text-cyan-900 data-[state=active]:!bg-cyan-700 data-[state=active]:!text-white dark:bg-cyan-950 dark:text-cyan-200",
+                    ],
+                    [
+                      "risks",
+                      "Dokumen & risiko",
+                      "bg-red-100 text-red-900 data-[state=active]:!bg-red-600 data-[state=active]:!text-white dark:bg-red-950 dark:text-red-200",
+                    ],
+                    [
+                      "rab",
+                      "RAB renovasi",
+                      "bg-green-100 text-green-900 data-[state=active]:!bg-green-700 data-[state=active]:!text-white dark:bg-green-950 dark:text-green-200",
+                    ],
+                    [
+                      "analysis",
+                      "Analisis investasi",
+                      "bg-blue-100 text-blue-900 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white dark:bg-blue-950 dark:text-blue-200",
+                    ],
+                    [
+                      "scenarios",
+                      "Skenario",
+                      "bg-amber-100 text-amber-900 data-[state=active]:!bg-amber-600 data-[state=active]:!text-white dark:bg-amber-950 dark:text-amber-200",
+                    ],
+                    [
+                      "timeline",
+                      "Timeline",
+                      "bg-indigo-100 text-indigo-900 data-[state=active]:!bg-indigo-600 data-[state=active]:!text-white dark:bg-indigo-950 dark:text-indigo-200",
+                    ],
+                    [
+                      "photos",
+                      "Foto & before-after",
+                      "bg-purple-100 text-purple-900 data-[state=active]:!bg-purple-600 data-[state=active]:!text-white dark:bg-purple-950 dark:text-purple-200",
+                    ],
+                  ].map(([value = "", label, color]) => (
+                    <TabsTrigger
+                      key={value}
+                      value={value}
+                      className={`rounded-b-none rounded-t-lg border border-b-0 border-white/60 px-3 text-xs shadow-none first:rounded-tl-lg last:rounded-tr-lg ${color}`}
+                    >
                       {label}
                     </TabsTrigger>
                   ))}
@@ -530,7 +578,13 @@ function ProjectPage() {
                 <AssetAnalysis project={project} onChange={update} onNavigate={setTab} />
               </TabsContent>
               <TabsContent forceMount value="market" className="project-tab mt-6">
-                <ProjectMarketAnalysis project={project} demo={demo} onUseTarget={(sale) => update({ ...project, finance: { ...project.finance, sale } })} />
+                <ProjectMarketAnalysis
+                  project={project}
+                  demo={demo}
+                  onUseTarget={(sale) =>
+                    update({ ...project, finance: { ...project.finance, sale } })
+                  }
+                />
               </TabsContent>
               <TabsContent forceMount value="risks" className="project-tab mt-6">
                 <RiskEditor project={project} onChange={update} />

@@ -58,6 +58,7 @@ describe("Account experience preference", () => {
       avatar_url: null,
       address: null,
       residence_province: null,
+      residence_regency: null,
       contact_phone: null,
       preferred_regions: ["32"],
     };

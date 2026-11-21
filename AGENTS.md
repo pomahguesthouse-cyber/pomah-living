@@ -42,3 +42,5 @@ use the editor.
 - Store detailed flipping payloads in an owner-protected companion table keyed to existing projects; do not overwrite legacy project totals or status.
 - Scope flipping state by project and account; persist only explicitly fictional demo projects to localStorage after hydration, so private project data never enters browser persistence.
 - Use one public project-detail route with an inline sign-in state for private IDs and owner-scoped service reads; show fictional fixtures independently of asset preferences.
+- Route admin and public slider data through the admin service; enforce privileges through database RLS and authenticated directory RPC, with atomic database-trigger audit so browser calls cannot bypass authorization or omit records.
+- Provision admin roles only through owner-authorized privileged operations; never select an account automatically or expose role writes to authenticated users.

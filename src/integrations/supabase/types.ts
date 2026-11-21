@@ -14,6 +14,126 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          actor_id: string
+          after_data: Json | null
+          before_data: Json | null
+          created_at: string
+          id: number
+          target: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          after_data?: Json | null
+          before_data?: Json | null
+          created_at?: string
+          id?: never
+          target: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          after_data?: Json | null
+          before_data?: Json | null
+          created_at?: string
+          id?: never
+          target?: string
+        }
+        Relationships: []
+      }
+      admin_roles: {
+        Row: {
+          created_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hero_slides: {
+        Row: {
+          button_href: string
+          button_label: string
+          description: string
+          eyebrow: string
+          id: string
+          image_alt: string
+          image_url: string
+          published: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          button_href?: string
+          button_label?: string
+          description?: string
+          eyebrow?: string
+          id?: string
+          image_alt?: string
+          image_url?: string
+          published?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          button_href?: string
+          button_label?: string
+          description?: string
+          eyebrow?: string
+          id?: string
+          image_alt?: string
+          image_url?: string
+          published?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      partner_approvals: {
+        Row: {
+          created_at: string
+          note: string
+          requested_role: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string
+          requested_role: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          note?: string
+          requested_role?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pomah_project_details: {
         Row: {
           payload: Json
@@ -144,7 +264,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_pomah_admin: { Args: never; Returns: boolean }
+      pomah_admin_directory: {
+        Args: {
+          page_number?: number
+          role_filter?: string
+          search_text?: string
+          status_filter?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

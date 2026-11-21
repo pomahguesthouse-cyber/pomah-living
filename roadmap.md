@@ -8,3 +8,8 @@
 - [x] Tambahkan halaman proyek flipping, demo, kalkulator, RAB, risiko, timeline, dan skenario.
 - [x] Hubungkan penyimpanan demo lokal dan detail proyek pemilik tanpa mengubah data lama.
 - [x] Uji perhitungan, alur halaman, cetak, dan tampilan seluler; periksa hasil build.
+- [x] Terapkan dan perketat admin, slide, approval, serta audit otomatis.
+- [x] Selesaikan UI admin dan slider publik tanpa mengubah tab proyek.
+- [x] Uji akses admin, slide publik, audit, pencarian akun, lint, dan 74 pengujian; build OK.
+- [x] Verifikasi super_admin yang sudah tersedia; tidak menetapkan atau menaikkan akun sendiri.
+- [ ] Unggah gambar: diblokir kebijakan public buckets workspace; gunakan URL HTTPS sementara.
