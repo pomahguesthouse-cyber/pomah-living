@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
 import { CircleAlert, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { RabSpreadsheet } from "@/components/rab-spreadsheet";
+import { FormattedNumberInput } from "@/components/formatted-number-input";
 import {
   calculateFlipping,
   financeFields,
@@ -24,37 +24,20 @@ export function NumberField({
   unit?: string;
   onChange: (value: number) => void;
 }) {
-  const [draft, setDraft] = useState(String(value).replace(".", ","));
-  useEffect(() => setDraft(String(value).replace(".", ",")), [value]);
-  const parsed = Number(draft.replace(",", "."));
   const maximum =
     unit === "%" ? 100 : unit === "bulan" ? 120 : unit === "× RAB" ? 10 : 1_000_000_000_000;
-  const invalid = !/^\d+(,\d+)?$/.test(draft) || !Number.isFinite(parsed) || parsed > maximum;
   return (
     <label className="block min-w-0 space-y-2 text-xs font-medium">
       <span className="block leading-5">
         {label} <span className="text-muted-foreground">({unit})</span>
       </span>
-      <Input
-        value={draft}
-        inputMode="decimal"
+      <FormattedNumberInput
+        value={value}
+        maximum={maximum}
         required
-        aria-invalid={invalid}
-        pattern="[0-9]+(,[0-9]+)?"
-        onChange={(event) => {
-          const next = event.target.value;
-          setDraft(next);
-          const n = Number(next.replace(",", "."));
-          const valid = /^\d+(,\d+)?$/.test(next) && Number.isFinite(n) && n >= 0 && n <= maximum;
-          event.target.setCustomValidity(valid ? "" : `Isi angka antara 0 dan ${maximum}.`);
-          if (valid) onChange(n);
-        }}
+        aria-label={label}
+        onValueChange={onChange}
       />
-      {invalid && (
-        <span className="block text-destructive" role="alert">
-          Isi angka antara 0 dan {maximum.toLocaleString("id-ID")}.
-        </span>
-      )}
       <span className="print-value">
         {unit === "Rp" ? formatRupiah(value) : value.toLocaleString("id-ID")}
       </span>
