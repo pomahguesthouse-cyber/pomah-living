@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, CircleAlert, CheckCircle2 } from "lucide-react";
+import { CircleAlert, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { RabSpreadsheet } from "@/components/rab-spreadsheet";
 import {
   calculateFlipping,
   financeFields,
   rabTotal,
-  workGroups,
   type FlippingProject,
 } from "@/lib/flipping";
 import { formatRupiah } from "@/lib/simulation";
@@ -102,152 +102,8 @@ export function FinanceEditor({ project, onChange }: EditorProps) {
     </div>
   );
 }
-export function RabEditor({ project, onChange }: EditorProps) {
-  const update = (id: string, change: Partial<FlippingProject["rab"][number]>) =>
-    onChange({
-      ...project,
-      rab: project.rab.map((item) => (item.id === id ? { ...item, ...change } : item)),
-    });
-  return (
-    <section>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">RAB renovasi</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Volume × harga satuan. Contingency sudah termasuk total.
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={project.rab.length >= 200}
-          onClick={() =>
-            onChange({
-              ...project,
-              rab: [
-                ...project.rab,
-                {
-                  id: crypto.randomUUID(),
-                  name: "Pekerjaan baru",
-                  group: "Persiapan",
-                  volume: 1,
-                  unit: "ls",
-                  price: 0,
-                },
-              ],
-            })
-          }
-        >
-          <Plus />
-          Tambah item
-        </Button>
-      </div>
-      <div className="max-w-full overflow-x-auto">
-        <table className="rab-table w-full min-w-[820px] text-left text-xs">
-          <thead>
-            <tr className="border-b border-border bg-muted">
-              <th>Pekerjaan</th>
-              <th>Kelompok</th>
-              <th>Volume</th>
-              <th>Satuan</th>
-              <th>Harga satuan</th>
-              <th>Subtotal</th>
-              <th className="no-print">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {project.rab.map((item, index) => (
-              <tr key={item.id} className="border-b border-border">
-                <td>
-                  <Input
-                    aria-label={`Pekerjaan ${index + 1}`}
-                    value={item.name}
-                    maxLength={500}
-                    onChange={(e) => update(item.id, { name: e.target.value })}
-                  />
-                  <span className="print-value">{item.name}</span>
-                </td>
-                <td>
-                  <select
-                    aria-label={`Kelompok ${index + 1}`}
-                    className="h-9 w-full rounded-md border border-input bg-background px-2"
-                    value={item.group}
-                    onChange={(e) => {
-                      const group = workGroups.find((g) => g === e.target.value);
-                      if (group) update(item.id, { group });
-                    }}
-                  >
-                    {workGroups.map((g) => (
-                      <option key={g}>{g}</option>
-                    ))}
-                  </select>
-                  <span className="print-value">{item.group}</span>
-                </td>
-                <td>
-                  <NumberField
-                    label={`Volume ${index + 1}`}
-                    unit="unit"
-                    value={item.volume}
-                    onChange={(volume) => update(item.id, { volume })}
-                  />
-                </td>
-                <td>
-                  <Input
-                    aria-label={`Satuan ${index + 1}`}
-                    value={item.unit}
-                    maxLength={30}
-                    onChange={(e) => update(item.id, { unit: e.target.value })}
-                  />
-                  <span className="print-value">{item.unit}</span>
-                </td>
-                <td>
-                  <NumberField
-                    label={`Harga satuan ${index + 1}`}
-                    value={item.price}
-                    onChange={(price) => update(item.id, { price })}
-                  />
-                </td>
-                <td className="whitespace-nowrap font-semibold tabular-nums">
-                  {formatRupiah(item.volume * item.price)}
-                </td>
-                <td className="no-print">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    title="Hapus item"
-                    aria-label={`Hapus item ${index + 1}`}
-                    onClick={() =>
-                      onChange({ ...project, rab: project.rab.filter((row) => row.id !== item.id) })
-                    }
-                  >
-                    <Trash2 className="text-destructive" />
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {project.rab.length === 0 && (
-        <p className="py-8 text-sm text-muted-foreground">Belum ada pekerjaan renovasi.</p>
-      )}
-      <div className="mt-4 flex flex-wrap justify-between gap-3 border-t border-border pt-5 text-lg">
-        <strong>Total RAB</strong>
-        <strong data-testid="rab-total">{formatRupiah(rabTotal(project.rab))}</strong>
-      </div>
-      <dl className="mt-5 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3">
-        {workGroups.map((group) => (
-          <div key={group}>
-            <dt className="text-muted-foreground">{group}</dt>
-            <dd className="mt-1 font-semibold">
-              {formatRupiah(rabTotal(project.rab.filter((r) => r.group === group)))}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </section>
-  );
+export function RabEditor(props: EditorProps) {
+  return <RabSpreadsheet {...props} />;
 }
 export function RiskEditor({ project, onChange }: EditorProps) {
   return (
