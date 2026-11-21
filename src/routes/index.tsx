@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check, ClipboardCheck, House, MapPin, TrendingUp } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ClipboardCheck, House, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import houseImage from "@/assets/rumah-banyumanik.webp.asset.json";
+import secondHouse from "@/assets/rumah-tembalang.webp.asset.json";
+import thirdHouse from "@/assets/rumah-ngaliyan.webp.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,56 +35,117 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+const heroSlides = [
+  {
+    image: houseImage.url,
+    eyebrow: "POMAH Living · Temukan peluang",
+    title: "Temukan aset.\nUkur potensinya.",
+    description: "Jelajahi aset contoh dan mulai evaluasi harga, kondisi, serta risikonya sebelum mengambil keputusan.",
+    action: "Jelajahi aset",
+    href: "/pilih-aset" as const,
+    alt: "Ilustrasi rumah untuk simulasi pencarian aset",
+  },
+  {
+    image: secondHouse.url,
+    eyebrow: "POMAH Living · Analisis investasi",
+    title: "Hitung modal.\nKendalikan risiko.",
+    description: "Perkirakan biaya akuisisi, renovasi, holding, hingga potensi laba rumah flipping dalam satu alur.",
+    action: "Coba kalkulator flipping",
+    href: "/proyek/$id" as const,
+    alt: "Ilustrasi rumah untuk analisis investasi properti",
+  },
+  {
+    image: thirdHouse.url,
+    eyebrow: "POMAH Living · Rencanakan renovasi",
+    title: "Dari RAB hingga\nsiap dipasarkan.",
+    description: "Susun rencana renovasi, uji skenario harga jual, pantau risiko, dan kelola tahapan proyek.",
+    action: "Lihat proyek demo",
+    href: "/proyek/$id" as const,
+    alt: "Ilustrasi rumah untuk perencanaan proyek flipping",
+  },
+];
+
 function Index() {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    if (paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % heroSlides.length);
+    }, 6500);
+    return () => window.clearInterval(timer);
+  }, [paused, activeSlide]);
+  const slide = heroSlides[activeSlide];
   return (
     <main>
-      <section className="hero-scene">
-        <img
-          className="hero-photo"
-          src={houseImage.url}
-          alt="Rumah contoh Cibinong dengan teras dan taman hijau"
-          fetchPriority="high"
-        />
+      <section
+        className="hero-scene"
+        aria-label="Sorotan POMAH Living"
+        aria-roledescription="carousel"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onFocusCapture={() => setPaused(true)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
+        }}
+      >
+        {heroSlides.map((item, index) => (
+          <img
+            key={item.alt}
+            className={`hero-photo transition-opacity duration-700 ${activeSlide === index ? "opacity-100" : "opacity-0"}`}
+            src={item.image}
+            alt={activeSlide === index ? item.alt : ""}
+            aria-hidden={activeSlide !== index}
+            fetchPriority={index === 0 ? "high" : undefined}
+            loading={index === 0 ? "eager" : "lazy"}
+          />
+        ))}
         <div className="hero-shade" />
-        <div className="page-container hero-content reveal">
+        <div className="page-container hero-content reveal w-full">
           <div className="mb-6 flex items-center gap-2.5 text-xs font-medium text-hero-muted">
             <span className="h-px w-7 bg-brand" />
-            Pomah Living · Simulasi rumah lelang
+            {slide.eyebrow}
           </div>
-          <h1 className="hero-title">
-            Hitung batas tawar
-            <br className="hidden sm:block" /> sebelum ikut lelang.
-          </h1>
+          <h1 className="hero-title whitespace-pre-line">{slide.title}</h1>
           <p className="mt-6 max-w-md text-[15px] leading-7 text-hero-muted sm:text-base">
-            Perkirakan biaya renovasi dan laba jual kembali rumah lelang dalam satu simulasi.
+            {slide.description}
           </p>
-          <Button asChild variant="hero" size="lg" className="mt-8 gap-5">
-            <Link to="/pilih-aset">
-              Coba simulasi lelang
-              <ArrowRight />
-            </Link>
-          </Button>
-          <Button asChild variant="hero" size="lg" className="ml-0 mt-3 sm:ml-3 sm:mt-8">
-            <Link to="/proyek/$id" params={{ id: "demo" }}>
-              Jelajahi proyek flipping <ArrowRight />
-            </Link>
-          </Button>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button asChild variant="hero" size="lg" className="gap-3">
+              {slide.href === "/pilih-aset" ? (
+                <Link to="/pilih-aset">{slide.action}<ArrowRight /></Link>
+              ) : (
+                <Link to="/proyek/$id" params={{ id: "demo" }}>{slide.action}<ArrowRight /></Link>
+              )}
+            </Button>
+            <Button asChild variant="hero" size="lg" className="gap-3">
+              <Link to="/pilih-aset">Pilih aset <ArrowRight /></Link>
+            </Button>
+          </div>
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-hero-muted">
-            <span className="flex items-center gap-2">
-              <Check className="size-3.5 text-brand" />
-              Tanpa login
-            </span>
-            <span className="flex items-center gap-2">
-              <Check className="size-3.5 text-brand" />
-              Data simulasi
-            </span>
+            <span className="flex items-center gap-2"><Check className="size-3.5 text-brand" /> Tanpa login untuk demo</span>
+            <span className="flex items-center gap-2"><Check className="size-3.5 text-brand" /> Data simulasi, bukan listing BTN</span>
           </div>
         </div>
-        <div className="absolute bottom-6 right-8 hidden items-center gap-2 text-[11px] text-hero-foreground md:flex">
-          <MapPin className="size-3.5" />
-          Cibinong, Kabupaten Bogor
-          <span className="mx-2 h-3 border-l border-hero-line" />
-          Ilustrasi aset
+        <div className="absolute bottom-5 left-0 right-0 z-10">
+          <div className="page-container flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2" aria-label="Pilih slide">
+              {heroSlides.map((item, index) => (
+                <button
+                  key={item.eyebrow}
+                  type="button"
+                  onClick={() => setActiveSlide(index)}
+                  aria-label={`Tampilkan slide ${index + 1} dari ${heroSlides.length}`}
+                  aria-current={index === activeSlide ? "true" : undefined}
+                  className={`h-2 rounded-full transition-all ${index === activeSlide ? "w-9 bg-white" : "w-2 bg-white/50 hover:bg-white/80"}`}
+                />
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button type="button" aria-label="Slide sebelumnya" onClick={() => setActiveSlide((current) => (current - 1 + heroSlides.length) % heroSlides.length)} className="rounded-full border border-white/50 p-2 text-white hover:bg-white/20"><ArrowLeft className="size-4" /></button>
+              <button type="button" aria-label="Slide berikutnya" onClick={() => setActiveSlide((current) => (current + 1) % heroSlides.length)} className="rounded-full border border-white/50 p-2 text-white hover:bg-white/20"><ArrowRight className="size-4" /></button>
+            </div>
+          </div>
         </div>
       </section>
       <section className="page-container py-14 sm:py-16">
