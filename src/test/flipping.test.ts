@@ -10,6 +10,20 @@ import {
 
 describe("Flipping investment rules", () => {
   const demo = makeFlippingProject("demo");
+  it("restores assessments for older project payloads and preserves edited notes", () => {
+    const previous = { ...demo } as Record<string, unknown>;
+    delete previous.assetAssessments;
+    const migrated = readFlippingProject(previous);
+    expect(migrated.assetAssessments).toHaveLength(9);
+    expect(migrated.assetAssessments[0]?.condition).toBe("Belum diperiksa");
+    const edited = {
+      ...migrated,
+      assetAssessments: migrated.assetAssessments.map((row, index) =>
+        index === 0 ? { ...row, finding: "Noda air", recommendation: "Periksa talang" } : row,
+      ),
+    };
+    expect(readFlippingProject(JSON.parse(JSON.stringify(edited))).assetAssessments[0]?.finding).toBe("Noda air");
+  });
   it("links renovation to volume times unit price including contingency exactly once", () => {
     expect(rabTotal(demo.rab)).toBe(70_000_000);
     expect(calculateFlipping(demo.finance, demo.rab).renovation).toBe(70_000_000);
