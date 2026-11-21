@@ -77,6 +77,8 @@ export const flippingSchema = z.object({
   }),
   finance: financeSchema,
   assetAssessments: assetAssessmentSchema.default(makeAssetAssessments),
+  // Manual review markers: not evidence of legal, technical, or financial verification.
+  stageReviews: z.record(z.string(), z.boolean()).optional(),
   rab: z
     .array(
       z.object({
