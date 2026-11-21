@@ -11,6 +11,10 @@ import {
   RefreshCw,
   History,
   Search,
+  Building2,
+  FolderKanban,
+  Database,
+  Activity,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
@@ -25,6 +29,7 @@ import {
   fetchAdminSlides,
   fetchAdminDirectory,
   fetchAdminAudit,
+  fetchAdminMetrics,
   saveAdminSlide,
   deleteAdminSlide,
   reviewPartner,
@@ -124,6 +129,7 @@ function AdminWorkspace({ userId, role }: { userId: string; role: string }) {
     queryKey: ["admin", userId, "directory", search, status, partnerRole, page],
     queryFn: () => fetchAdminDirectory(search, status, partnerRole, page),
   });
+  const metrics = useQuery({ queryKey: ["admin", userId, "metrics"], queryFn: fetchAdminMetrics, enabled: tab === "overview" });
   const audit = useQuery({
     queryKey: ["admin", userId, "audit", auditPage],
     queryFn: () => fetchAdminAudit(auditPage),
@@ -214,20 +220,32 @@ function AdminWorkspace({ userId, role }: { userId: string; role: string }) {
       )}
       {tab === "overview" && (
         <section className="mt-8" aria-label="Dashboard admin">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div><h2 className="text-xl font-semibold">Ringkasan platform</h2><p className="mt-1 text-sm text-muted-foreground">Statistik seluruh pengguna, bukan hanya akun yang sedang login.</p></div>
+            <Button variant="outline" onClick={() => { void metrics.refetch(); void directory.refetch(); }}><RefreshCw /> Perbarui statistik</Button>
+          </div>
+          {metrics.isError && <p role="alert" className="mb-4 text-sm text-destructive">Statistik belum tersedia: {adminError(metrics.error)}. Jalankan migrasi SQL dashboard terlebih dahulu.</p>}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { label: "Akun terdaftar", value: data?.accounts, icon: Users },
-              { label: "Permohonan menunggu", value: data?.pending, icon: ShieldCheck },
-              { label: "Slide terpublikasi", value: data?.published, icon: Images },
-            ].map(({ label, value, icon: Icon }) => (
-              <article key={label} className="rounded-lg border border-border bg-card p-5">
-                <Icon className="size-5 text-brand" />
-                <p className="mt-5 text-3xl font-semibold tabular-nums">
-                  {value?.toLocaleString("id-ID") ?? "—"}
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">{label}</p>
+              { label: "Total pengguna", value: metrics.data?.users, icon: Users, tone: "border-sky-200 bg-sky-50/50 text-sky-700", detail: "Semua akun terdaftar", target: "users" },
+              { label: "Total proyek flipping", value: metrics.data?.projects, icon: FolderKanban, tone: "border-emerald-200 bg-emerald-50/50 text-emerald-700", detail: "Proyek seluruh pengguna", target: "" },
+              { label: "Aset properti unik", value: metrics.data?.assets, icon: Building2, tone: "border-amber-200 bg-amber-50/50 text-amber-700", detail: "Menunggu integrasi katalog aset", target: "" },
+              { label: "Approval menunggu", value: metrics.data?.pending, icon: ShieldCheck, tone: "border-violet-200 bg-violet-50/50 text-violet-700", detail: "Permohonan mitra", target: "users" },
+              { label: "Slide terpublikasi", value: metrics.data?.published, icon: Images, tone: "border-rose-200 bg-rose-50/50 text-rose-700", detail: "Konten beranda aktif", target: "slides" },
+              { label: "Proyek terjual", value: metrics.data?.sold, icon: Activity, tone: "border-cyan-200 bg-cyan-50/50 text-cyan-700", detail: "Status proyek selesai terjual", target: "" },
+            ].map(({ label, value, icon: Icon, tone, detail, target }) => (
+              <article key={label} className={`rounded-xl border p-5 ${tone}`}>
+                <Icon className="size-6" aria-hidden="true" />
+                <p className="mt-4 text-3xl font-bold tabular-nums text-foreground">{metrics.isPending ? "…" : value == null ? "—" : value.toLocaleString("id-ID")}</p>
+                <p className="mt-2 text-sm font-semibold text-foreground">{label}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
+                {target && <button type="button" className="mt-3 text-xs font-semibold underline underline-offset-4" onClick={() => { setTab(target); if (label === "Approval menunggu") { setStatus("pending"); setPage(0); } }}>Lihat detail</button>}
               </article>
             ))}
+          </div>
+          <div className="mt-6 rounded-xl border border-border bg-card p-5">
+            <div className="flex items-center gap-2"><Database className="size-5 text-brand" /><h3 className="font-semibold">Katalog aset BTN</h3></div>
+            <p className="mt-2 text-sm text-muted-foreground">Statistik scraping belum dihubungkan ke tabel katalog. Angka ditampilkan sebagai tanda —, bukan nol, sampai konektor dan penyimpanan aset tersedia. Nantinya pisahkan total hasil impor, aset unik, aset aktif, dan aset gagal sinkron.</p>
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button
