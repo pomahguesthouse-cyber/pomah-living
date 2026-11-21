@@ -12,6 +12,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PropertyPhotoWorkspace } from "@/components/property-photo-workspace";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -437,6 +438,7 @@ function ProjectPage() {
                   {[
                     ["analysis", "Analisis investasi"],
                     ["rab", "RAB renovasi"],
+                    ["photos", "Foto & before-after"],
                     ["risks", "Dokumen & risiko"],
                     ["timeline", "Timeline"],
                     ["scenarios", "Skenario"],
@@ -452,6 +454,9 @@ function ProjectPage() {
               </TabsContent>
               <TabsContent forceMount value="rab" className="project-tab mt-6">
                 <RabEditor project={project} onChange={update} />
+              </TabsContent>
+              <TabsContent forceMount value="photos" className="project-tab mt-6">
+                <PropertyPhotoWorkspace />
               </TabsContent>
               <TabsContent forceMount value="risks" className="project-tab mt-6">
                 <RiskEditor project={project} onChange={update} />
