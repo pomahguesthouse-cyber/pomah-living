@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Camera, ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,17 +9,22 @@ const allowed = ["image/jpeg", "image/png", "image/webp"];
 
 export function PropertyPhotoWorkspace() {
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const urls = useRef<string[]>([]);
   const [error, setError] = useState("");
-  useEffect(() => () => { photos.forEach((photo) => URL.revokeObjectURL(photo.url)); }, [photos]);
+  useEffect(() => () => { urls.current.forEach((url) => URL.revokeObjectURL(url)); }, []);
   function addFiles(files: FileList | null, stage: "before" | "after") {
     if (!files) return;
     const valid = Array.from(files).filter((file) => allowed.includes(file.type) && file.size <= 10 * 1024 * 1024);
     setError(valid.length !== files.length ? "Sebagian foto dilewati. Gunakan JPG, PNG, atau WebP maksimal 10 MB per foto." : "");
     if (!valid.length) return;
-    setPhotos((old) => [...old, ...valid.slice(0, Math.max(0, 24 - old.length)).map((file) => ({
-      id: crypto.randomUUID(), url: URL.createObjectURL(file), name: file.name,
-      area: "Fasad", notes: "", stage,
-    }))]);
+    setPhotos((old) => {
+      const added = valid.slice(0, Math.max(0, 24 - old.length)).map((file) => {
+        const url = URL.createObjectURL(file);
+        urls.current.push(url);
+        return { id: crypto.randomUUID(), url, name: file.name, area: "Fasad", notes: "", stage };
+      });
+      return [...old, ...added];
+    });
   }
   function patch(id: string, data: Partial<Photo>) {
     setPhotos((old) => old.map((photo) => photo.id === id ? { ...photo, ...data } : photo));
