@@ -1,13 +1,14 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { format } from "date-fns";
-import { ArrowLeft, MapPin, X } from "lucide-react";
+import { format, subYears } from "date-fns";
+import { ArrowLeft, Camera, MapPin, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/hooks/use-session";
+import { supabase } from "@/integrations/supabase/client";
 import {
   maxPreferredRegions,
   provinceOptions,
@@ -109,6 +110,16 @@ function AccountDetailsForm({
   experienceAvailable: boolean;
 }) {
   const cache = useQueryClient();
+  const [residenceProvince, setResidenceProvince] = useState(initial?.residence_province ?? "");
+  const [residenceRegency, setResidenceRegency] = useState(initial?.residence_regency ?? "");
+  const [birthDate, setBirthDate] = useState(initial?.birth_date ?? "");
+  const [avatarUrl, setAvatarUrl] = useState(initial?.avatar_url ?? "");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState("");
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const avatarInput = useRef<HTMLInputElement>(null);
+  const maxBirthDate = format(subYears(new Date(), 18), "yyyy-MM-dd");
   const [regions, setRegions] = useState(initial?.preferred_regions ?? []);
   const [province, setProvince] = useState("");
   const [regency, setRegency] = useState("");
@@ -134,32 +145,72 @@ function AccountDetailsForm({
     mutation.reset();
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  function selectAvatar(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      setAvatarError("Gunakan JPG, PNG, atau WebP maksimal 5 MB.");
+      event.target.value = "";
+      return;
+    }
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    setAvatarPreview(URL.createObjectURL(file));
+    setAvatarFile(file);
+    setAvatarError("");
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (mutation.isPending) return;
+    if (mutation.isPending || savingAvatar) return;
     const form = new FormData(event.currentTarget);
     const value = (name: string) => String(form.get(name) ?? "").trim() || null;
     const full_name = value("full_name");
     if (!full_name) return;
+    if (!birthDate || birthDate > maxBirthDate || !/^\\d{4}-\\d{2}-\\d{2}$/.test(birthDate) || Number.isNaN(Date.parse(birthDate))) {
+      setAvatarError("Tanggal lahir harus valid dan usia minimal 18 tahun.");
+      return;
+    }
+    if (!residenceProvince || !residenceRegency || !regencyOptions(residenceProvince).some((item) => item.code === residenceRegency)) {
+      setAvatarError("Provinsi dan kabupaten/kota domisili wajib dipilih.");
+      return;
+    }
+    setAvatarError("");
+    let savedAvatar = avatarUrl || null;
+    if (avatarFile) {
+      setSavingAvatar(true);
+      const ext = avatarFile.type === "image/png" ? "png" : avatarFile.type === "image/webp" ? "webp" : "jpg";
+      const storagePath = `${id}/profile-${Date.now()}.${ext}`;
+      const upload = await supabase.storage.from("avatars").upload(storagePath, avatarFile, { contentType: avatarFile.type, upsert: false });
+      setSavingAvatar(false);
+      if (upload.error) {
+        setAvatarError("Foto gagal diunggah. Periksa konfigurasi storage avatars.");
+        return;
+      }
+      savedAvatar = supabase.storage.from("avatars").getPublicUrl(storagePath).data.publicUrl;
+    }
     const experience = value("property_experience");
     const savedRegions = canAdd ? [...regions, selectedRegion] : regions;
     mutation.mutate(
       {
         full_name,
-        birth_date: value("birth_date"),
+        birth_date: birthDate,
         occupation: value("occupation"),
         ...(experienceAvailable && {
           has_property_experience: experience === null ? null : experience === "yes",
         }),
         display_name: value("display_name"),
-        avatar_url: value("avatar_url"),
+        avatar_url: savedAvatar,
         contact_phone: value("contact_phone"),
         address: value("address"),
-        residence_province: value("residence_province"),
+        residence_province: residenceProvince,
+        residence_regency: residenceRegency,
         preferred_regions: savedRegions,
       },
       {
         onSuccess: () => {
+          setAvatarUrl(savedAvatar ?? "");
+          setAvatarFile(null);
+          setAvatarPreview(null);
           setRegions(savedRegions);
           setProvince("");
           setRegency("");
@@ -204,13 +255,15 @@ function AccountDetailsForm({
           />
         </label>
         <label className="space-y-1 text-sm">
-          <span>Tanggal lahir (opsional)</span>
+          <span>Tanggal lahir (minimal 18 tahun)</span>
           <Input
             name="birth_date"
             type="date"
             autoComplete="bday"
-            max={format(new Date(), "yyyy-MM-dd")}
-            defaultValue={initial?.birth_date ?? ""}
+            max={maxBirthDate}
+            value={birthDate}
+            onChange={(event) => setBirthDate(event.target.value)}
+            required
           />
         </label>
         <label className="space-y-1 text-sm">
@@ -231,10 +284,18 @@ function AccountDetailsForm({
           <span>Email masuk</span>
           <Input type="email" value={email} readOnly />
         </label>
-        <label className="space-y-1 text-sm">
-          <span>Tautan foto akun</span>
-          <Input name="avatar_url" type="url" defaultValue={initial?.avatar_url ?? ""} />
-        </label>
+        <div className="space-y-2 text-sm sm:col-span-2">
+          <span className="block">Foto profil</span>
+          <div className="flex items-center gap-3">
+            <div className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-muted text-xl font-semibold">
+              {avatarPreview || avatarUrl ? <img src={avatarPreview || avatarUrl} alt="Foto profil" className="size-full object-cover" /> : (initial?.display_name || initial?.full_name || email).slice(0, 2).toUpperCase()}
+            </div>
+            <input ref={avatarInput} type="file" accept="image/jpeg,image/png,image/webp" capture={undefined} className="hidden" onChange={selectAvatar} aria-label="Pilih foto profil" />
+            <Button type="button" variant="outline" onClick={() => avatarInput.current?.click()}><Camera className="mr-2 size-4" /> Ubah foto</Button>
+            {(avatarUrl || avatarPreview) && <Button type="button" variant="ghost" onClick={() => { if (avatarPreview) URL.revokeObjectURL(avatarPreview); setAvatarPreview(null); setAvatarFile(null); setAvatarUrl(""); }}>Hapus foto</Button>}
+          </div>
+          <p className="text-xs text-muted-foreground">JPG, PNG, atau WebP, maksimal 5 MB. Pilih dari perangkat atau kamera.</p>
+        </div>
         <fieldset disabled={!experienceAvailable} className="space-y-2 sm:col-span-2">
           <legend className="text-sm">Pengalaman di bidang properti (opsional)</legend>
           <div className="flex flex-wrap gap-5 text-sm">
@@ -278,7 +339,9 @@ function AccountDetailsForm({
             name="residence_province"
             className={selectClass}
             autoComplete="address-level1"
-            defaultValue={initial?.residence_province ?? ""}
+            value={residenceProvince}
+            required
+            onChange={(event) => { setResidenceProvince(event.target.value); setResidenceRegency(""); }}
           >
             <option value="">Pilih provinsi domisili</option>
             {provinceOptions.map(({ code, name }) => (
@@ -286,6 +349,13 @@ function AccountDetailsForm({
                 {name}
               </option>
             ))}
+          </select>
+        </label>
+        <label className="space-y-1 text-sm sm:col-span-2">
+          <span>Kabupaten/kota domisili</span>
+          <select name="residence_regency" className={selectClass} autoComplete="address-level2" value={residenceRegency} required disabled={!residenceProvince} onChange={(event) => setResidenceRegency(event.target.value)}>
+            <option value="">Pilih kabupaten/kota</option>
+            {regencyOptions(residenceProvince).map(({ code, name }) => <option key={code} value={code}>{name}</option>)}
           </select>
         </label>
       </fieldset>
@@ -366,6 +436,7 @@ function AccountDetailsForm({
           <p className="text-xs">Maksimal {maxPreferredRegions} wilayah.</p>
         )}
       </fieldset>
+      {avatarError && <p role="alert" className="text-sm text-destructive">{avatarError}</p>}
       {mutation.isError && (
         <p role="alert" className="text-sm text-destructive">
           Data akun gagal disimpan. Coba lagi.
@@ -376,8 +447,8 @@ function AccountDetailsForm({
           Data akun dan preferensi tersimpan.
         </p>
       )}
-      <Button type="submit" disabled={mutation.isPending}>
-        {mutation.isPending ? "Menyimpan…" : "Simpan akun"}
+      <Button type="submit" disabled={mutation.isPending || savingAvatar || !birthDate || birthDate > maxBirthDate || !residenceProvince || !residenceRegency}>
+        {mutation.isPending || savingAvatar ? "Menyimpan…" : "Simpan akun"}
       </Button>
     </form>
   );
