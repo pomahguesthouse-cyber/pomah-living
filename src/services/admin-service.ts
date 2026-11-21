@@ -92,3 +92,13 @@ export function adminError(error: unknown) {
     return error.message;
   return "Permintaan gagal. Periksa koneksi dan hak akses, lalu coba lagi.";
 }
+
+/** Aggregated on the database with SECURITY DEFINER; never query other users' projects from the browser. */
+export type AdminMetrics = { users: number; projects: number; sold: number; pending: number; published: number; assets: number | null };
+export async function fetchAdminMetrics(): Promise<AdminMetrics> {
+  const { data, error } = await supabase.rpc("pomah_admin_metrics");
+  if (error) throw error;
+  const result = data as unknown as AdminMetrics;
+  if (!result || typeof result.users !== "number" || typeof result.projects !== "number") throw new Error("Format statistik admin tidak valid.");
+  return result;
+}
