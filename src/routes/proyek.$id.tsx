@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PropertyPhotoWorkspace } from "@/components/property-photo-workspace";
 import { FlippingOverview } from "@/components/flipping-overview";
+import { ProjectMarketAnalysis } from "@/components/project-market-analysis";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -441,6 +442,7 @@ function ProjectPage() {
                     ["analysis", "Analisis investasi"],
                     ["rab", "RAB renovasi"],
                     ["photos", "Foto & before-after"],
+                    ["market", "Harga pasar"],
                     ["risks", "Dokumen & risiko"],
                     ["timeline", "Timeline"],
                     ["scenarios", "Skenario"],
@@ -459,6 +461,9 @@ function ProjectPage() {
               </TabsContent>
               <TabsContent forceMount value="photos" className="project-tab mt-6">
                 <PropertyPhotoWorkspace />
+              </TabsContent>
+              <TabsContent forceMount value="market" className="project-tab mt-6">
+                <ProjectMarketAnalysis project={project} demo={demo} onUseTarget={(sale) => update({ ...project, finance: { ...project.finance, sale } })} />
               </TabsContent>
               <TabsContent forceMount value="risks" className="project-tab mt-6">
                 <RiskEditor project={project} onChange={update} />
