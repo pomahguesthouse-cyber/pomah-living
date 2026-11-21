@@ -438,7 +438,7 @@ function ProjectPage() {
           <div className="min-w-0">
             <Tabs value={tab} onValueChange={setTab} className="min-w-0">
               <div className="no-print max-w-full overflow-x-auto border-b border-border pb-2">
-                <TabsList className="h-11 w-max justify-start bg-transparent p-0">
+                <TabsList className="h-11 w-max justify-start gap-0 rounded-none bg-transparent p-0">
                   {[
                     ["analysis", "Analisis investasi", "bg-blue-100 text-blue-900 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white dark:bg-blue-950 dark:text-blue-200"],
                     ["asset", "Analisis Aset", "bg-orange-100 text-orange-900 data-[state=active]:!bg-orange-600 data-[state=active]:!text-white dark:bg-orange-950 dark:text-orange-200"],
@@ -449,7 +449,7 @@ function ProjectPage() {
                     ["timeline", "Timeline", "bg-indigo-100 text-indigo-900 data-[state=active]:!bg-indigo-600 data-[state=active]:!text-white dark:bg-indigo-950 dark:text-indigo-200"],
                     ["scenarios", "Skenario", "bg-amber-100 text-amber-900 data-[state=active]:!bg-amber-600 data-[state=active]:!text-white dark:bg-amber-950 dark:text-amber-200"],
                   ].map(([value, label, color]) => (
-                    <TabsTrigger key={value} value={value} className={`mr-1 px-3 text-xs ${color}`}>
+                    <TabsTrigger key={value} value={value} className={`rounded-b-none rounded-t-lg border border-b-0 border-white/60 px-3 text-xs shadow-none first:rounded-tl-lg last:rounded-tr-lg ${color}`}>
                       {label}
                     </TabsTrigger>
                   ))}
