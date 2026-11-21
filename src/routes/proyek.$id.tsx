@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PropertyPhotoWorkspace } from "@/components/property-photo-workspace";
+import { FlippingOverview } from "@/components/flipping-overview";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -406,6 +407,7 @@ function ProjectPage() {
             ))}
           </div>
         </details>
+        <FlippingOverview project={project} onNavigate={setTab} />
         <div className="risk-indicator mt-5 flex flex-wrap items-center justify-between gap-3 bg-warning-soft p-4 text-xs leading-6">
           <span className="flex items-center gap-2">
             <CircleAlert className="size-4 shrink-0 text-warning" />
