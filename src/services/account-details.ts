@@ -11,6 +11,7 @@ export type AccountDetails = {
   avatar_url: string | null;
   address: string | null;
   residence_province: string | null;
+  residence_regency: string | null;
   contact_phone: string | null;
   preferred_regions: string[];
 };
@@ -32,7 +33,7 @@ type AccountDatabase = Database & {
 // Extend the existing client without changing the generated Supabase types.
 const accounts = supabase as unknown as SupabaseClient<AccountDatabase>;
 const accountColumns =
-  "full_name,birth_date,occupation,display_name,avatar_url,address,residence_province,contact_phone,preferred_regions";
+  "full_name,birth_date,occupation,display_name,avatar_url,address,residence_province,residence_regency,contact_phone,preferred_regions";
 
 export const accountDetailsKey = (id: string) => ["account-details", id] as const;
 export const preferredRegionsKey = (id: string | undefined) => ["preferred-regions", id] as const;
