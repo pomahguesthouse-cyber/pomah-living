@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PropertyPhotoWorkspace } from "@/components/property-photo-workspace";
 import { FlippingOverview } from "@/components/flipping-overview";
+import { AssetAnalysis } from "@/components/asset-analysis";
 import { ProjectMarketAnalysis } from "@/components/project-market-analysis";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -440,6 +441,7 @@ function ProjectPage() {
                 <TabsList className="h-11 w-max justify-start bg-transparent p-0">
                   {[
                     ["analysis", "Analisis investasi"],
+                    ["asset", "Analisis Aset"],
                     ["rab", "RAB renovasi"],
                     ["photos", "Foto & before-after"],
                     ["market", "Harga pasar"],
@@ -455,6 +457,9 @@ function ProjectPage() {
               </div>
               <TabsContent forceMount value="analysis" className="project-tab mt-6">
                 <FinanceEditor project={project} onChange={update} />
+              </TabsContent>
+              <TabsContent forceMount value="asset" className="project-tab mt-6">
+                <AssetAnalysis project={project} onChange={update} onNavigate={setTab} />
               </TabsContent>
               <TabsContent forceMount value="rab" className="project-tab mt-6">
                 <RabEditor project={project} onChange={update} />
