@@ -12,6 +12,31 @@ export const workGroups = [
   "Finishing",
   "Contingency",
 ] as const;
+export const assetAssessmentSections = [
+  { area: "Atap dan talang", group: "Arsitektur" },
+  { area: "Struktur (kolom, balok, pelat)", group: "Struktur" },
+  { area: "Dinding dan cat", group: "Finishing" },
+  { area: "Lantai dan keramik", group: "Arsitektur" },
+  { area: "Plafon", group: "Arsitektur" },
+  { area: "Pintu dan jendela", group: "Arsitektur" },
+  { area: "Listrik", group: "MEP" },
+  { area: "Air bersih, sanitasi, drainase", group: "MEP" },
+  { area: "Fasad dan tampilan jual", group: "Finishing" },
+] as const;
+
+export const assetAssessmentSchema = z.array(z.object({
+  area: text,
+  group: z.enum(workGroups),
+  condition: z.enum(["Belum diperiksa", "Baik", "Perlu perbaikan ringan", "Perlu pemeriksaan lanjutan", "Perlu perbaikan besar"]),
+  finding: text,
+  recommendation: text,
+})).max(30);
+export type AssetAssessment = z.infer<typeof assetAssessmentSchema>[number];
+export function makeAssetAssessments(): AssetAssessment[] {
+  return assetAssessmentSections.map(({area, group}) => ({
+    area, group, condition: "Belum diperiksa", finding: "", recommendation: "",
+  }));
+}
 export const financeSchema = z.object({
   purchase: amount,
   auctionRate: rate,
@@ -51,6 +76,7 @@ export const flippingSchema = z.object({
     limit: amount,
   }),
   finance: financeSchema,
+  assetAssessments: assetAssessmentSchema.default(makeAssetAssessments),
   rab: z
     .array(
       z.object({
@@ -224,6 +250,7 @@ export function makeFlippingProject(id: string, name?: string, location?: string
       sellerFixed: 0,
       sale: demo ? 480_000_000 : 0,
     },
+    assetAssessments: makeAssetAssessments(),
     rab: demo
       ? [
           {
