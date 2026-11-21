@@ -230,6 +230,18 @@ function ProjectPage() {
         Memuat rincian proyek…
       </main>
     );
+  const stages = [
+    { id: "asset", label: "Analisis Aset" },
+    { id: "market", label: "Harga Pasar" },
+    { id: "risks", label: "Dokumen & Risiko" },
+    { id: "rab", label: "RAB Renovasi" },
+    { id: "analysis", label: "Analisis Investasi" },
+    { id: "scenarios", label: "Skenario" },
+    { id: "timeline", label: "Timeline" },
+    { id: "photos", label: "Foto & Before-After" },
+  ] as const;
+  const reviewed = stages.filter(({ id }) => project.stageReviews?.[id]).length;
+  const progressPercent = Math.round((reviewed / stages.length) * 100);
   const result = calculateFlipping(project.finance, project.rab);
   const unresolved = project.risks.filter((risk) => !risk.verified).length;
   const image = demo ? (getProperty(id) ?? getProperty("cibinong"))?.image : undefined;
@@ -434,6 +446,65 @@ function ProjectPage() {
             penawaran.
           </p>
         )}
+        <section aria-labelledby="flipping-progress-title" className="no-print mt-6 rounded-lg border border-border bg-white p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 id="flipping-progress-title" className="text-sm font-semibold">
+                Progres peninjauan tahapan
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Tandai tahap setelah Anda meninjau isinya. Bukan verifikasi resmi atau progres pekerjaan fisik.
+              </p>
+            </div>
+            <strong className="text-sm tabular-nums">{reviewed}/{stages.length} tahap · {progressPercent}%</strong>
+          </div>
+          <div
+            role="progressbar"
+            aria-label="Progres peninjauan"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progressPercent}
+            className="mt-4 h-2.5 overflow-hidden rounded-full bg-muted"
+          >
+            <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progressPercent}%` }} />
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {stages.map((stage, index) => {
+              const checked = Boolean(project.stageReviews?.[stage.id]);
+              return (
+                <div key={stage.id} className="flex items-center gap-2 rounded-md border border-border p-2">
+                  <button
+                    type="button"
+                    onClick={() => setTab(stage.id)}
+                    className="min-w-0 flex-1 text-left text-xs font-medium hover:underline"
+                    aria-label={`Buka tahap ${index + 1}: ${stage.label}`}
+                  >
+                    <span className="mr-1 text-muted-foreground">{index + 1}.</span>
+                    {stage.label}
+                  </button>
+                  <label className="flex shrink-0 cursor-pointer items-center gap-1 text-[11px]">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(event) =>
+                        update({
+                          ...project,
+                          stageReviews: {
+                            ...project.stageReviews,
+                            [stage.id]: event.target.checked,
+                          },
+                        })
+                      }
+                      className="size-4 accent-green-700"
+                      aria-label={`Tandai ${stage.label} sudah ditinjau`}
+                    />
+                    <span>{checked ? "Ditinjau" : "Belum"}</span>
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+        </section>
         <div className="mt-7 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_310px]">
           <div className="min-w-0">
             <Tabs value={tab} onValueChange={setTab} className="min-w-0">
