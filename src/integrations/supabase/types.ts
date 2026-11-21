@@ -100,6 +100,7 @@ export type Database = {
           occupation: string | null
           preferred_regions: string[]
           residence_province: string | null
+          residence_regency: string | null
           updated_at: string
         }
         Insert: {
@@ -116,6 +117,7 @@ export type Database = {
           occupation?: string | null
           preferred_regions?: string[]
           residence_province?: string | null
+          residence_regency?: string | null
           updated_at?: string
         }
         Update: {
@@ -132,6 +134,7 @@ export type Database = {
           occupation?: string | null
           preferred_regions?: string[]
           residence_province?: string | null
+          residence_regency?: string | null
           updated_at?: string
         }
         Relationships: []
