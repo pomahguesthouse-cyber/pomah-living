@@ -124,7 +124,6 @@ function Index() {
             loading={index === 0 ? "eager" : "lazy"}
           />
         ))}
-        <div className="hero-shade" />
         <div className="page-container hero-content reveal w-full">
           <div className="mb-6 flex items-center gap-2.5 text-xs font-medium text-hero-muted">
             <span className="h-px w-7 bg-brand" />
