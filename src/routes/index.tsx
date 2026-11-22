@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchPublishedSlides } from "@/services/admin-service";
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Check, ClipboardCheck, House, TrendingUp } from "lucide-react";
+import { ArrowLeft, ArrowRight, ClipboardCheck, House, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import houseImage from "@/assets/rumah-banyumanik.webp.asset.json";
 import secondHouse from "@/assets/rumah-tembalang.webp.asset.json";
@@ -124,87 +124,70 @@ function Index() {
             loading={index === 0 ? "eager" : "lazy"}
           />
         ))}
-        <div className="page-container hero-content reveal w-full">
-          <div className="mb-6 flex items-center gap-2.5 text-xs font-medium text-hero-muted">
-            <span className="h-px w-7 bg-brand" />
-            {slide.eyebrow}
-          </div>
-          <h1 className="hero-title whitespace-pre-line">{slide.title}</h1>
-          <p className="mt-6 max-w-md text-[15px] leading-7 text-hero-muted sm:text-base">
-            {slide.description}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild variant="hero" size="lg" className="gap-3">
-              {slide.href === "/pilih-aset" ? (
-                <Link to="/pilih-aset">
-                  {slide.action}
-                  <ArrowRight />
-                </Link>
-              ) : (
-                <Link to="/proyek/$id" params={{ id: "demo" }}>
-                  {slide.action}
-                  <ArrowRight />
-                </Link>
-              )}
-            </Button>
-            <Button asChild variant="hero" size="lg" className="gap-3">
-              <Link to="/pilih-aset">
-                Pilih aset <ArrowRight />
-              </Link>
-            </Button>
-          </div>
-          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-hero-muted">
-            <span className="flex items-center gap-2">
-              <Check className="size-3.5 text-brand" /> Tanpa login untuk demo
-            </span>
-            <span className="flex items-center gap-2">
-              <Check className="size-3.5 text-brand" /> Data simulasi, bukan listing BTN
-            </span>
-          </div>
-        </div>
-        <div className="absolute bottom-5 left-0 right-0 z-10">
-          <div className="page-container flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2" aria-label="Pilih slide">
-              {slides.map((item, index) => (
+        <h1 className="sr-only">{slide.title}</h1>
+        {slides.length > 1 && (
+          <div className="absolute bottom-3 left-0 right-0 z-10 sm:bottom-5">
+            <div className="page-container flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2" aria-label="Pilih slide">
+                {slides.map((item, index) => (
+                  <Button
+                    key={item.eyebrow}
+                    type="button"
+                    onClick={() => setActiveSlide(index)}
+                    aria-label={`Tampilkan slide ${index + 1} dari ${slides.length}`}
+                    aria-current={index === currentSlide ? "true" : undefined}
+                    className={`h-2 rounded-full transition-all ${index === currentSlide ? "w-9 bg-white" : "w-2 bg-white/50 hover:bg-white/80"}`}
+                  >
+                    <span className="sr-only">{index + 1}</span>
+                  </Button>
+                ))}
+              </div>
+              <div className="flex gap-2">
                 <Button
-                  key={item.eyebrow}
                   type="button"
-                  onClick={() => setActiveSlide(index)}
-                  aria-label={`Tampilkan slide ${index + 1} dari ${slides.length}`}
-                  aria-current={index === activeSlide ? "true" : undefined}
-                  className={`h-2 rounded-full transition-all ${index === activeSlide ? "w-9 bg-white" : "w-2 bg-white/50 hover:bg-white/80"}`}
+                  aria-label="Slide sebelumnya"
+                  onClick={() =>
+                    setActiveSlide((current) => (current - 1 + slides.length) % slides.length)
+                  }
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full border border-hero-line text-hero-foreground hover:bg-hero-line hover:text-hero-foreground"
                 >
-                  {index + 1}
+                  <ArrowLeft className="size-4" />
                 </Button>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                aria-label="Slide sebelumnya"
-                onClick={() =>
-                  setActiveSlide((current) => (current - 1 + slides.length) % slides.length)
-                }
-                variant="ghost"
-                size="icon"
-                className="rounded-full border border-hero-line text-hero-foreground hover:bg-hero-line hover:text-hero-foreground"
-              >
-                <ArrowLeft className="size-4" />
-              </Button>
-              <Button
-                type="button"
-                aria-label="Slide berikutnya"
-                onClick={() => setActiveSlide((current) => (current + 1) % slides.length)}
-                variant="ghost"
-                size="icon"
-                className="rounded-full border border-hero-line text-hero-foreground hover:bg-hero-line hover:text-hero-foreground"
-              >
-                <ArrowRight className="size-4" />
-              </Button>
+                <Button
+                  type="button"
+                  aria-label="Slide berikutnya"
+                  onClick={() => setActiveSlide((current) => (current + 1) % slides.length)}
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full border border-hero-line text-hero-foreground hover:bg-hero-line hover:text-hero-foreground"
+                >
+                  <ArrowRight className="size-4" />
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </section>
+      <div className="page-container flex flex-wrap items-center justify-between gap-4 py-5">
+        <p className="text-xs text-muted-foreground">
+          Tanpa login untuk demo · Data simulasi, bukan listing BTN
+        </p>
+        <Button asChild variant="hero" className="gap-3">
+          {slide.href === "/pilih-aset" ? (
+            <Link to="/pilih-aset">
+              {slide.action}
+              <ArrowRight />
+            </Link>
+          ) : (
+            <Link to="/proyek/$id" params={{ id: "demo" }}>
+              {slide.action}
+              <ArrowRight />
+            </Link>
+          )}
+        </Button>
+      </div>
       <section className="page-container py-14 sm:py-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>

@@ -136,7 +136,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-20 border-b border-border bg-card">
+        <header
+          className={`top-0 z-20 border-b border-border ${pathname === "/" ? "fixed inset-x-0 bg-card/85 backdrop-blur-md" : "sticky bg-card"}`}
+        >
           <div className="page-container flex h-20 items-center justify-between gap-3">
             <Link to="/" aria-label="Pomah Living — Beranda">
               <img className="brand-logo" src={logo.url} alt="Pomah Living" />
