@@ -202,6 +202,8 @@
 }
 .hero-scene {
   position: relative;
+  margin-block-start: 24px;
+  scroll-margin-block-start: calc(5rem + 24px);
   min-height: 600px;
   display: flex;
   align-items: center;
