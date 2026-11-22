@@ -34,4 +34,13 @@ describe("Shared demo revisions", () => {
     );
     expect(restoreDemoSample(sample, "{invalid")).toEqual(sample.project);
   });
+  it("recovers legacy browser edits only for the original fixture", () => {
+    const sample = fixtureDemo("demo");
+    const legacy = JSON.stringify({
+      ...sample.project,
+      finance: { ...sample.project.finance, purchase: 123_000_000 },
+    });
+    expect(restoreDemoSample(sample, null, legacy).finance.purchase).toBe(123_000_000);
+    expect(restoreDemoSample({ ...sample, revision: 1 }, null, legacy)).toEqual(sample.project);
+  });
 });

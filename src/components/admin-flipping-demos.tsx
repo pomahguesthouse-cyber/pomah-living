@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { Save, Send, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FinanceEditor, RabEditor } from "@/components/flipping-editors";
+import {
+  FinanceEditor,
+  NumberField,
+  RabEditor,
+  ScenarioEditor,
+} from "@/components/flipping-editors";
 import { calculateFlipping, rabTotal } from "@/lib/flipping";
 import { formatRupiah } from "@/lib/simulation";
 import { demoSampleSchema, type DemoSample } from "@/lib/flipping-demos";
@@ -21,6 +27,7 @@ export function AdminFlippingDemos({ userId }: { userId: string }) {
     queryFn: fetchAdminDemos,
   });
   const [selected, setSelected] = useState("demo");
+  const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   if (query.isPending)
     return (
@@ -51,6 +58,7 @@ export function AdminFlippingDemos({ userId }: { userId: string }) {
         <select
           className="mt-2 block h-10 w-full rounded-md border border-input bg-background px-3 sm:max-w-md"
           value={selected}
+          disabled={busy}
           onChange={(event) => setSelected(event.target.value)}
         >
           {query.data.map(({ sample }) => (
@@ -67,6 +75,8 @@ export function AdminFlippingDemos({ userId }: { userId: string }) {
           publishedRevision={entry.publishedRevision}
           userId={userId}
           onSaved={setMessage}
+          busy={busy}
+          setBusy={setBusy}
         />
       )}
     </section>
@@ -77,15 +87,18 @@ function DemoEditor({
   publishedRevision,
   userId,
   onSaved,
+  busy,
+  setBusy,
 }: {
   initial: DemoSample;
   publishedRevision: number;
   userId: string;
   onSaved: (message: string) => void;
+  busy: boolean;
+  setBusy: (busy: boolean) => void;
 }) {
   const [sample, setSample] = useState(initial);
   const [view, setView] = useState("finance");
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const client = useQueryClient();
   const totals = calculateFlipping(sample.project.finance, sample.project.rab);
@@ -99,8 +112,11 @@ function DemoEditor({
     setBusy(true);
     setError("");
     onSaved("");
+    let draftSaved = false;
+    const adminKey = ["admin", userId, "flipping-demos"];
     try {
       const saved = await saveDemoSample(valid.data, false, sample.revision);
+      draftSaved = true;
       setSample(saved);
       if (publish) {
         await saveDemoSample(saved, true, publishedRevision);
@@ -111,16 +127,17 @@ function DemoEditor({
           ? "Demo dipublikasikan. Simulasi lokal versi lama tidak menggantikan versi baru."
           : "Draf tersimpan. Demo publik belum berubah.",
       );
-      await client.invalidateQueries({ queryKey: ["admin", userId, "flipping-demos"] });
+      await client.invalidateQueries({ queryKey: adminKey });
       await client.invalidateQueries({ queryKey: ["admin", userId, "audit"] });
     } catch (cause) {
-      setError(adminError(cause));
+      const detail = adminError(cause);
+      setError(draftSaved ? `Draf tersimpan. Publikasi gagal. ${detail}` : detail);
     } finally {
       setBusy(false);
     }
   }
   return (
-    <div className="space-y-6">
+    <fieldset disabled={busy} className="min-w-0 space-y-6">
       <p className="text-xs text-muted-foreground">
         Data fiktif · Draf {sample.revision} · Versi publik {publishedRevision || "fixture awal"}
       </p>
@@ -151,6 +168,32 @@ function DemoEditor({
           onChange={(e) => setSample({ ...sample, description: e.target.value })}
         />
       </label>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block space-y-2 text-sm font-medium">
+          Alamat contoh
+          <Input
+            value={sample.project.property.address}
+            maxLength={500}
+            onChange={(event) => {
+              const address = event.target.value;
+              setSample((current) => ({
+                ...current,
+                project: { ...current.project, property: { ...current.project.property, address } },
+              }));
+            }}
+          />
+        </label>
+        <NumberField
+          label="Nilai limit lelang"
+          value={sample.project.property.limit}
+          onChange={(limit) =>
+            setSample((current) => ({
+              ...current,
+              project: { ...current.project, property: { ...current.project.property, limit } },
+            }))
+          }
+        />
+      </div>
       <dl className="grid grid-cols-1 gap-4 border-y border-border py-5 sm:grid-cols-3">
         {[
           ["Total RAB", rabTotal(sample.project.rab)],
@@ -165,7 +208,7 @@ function DemoEditor({
           </div>
         ))}
       </dl>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           variant={view === "finance" ? "brand" : "outline"}
           onClick={() => setView("finance")}
@@ -175,14 +218,26 @@ function DemoEditor({
         <Button variant={view === "rab" ? "brand" : "outline"} onClick={() => setView("rab")}>
           RAB rinci
         </Button>
+        <Button
+          variant={view === "scenarios" ? "brand" : "outline"}
+          onClick={() => setView("scenarios")}
+        >
+          Skenario
+        </Button>
       </div>
       {view === "finance" ? (
         <FinanceEditor
           project={sample.project}
           onChange={(project) => setSample({ ...sample, project })}
         />
-      ) : (
+      ) : view === "rab" ? (
         <RabEditor
+          project={sample.project}
+          onChange={(project) => setSample({ ...sample, project })}
+        />
+      ) : null}
+      {view === "scenarios" && (
+        <ScenarioEditor
           project={sample.project}
           onChange={(project) => setSample({ ...sample, project })}
         />
@@ -197,9 +252,14 @@ function DemoEditor({
           <Save /> Simpan draf
         </Button>
         <Button disabled={busy} onClick={() => void save(true)}>
-          <Send /> Publikasikan demo
+          <Send /> {busy ? "Menyimpan…" : "Publikasikan demo"}
+        </Button>
+        <Button asChild variant="ghost">
+          <Link to="/proyek/$id" params={{ id: sample.id }}>
+            Buka demo publik
+          </Link>
         </Button>
       </div>
-    </div>
+    </fieldset>
   );
 }

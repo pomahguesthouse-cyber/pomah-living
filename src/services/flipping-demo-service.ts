@@ -61,7 +61,9 @@ export async function saveDemoSample(
           .eq("revision", expectedRevision)
           .select("*")
           .single();
-  if (result.error)
-    throw new Error("Penyimpanan gagal. Periksa akses atau muat ulang jika versi telah berubah.");
+  if (result.error?.code === "PGRST116" || result.error?.code === "23505") {
+    throw new Error("Versi demo sudah berubah. Salin perubahan Anda lalu muat ulang halaman.");
+  }
+  if (result.error) throw result.error;
   return readSample(result.data);
 }

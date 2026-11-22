@@ -151,9 +151,11 @@ function ProjectPage() {
     if (!demo || !sample) return;
     try {
       const saved = localStorage.getItem(demoStorageKey(sample));
-      setProject(key, restoreDemoSample(sample, saved));
+      const legacy =
+        sample.revision === 0 && !saved ? localStorage.getItem(`pomah:flipping:demo:${id}`) : null;
+      setProject(key, restoreDemoSample(sample, saved, legacy));
       setMessage(
-        saved
+        saved || legacy
           ? "Demo dipulihkan dari perangkat ini."
           : "Demo siap. Perubahan disimpan pada perangkat ini saja.",
       );
@@ -164,7 +166,7 @@ function ProjectPage() {
       );
     }
     setHydratedKey(key);
-  }, [demo, sample, key, setProject]);
+  }, [demo, id, sample, key, setProject]);
   useEffect(() => {
     if (!demo && detail.data) {
       setProject(key, detail.data.project);

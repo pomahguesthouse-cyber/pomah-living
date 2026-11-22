@@ -26,8 +26,16 @@ export function fixtureDemo(id: string): DemoSample {
 export function demoStorageKey(sample: DemoSample) {
   return `pomah:flipping:demo:${sample.id}:revision:${sample.revision}`;
 }
-export function restoreDemoSample(sample: DemoSample, raw: string | null) {
-  if (!raw) return sample.project;
+export function restoreDemoSample(sample: DemoSample, raw: string | null, legacy?: string | null) {
+  if (!raw) {
+    // Only the original fixture can inherit pre-revision browser edits.
+    if (sample.revision !== 0 || !legacy) return sample.project;
+    try {
+      return readFlippingProject(JSON.parse(legacy));
+    } catch {
+      return sample.project;
+    }
+  }
   try {
     const envelope = z
       .object({ revision: z.number(), project: flippingSchema })
