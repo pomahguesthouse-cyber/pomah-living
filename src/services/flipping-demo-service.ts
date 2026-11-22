@@ -3,7 +3,13 @@ import { demoIds, demoSampleSchema, fixtureDemo, type DemoSample } from "@/lib/f
 import type { Tables, Json } from "@/integrations/supabase/types";
 
 function readSample(row: Tables<"pomah_flipping_demos">): DemoSample {
+  const payload = row.payload;
+  const photos =
+    payload && typeof payload === "object" && !Array.isArray(payload)
+      ? payload["demoPhotos"]
+      : undefined;
   return demoSampleSchema.parse({
+    photos,
     id: row.id,
     description: row.description,
     project: row.payload,
@@ -48,7 +54,7 @@ export async function saveDemoSample(
     id: valid.id,
     published,
     description: valid.description,
-    payload: JSON.parse(JSON.stringify(valid.project)) as Json,
+    payload: JSON.parse(JSON.stringify({ ...valid.project, demoPhotos: valid.photos })) as Json,
   };
   const result =
     expectedRevision === 0

@@ -12,6 +12,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DemoPhotoGallery } from "@/components/demo-photo-gallery";
 import { PropertyPhotoWorkspace } from "@/components/property-photo-workspace";
 import { FlippingOverview } from "@/components/flipping-overview";
 import { AssetAnalysis } from "@/components/asset-analysis";
@@ -633,6 +634,9 @@ function ProjectPage() {
                 <TimelineEditor project={project} onChange={update} />
               </TabsContent>
               <TabsContent forceMount value="photos" className="project-tab mt-6">
+                {tab === "photos" && sample && sample.photos.length > 0 && (
+                  <DemoPhotoGallery photos={sample.photos} />
+                )}
                 <PropertyPhotoWorkspace />
               </TabsContent>
             </Tabs>

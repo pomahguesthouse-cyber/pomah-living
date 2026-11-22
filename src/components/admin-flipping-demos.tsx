@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Save, Send, RefreshCw } from "lucide-react";
+import { AdminDemoPhotos } from "@/components/admin-demo-photos";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +28,7 @@ export function AdminFlippingDemos({ userId }: { userId: string }) {
     queryFn: fetchAdminDemos,
   });
   const [selected, setSelected] = useState("demo");
+  const [view, setView] = useState("finance");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   if (query.isPending)
@@ -77,6 +79,8 @@ export function AdminFlippingDemos({ userId }: { userId: string }) {
           onSaved={setMessage}
           busy={busy}
           setBusy={setBusy}
+          view={view}
+          setView={setView}
         />
       )}
     </section>
@@ -89,6 +93,8 @@ function DemoEditor({
   onSaved,
   busy,
   setBusy,
+  view,
+  setView,
 }: {
   initial: DemoSample;
   publishedRevision: number;
@@ -96,9 +102,10 @@ function DemoEditor({
   onSaved: (message: string) => void;
   busy: boolean;
   setBusy: (busy: boolean) => void;
+  view: string;
+  setView: (view: string) => void;
 }) {
   const [sample, setSample] = useState(initial);
-  const [view, setView] = useState("finance");
   const [error, setError] = useState("");
   const client = useQueryClient();
   const totals = calculateFlipping(sample.project.finance, sample.project.rab);
@@ -224,6 +231,9 @@ function DemoEditor({
         >
           Skenario
         </Button>
+        <Button variant={view === "photos" ? "brand" : "outline"} onClick={() => setView("photos")}>
+          Foto
+        </Button>
       </div>
       {view === "finance" ? (
         <FinanceEditor
@@ -240,6 +250,14 @@ function DemoEditor({
         <ScenarioEditor
           project={sample.project}
           onChange={(project) => setSample({ ...sample, project })}
+        />
+      )}
+      {view === "photos" && (
+        <AdminDemoPhotos
+          sample={sample}
+          userId={userId}
+          onChange={(photos) => setSample((current) => ({ ...current, photos }))}
+          setBusy={setBusy}
         />
       )}
       {error && (

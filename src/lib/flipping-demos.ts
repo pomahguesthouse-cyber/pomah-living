@@ -3,12 +3,37 @@ import { flippingSchema, makeFlippingProject, readFlippingProject } from "@/lib/
 import { getProperty } from "@/lib/properties";
 
 export const demoIds = ["demo", "cibinong", "sawangan", "jatiasih"] as const;
-export const demoSampleSchema = z.object({
-  id: z.enum(demoIds),
-  description: z.string().max(2000),
-  project: flippingSchema,
-  revision: z.number().int().min(0),
+export const maxDemoPhotos = 24;
+export const maxDemoPhotoBytes = 10 * 1024 * 1024;
+export const demoPhotoExtensions = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+} as const;
+export const demoPhotoStages = ["before", "after"] as const;
+export const demoPhotoStageLabels = {
+  before: "Kondisi awal",
+  after: "Desain atau hasil renovasi",
+} as const;
+const demoPhotoSchema = z.object({
+  path: z.string().regex(/^(demo|cibinong|sawangan|jatiasih)\/[a-f0-9-]{36}\.(jpg|png|webp)$/),
+  stage: z.enum(demoPhotoStages),
+  caption: z.string().max(200),
 });
+export type DemoPhoto = z.infer<typeof demoPhotoSchema>;
+export const demoSampleSchema = z
+  .object({
+    id: z.enum(demoIds),
+    description: z.string().max(2000),
+    project: flippingSchema,
+    revision: z.number().int().min(0),
+    photos: z.array(demoPhotoSchema).max(maxDemoPhotos).default([]),
+  })
+  .refine(
+    (sample) =>
+      sample.photos.every(({ path }) => path.startsWith(`${sample.id}/`)) &&
+      new Set(sample.photos.map(({ path }) => path)).size === sample.photos.length,
+  );
 export type DemoSample = z.infer<typeof demoSampleSchema>;
 export function canonicalDemoId(id: string) {
   return id === "demo" ? "demo" : getProperty(id)?.id;

@@ -3,6 +3,7 @@ import {
   canonicalDemoId,
   demoIds,
   demoStorageKey,
+  demoSampleSchema,
   fixtureDemo,
   restoreDemoSample,
   serializeDemoEdit,
@@ -42,5 +43,23 @@ describe("Shared demo revisions", () => {
     });
     expect(restoreDemoSample(sample, null, legacy).finance.purchase).toBe(123_000_000);
     expect(restoreDemoSample({ ...sample, revision: 1 }, null, legacy)).toEqual(sample.project);
+  });
+  it("defaults old demos to an empty gallery", () => {
+    const { photos: _photos, ...legacy } = fixtureDemo("demo");
+    expect(demoSampleSchema.parse(legacy).photos).toEqual([]);
+  });
+
+  it("allows photos only from the same demo and rejects duplicate paths", () => {
+    const sample = fixtureDemo("demo");
+    const photo = {
+      path: "demo/12345678-1234-1234-1234-123456789abc.webp",
+      stage: "before",
+      caption: "Fasad",
+    };
+    expect(demoSampleSchema.parse({ ...sample, photos: [photo] }).photos).toEqual([photo]);
+    expect(demoSampleSchema.safeParse({ ...sample, photos: [photo, photo] }).success).toBe(false);
+    expect(demoSampleSchema.safeParse({ ...sample, id: "jatiasih", photos: [photo] }).success).toBe(
+      false,
+    );
   });
 });
