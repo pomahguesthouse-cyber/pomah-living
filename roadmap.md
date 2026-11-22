@@ -1,6 +1,7 @@
 # Pomah Living
 
 - [x] Guard Academy undefined questions; 78 tests pass, changed-file lint passes, and the public Academy page renders without browser errors.
+- [x] Sweep missing-item handling in sliders, asset analysis, demo/private project reads, admin editors, RAB imports, account selections, and shared controls; existing guards hold. Twelve signed-out public page checks produced no browser errors. Authenticated flows and live database constraints remain unverified for this sweep because no requesting-user session is available.
 
 - [x] Bangun desain, beranda, logo asli, dan ikon situs.
 - [x] Bangun pilihan tiga aset simulasi dan navigasi analisis.
