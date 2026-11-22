@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_progress: {
+        Row: {
+          completed: boolean
+          level: number
+          mission_index: number
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          completed?: boolean
+          level?: number
+          mission_index?: number
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          completed?: boolean
+          level?: number
+          mission_index?: number
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
       admin_audit_log: {
         Row: {
           action: string
@@ -274,6 +301,7 @@ export type Database = {
         }
         Returns: Json
       }
+      pomah_admin_metrics: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never
