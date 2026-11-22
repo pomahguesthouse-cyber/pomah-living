@@ -1,5 +1,7 @@
 # Pomah Living
 
+- [x] Guard Academy undefined questions; 78 tests pass, changed-file lint passes, and the public Academy page renders without browser errors.
+
 - [x] Bangun desain, beranda, logo asli, dan ikon situs.
 - [x] Bangun pilihan tiga aset simulasi dan navigasi analisis.
 - [x] Implementasikan checklist, formulir rupiah, kalkulasi, dan urutan keputusan.
