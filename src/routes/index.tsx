@@ -85,6 +85,7 @@ function Index() {
       })),
     retry: false,
     staleTime: 60_000,
+    refetchInterval: 240_000,
   });
   const slides = publicSlides.data?.length ? publicSlides.data : heroSlides;
   const [activeSlide, setActiveSlide] = useState(0);

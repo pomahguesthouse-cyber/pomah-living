@@ -1,11 +1,18 @@
-import { useState, type FormEvent } from "react";
-import { ArrowRight, Eye, Save, Trash2 } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, Eye, Save, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { isSafeImageUrl, slideSchema, type SlideInput } from "@/lib/admin";
-import type { HeroSlide } from "@/services/admin-service";
+import {
+  isSafeImageUrl,
+  slideDetailsSchema,
+  slideImageExtension,
+  type SlideInput,
+} from "@/lib/admin";
+import { adminError, type HeroSlide } from "@/services/admin-service";
+import { resolveHeroSlideImages, uploadHeroSlideImage } from "@/services/hero-slide-image-service";
 
 export function AdminSlideForm({
   slide,
@@ -15,24 +22,47 @@ export function AdminSlideForm({
 }: {
   slide?: HeroSlide;
   busy: boolean;
-  save: (value: SlideInput, id?: string) => Promise<void>;
+  save: (
+    value: Omit<SlideInput, "image_url">,
+    image: () => Promise<string>,
+    id?: string,
+  ) => Promise<void>;
   remove: (id: string) => Promise<void>;
 }) {
   const [published, setPublished] = useState(slide?.published ?? false);
-  const [image, setImage] = useState(slide?.image_url ?? "");
+  const existingImage = slide?.image_url ?? "";
+  const [file, setFile] = useState<File>();
+  const [objectUrl, setObjectUrl] = useState("");
+  const [uploadedImage, setUploadedImage] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [title, setTitle] = useState(slide?.title ?? "");
   const [description, setDescription] = useState(slide?.description ?? "");
   const [preview, setPreview] = useState(false);
-  const [brokenImage, setBrokenImage] = useState(false);
+  const [brokenImage, setBrokenImage] = useState("");
   const [error, setError] = useState("");
-  function submit(event: FormEvent<HTMLFormElement>) {
+  const savedPreview = useQuery({
+    queryKey: ["admin-hero-slide-image", existingImage],
+    queryFn: async () => (await resolveHeroSlideImages([existingImage])).get(existingImage) ?? null,
+    enabled: preview && !file && isSafeImageUrl(existingImage),
+    staleTime: 240_000,
+    refetchInterval: 240_000,
+    retry: false,
+  });
+  const previewImage = file ? objectUrl : savedPreview.data;
+  useEffect(() => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setObjectUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy || uploading) return;
     const form = new FormData(event.currentTarget);
     const val = (key: string) => String(form.get(key) ?? "").trim();
-    const result = slideSchema.safeParse({
+    const result = slideDetailsSchema.safeParse({
       title,
       description,
-      image_url: image.trim(),
       eyebrow: val("eyebrow"),
       image_alt: val("image_alt"),
       button_label: val("button_label"),
@@ -44,11 +74,34 @@ export function AdminSlideForm({
       setError(result.error.issues[0]?.message ?? "Periksa isian slide.");
       return;
     }
+    if (!file && !isSafeImageUrl(existingImage)) {
+      setError("Pilih gambar untuk slide ini.");
+      return;
+    }
     setError("");
-    void save(result.data, slide?.id);
+    setUploading(true);
+    try {
+      await save(
+        result.data,
+        async () => {
+          if (!file) return existingImage;
+          const imageUrl = uploadedImage || (await uploadHeroSlideImage(file));
+          setUploadedImage(imageUrl);
+          return imageUrl;
+        },
+        slide?.id,
+      );
+    } catch (cause) {
+      setError(adminError(cause));
+    } finally {
+      setUploading(false);
+    }
   }
   return (
-    <form onSubmit={submit} className="rounded-lg border border-border bg-card p-5">
+    <form
+      onSubmit={(event) => void submit(event)}
+      className="rounded-lg border border-border bg-card p-5"
+    >
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h3 className="font-semibold">
           {slide ? `Slide · urutan ${slide.sort_order}` : "Tambah slide"}
@@ -81,19 +134,37 @@ export function AdminSlideForm({
           />
         </label>
         <label className="text-xs font-medium sm:col-span-2">
-          URL gambar HTTPS
+          <span className="flex items-center gap-2">
+            <Upload className="size-4" /> Unggah gambar slide
+          </span>
           <Input
-            name="image_url"
             className="mt-2"
-            type="url"
-            maxLength={1000}
-            required
-            value={image}
-            onChange={(e) => {
-              setImage(e.target.value);
-              setBrokenImage(false);
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={busy || uploading}
+            onChange={(event) => {
+              const selected = event.currentTarget.files?.[0];
+              event.currentTarget.value = "";
+              if (!selected) return;
+              if (!slideImageExtension(selected)) {
+                setError("Pilih JPG, PNG, atau WebP maksimal 10 MB.");
+                return;
+              }
+              setFile(selected);
+              setUploadedImage("");
+              setObjectUrl("");
+              setBrokenImage("");
+              setError("");
+              setPreview(true);
             }}
           />
+          <span className="mt-2 block text-muted-foreground">
+            {file
+              ? file.name
+              : existingImage
+                ? "Pilih file untuk mengganti gambar slide ini."
+                : "JPG, PNG, atau WebP maksimal 10 MB."}
+          </span>
         </label>
         <label className="text-xs font-medium">
           Deskripsi gambar
@@ -166,8 +237,8 @@ export function AdminSlideForm({
         </p>
       )}
       <div className="mt-5 flex flex-wrap gap-2">
-        <Button type="submit" disabled={busy}>
-          <Save /> {slide ? "Simpan perubahan" : "Tambah slide"}
+        <Button type="submit" disabled={busy || uploading}>
+          <Save /> {uploading ? "Menyimpan…" : slide ? "Simpan perubahan" : "Tambah slide"}
         </Button>
         <Button type="button" variant="outline" onClick={() => setPreview(!preview)}>
           <Eye /> Pratinjau
@@ -176,7 +247,7 @@ export function AdminSlideForm({
           <Button
             type="button"
             variant="ghost"
-            disabled={busy}
+            disabled={busy || uploading}
             onClick={() => void remove(slide.id)}
           >
             <Trash2 /> Hapus
@@ -185,17 +256,23 @@ export function AdminSlideForm({
       </div>
       {preview && (
         <div className="mt-5 border-t border-border pt-5">
-          {isSafeImageUrl(image) && !brokenImage ? (
+          {previewImage && brokenImage !== previewImage ? (
             <img
-              src={image}
+              src={previewImage}
               alt="Pratinjau gambar slide"
               referrerPolicy="no-referrer"
-              onError={() => setBrokenImage(true)}
+              onError={() => setBrokenImage(previewImage)}
               className="aspect-[16/9] w-full rounded-md object-cover"
             />
           ) : (
             <p role="alert" className="text-sm text-destructive">
-              Gambar belum dapat ditampilkan. Periksa URL dan izin akses gambar.
+              {file
+                ? "Gambar belum dapat ditampilkan."
+                : savedPreview.isFetching
+                  ? "Memuat gambar…"
+                  : existingImage
+                    ? "Gambar belum dapat ditampilkan."
+                    : "Pilih gambar untuk melihat pratinjau."}
             </p>
           )}
           <h4 className="mt-3 text-lg font-semibold">{title}</h4>

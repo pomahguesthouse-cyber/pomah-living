@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { canReviewApproval, isSafeImageUrl, slideSchema } from "@/lib/admin";
+import {
+  canReviewApproval,
+  heroSlideImagePath,
+  isSafeImageUrl,
+  slideImageExtension,
+  slideSchema,
+} from "@/lib/admin";
 
 describe("Admin input boundaries", () => {
   it("accepts public HTTPS images", () => {
@@ -16,6 +22,21 @@ describe("Admin input boundaries", () => {
       "https://images.internal/a",
     ])
       expect(isSafeImageUrl(url)).toBe(false);
+  });
+  it("recognizes managed hero uploads while leaving ordinary URLs as legacy images", () => {
+    const file = "abcdef12-1234-1234-1234-123456789abc.webp";
+    expect(
+      heroSlideImagePath(`https://example.com/storage/v1/object/public/hero-slide-images/${file}`),
+    ).toBe(file);
+    expect(heroSlideImagePath("https://images.example.com/house.webp")).toBeUndefined();
+  });
+
+  it("accepts supported files up to 10 MB and rejects SVG, empty and oversized files", () => {
+    const size = 10 * 1024 * 1024;
+    expect(slideImageExtension({ type: "image/jpeg", size })).toBe("jpg");
+    expect(slideImageExtension({ type: "image/png", size: size + 1 })).toBeUndefined();
+    expect(slideImageExtension({ type: "image/webp", size: 0 })).toBeUndefined();
+    expect(slideImageExtension({ type: "image/svg+xml", size })).toBeUndefined();
   });
   it("only allows known local CTA destinations", () => {
     const slide = {

@@ -156,9 +156,13 @@ function AdminWorkspace({ userId, role }: { userId: string; role: string }) {
       setBusy(false);
     }
   }
-  async function save(value: SlideInput, id?: string) {
+  async function save(
+    value: Omit<SlideInput, "image_url">,
+    image: () => Promise<string>,
+    id?: string,
+  ) {
     await perform(async () => {
-      await saveAdminSlide(value, id);
+      await saveAdminSlide({ ...value, image_url: await image() }, id);
       if (!id) setNewSlideKey((key) => key + 1);
     }, "Slide tersimpan dan perubahan tercatat.");
   }

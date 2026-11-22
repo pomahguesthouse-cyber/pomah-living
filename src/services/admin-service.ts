@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
-import { directorySchema, slideSchema, isSafeImageUrl, type SlideInput } from "@/lib/admin";
+import { directorySchema, slideSchema, type SlideInput } from "@/lib/admin";
 import type { Tables } from "@/integrations/supabase/types";
+
+import { resolveHeroSlideImages } from "@/services/hero-slide-image-service";
 
 export type HeroSlide = Tables<"hero_slides">;
 export async function fetchAdminRole(userId: string) {
@@ -29,7 +31,11 @@ export async function fetchPublishedSlides() {
     .order("sort_order")
     .order("id");
   if (error) throw error;
-  return data.filter((slide) => isSafeImageUrl(slide.image_url));
+  const urls = await resolveHeroSlideImages(data.map((slide) => slide.image_url));
+  return data.flatMap((slide) => {
+    const image = urls.get(slide.image_url);
+    return image ? [{ ...slide, image_url: image }] : [];
+  });
 }
 export async function saveAdminSlide(value: SlideInput, id?: string) {
   const payload = slideSchema.parse(value);
@@ -94,11 +100,19 @@ export function adminError(error: unknown) {
 }
 
 /** Aggregated on the database with SECURITY DEFINER; never query other users' projects from the browser. */
-export type AdminMetrics = { users: number; projects: number; sold: number; pending: number; published: number; assets: number | null };
+export type AdminMetrics = {
+  users: number;
+  projects: number;
+  sold: number;
+  pending: number;
+  published: number;
+  assets: number | null;
+};
 export async function fetchAdminMetrics(): Promise<AdminMetrics> {
   const { data, error } = await supabase.rpc("pomah_admin_metrics");
   if (error) throw error;
   const result = data as unknown as AdminMetrics;
-  if (!result || typeof result.users !== "number" || typeof result.projects !== "number") throw new Error("Format statistik admin tidak valid.");
+  if (!result || typeof result.users !== "number" || typeof result.projects !== "number")
+    throw new Error("Format statistik admin tidak valid.");
   return result;
 }

@@ -17,16 +17,39 @@ export function isSafeImageUrl(value: string): boolean {
   }
 }
 
-export const slideSchema = z.object({
+const slideImageExtensions = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+} as const;
+
+export function slideImageExtension(file: Pick<File, "type" | "size">) {
+  if (
+    file.size <= 0 ||
+    file.size > 10 * 1024 * 1024 ||
+    !Object.hasOwn(slideImageExtensions, file.type)
+  )
+    return undefined;
+  return slideImageExtensions[file.type as keyof typeof slideImageExtensions];
+}
+
+export function heroSlideImagePath(value: string) {
+  return value.match(
+    /\/storage\/v1\/object\/public\/hero-slide-images\/([a-f0-9-]{36}\.(?:jpg|png|webp))$/,
+  )?.[1];
+}
+export const slideDetailsSchema = z.object({
   title: z.string().trim().min(1, "Judul wajib diisi.").max(160),
   eyebrow: z.string().trim().max(100),
   description: z.string().trim().max(350),
-  image_url: z.string().refine(isSafeImageUrl, "Gunakan URL gambar HTTPS publik tanpa kredensial."),
   image_alt: z.string().trim().min(1, "Deskripsi gambar wajib diisi.").max(180),
   button_label: z.string().trim().min(1).max(80),
   button_href: z.enum(["/pilih-aset", "/proyek/demo"]),
   sort_order: z.number().int().min(0).max(999),
   published: z.boolean(),
+});
+export const slideSchema = slideDetailsSchema.extend({
+  image_url: z.string().refine(isSafeImageUrl, "Gambar slide tidak valid."),
 });
 export type SlideInput = z.infer<typeof slideSchema>;
 export const directorySchema = z.object({
