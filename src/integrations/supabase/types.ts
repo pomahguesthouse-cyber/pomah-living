@@ -161,6 +161,33 @@ export type Database = {
         }
         Relationships: []
       }
+      pomah_flipping_demos: {
+        Row: {
+          description: string
+          id: string
+          payload: Json
+          published: boolean
+          revision: number
+          updated_at: string
+        }
+        Insert: {
+          description?: string
+          id: string
+          payload: Json
+          published?: boolean
+          revision?: number
+          updated_at?: string
+        }
+        Update: {
+          description?: string
+          id?: string
+          payload?: Json
+          published?: boolean
+          revision?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pomah_project_details: {
         Row: {
           payload: Json

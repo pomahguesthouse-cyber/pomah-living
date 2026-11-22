@@ -39,6 +39,13 @@ import { formatRupiah } from "@/lib/simulation";
 import { useFlippingStore } from "@/stores/flipping-store";
 import { useSession } from "@/hooks/use-session";
 import { loadFlippingProject, saveFlippingProject } from "@/services/flipping-service";
+import {
+  canonicalDemoId,
+  demoStorageKey,
+  restoreDemoSample,
+  serializeDemoEdit,
+} from "@/lib/flipping-demos";
+import { fetchPublishedDemos, publishedDemoKey } from "@/services/flipping-demo-service";
 
 export const Route = createFileRoute("/proyek/$id")({
   loader: ({ params }) => {
@@ -110,7 +117,17 @@ function ProjectPage() {
   const demo = isDemoProject(id);
   const { session, ready } = useSession();
   const userId = session?.user.id;
-  const key = demo ? `demo:${id}` : `${userId ?? "signed-out"}:${id}`;
+  const published = useQuery({
+    queryKey: publishedDemoKey,
+    queryFn: fetchPublishedDemos,
+    enabled: demo,
+    retry: false,
+  });
+  const sample = published.data?.find((item) => item.id === canonicalDemoId(id));
+  const key = demo
+    ? `demo:${sample?.id ?? id}:revision:${sample?.revision ?? 0}`
+    : `${userId ?? "signed-out"}:${id}`;
+  const [hydratedKey, setHydratedKey] = useState("");
   const project = useFlippingStore((state) => state.projects[key]);
   const setProject = useFlippingStore((state) => state.setProject);
   const removeProject = useFlippingStore((state) => state.removeProject);
@@ -131,23 +148,23 @@ function ProjectPage() {
     refetchOnWindowFocus: false,
   });
   useEffect(() => {
-    if (!demo) return;
-    const initial = makeFlippingProject(id);
+    if (!demo || !sample) return;
     try {
-      const saved = localStorage.getItem(`pomah:flipping:demo:${id}`);
-      setProject(key, saved ? readFlippingProject(JSON.parse(saved)) : initial);
+      const saved = localStorage.getItem(demoStorageKey(sample));
+      setProject(key, restoreDemoSample(sample, saved));
       setMessage(
         saved
           ? "Demo dipulihkan dari perangkat ini."
           : "Demo siap. Perubahan disimpan pada perangkat ini saja.",
       );
     } catch {
-      setProject(key, initial);
+      setProject(key, sample.project);
       setMessage(
         "Simpanan demo tidak dapat dibaca. Contoh awal ditampilkan; simpanan lama belum dihapus.",
       );
     }
-  }, [demo, id, key, setProject]);
+    setHydratedKey(key);
+  }, [demo, sample, key, setProject]);
   useEffect(() => {
     if (!demo && detail.data) {
       setProject(key, detail.data.project);
@@ -155,15 +172,15 @@ function ProjectPage() {
     }
   }, [demo, detail.data, key, setProject]);
   useEffect(() => {
-    if (!demo || !project) return;
+    if (!demo || !project || !sample || hydratedKey !== key) return;
     try {
-      localStorage.setItem(`pomah:flipping:demo:${id}`, JSON.stringify(project));
+      localStorage.setItem(demoStorageKey(sample), serializeDemoEdit(sample, project));
     } catch {
       setMessage(
         "Penyimpanan lokal tidak tersedia. Perubahan hanya tersimpan selama halaman ini terbuka.",
       );
     }
-  }, [demo, id, project]);
+  }, [demo, sample, project, hydratedKey, key]);
   useEffect(
     () => () => {
       if (!demo) removeProject(key);
@@ -224,7 +241,16 @@ function ProjectPage() {
         </div>
       </main>
     );
-  if (!project)
+  if (demo && published.isError)
+    return (
+      <main className="page-container py-14">
+        <p role="alert">Demo publik gagal dimuat. Simulasi pribadi Anda tidak diubah.</p>
+        <Button className="mt-4" onClick={() => void published.refetch()}>
+          Coba lagi
+        </Button>
+      </main>
+    );
+  if (!project || (demo && (!sample || hydratedKey !== key)))
     return (
       <main className="page-container py-14" role="status">
         Memuat rincian proyek…
@@ -274,6 +300,9 @@ function ProjectPage() {
             <h1 className="mt-2 text-2xl font-semibold leading-tight sm:text-3xl">
               {project.property.name}
             </h1>
+            {demo && sample && (
+              <p className="mt-3 text-sm text-muted-foreground">{sample.description}</p>
+            )}
             <p className="mt-3 flex items-start gap-2 text-xs leading-6 text-muted-foreground">
               <MapPin className="mt-1 size-4 shrink-0" />
               {project.property.address || "Alamat belum diisi"}
@@ -693,7 +722,7 @@ function ProjectPage() {
               variant="outline"
               onClick={() => {
                 if (window.confirm("Kembalikan semua perubahan demo ke contoh awal?"))
-                  update(makeFlippingProject(id));
+                  if (sample) update(sample.project);
               }}
             >
               <RotateCcw />

@@ -13,3 +13,5 @@
 - [x] Uji akses admin, slide publik, audit, pencarian akun, lint, dan 74 pengujian; build OK.
 - [x] Verifikasi super_admin yang sudah tersedia; tidak menetapkan atau menaikkan akun sendiri.
 - [ ] Unggah gambar: diblokir kebijakan public buckets workspace; gunakan URL HTTPS sementara.
+- [ ] Add shared admin Flipping Demo drafts/publications with audit and revision-aware local edits.
+- [ ] Verify shared demo editing, public listings/details, tests and lint; commit without publishing.

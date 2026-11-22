@@ -16,6 +16,8 @@ import { fetchPreferredRegions, preferredRegionsKey } from "@/services/account-d
 import { properties } from "@/lib/properties";
 import { calculateSimulation, formatRupiah } from "@/lib/simulation";
 import { cn } from "@/lib/utils";
+import { fetchPublishedDemos, publishedDemoKey } from "@/services/flipping-demo-service";
+import { calculateFlipping } from "@/lib/flipping";
 
 export const Route = createFileRoute("/pilih-aset")({
   head: () => ({
@@ -40,6 +42,12 @@ export const Route = createFileRoute("/pilih-aset")({
 });
 
 function SelectAsset() {
+  const demos = useQuery({
+    queryKey: publishedDemoKey,
+    queryFn: fetchPublishedDemos,
+    retry: false,
+  });
+  const featuredDemo = demos.data?.find((item) => item.id === "demo");
   const { session, ready } = useSession();
   const id = session?.user.id;
   const regions = useQuery({
@@ -54,7 +62,7 @@ function SelectAsset() {
   const visibleProperties = isFiltering
     ? properties.filter((property) => matchesPreferredRegions(property.regionCode, preferences))
     : properties;
-  const canShowListings = ready && (!id || regions.isSuccess);
+  const canShowListings = ready && (!id || regions.isSuccess) && demos.isSuccess;
 
   return (
     <main className="page-container reveal py-10 sm:py-14">
@@ -85,10 +93,11 @@ function SelectAsset() {
       </div>
       <section className="mt-7 flex flex-wrap items-center justify-between gap-4 border-y border-border py-5">
         <div>
-          <h2 className="text-base font-semibold">Proyek flipping demo</h2>
+          <h2 className="text-base font-semibold">
+            {featuredDemo?.project.property.name ?? "Proyek flipping demo"}
+          </h2>
           <p className="mt-1 text-xs leading-6 text-muted-foreground">
-            Analisis investasi, renovasi, dokumen, dan timeline. Contoh fiktif, tersedia tanpa
-            login.
+            {featuredDemo?.description ?? "Contoh fiktif, tersedia tanpa login."}
           </p>
         </div>
         <Button asChild>
@@ -112,7 +121,16 @@ function SelectAsset() {
           </Button>
         </div>
       )}
+      {demos.isError && (
+        <div className="mt-5">
+          <p role="alert">Demo publik gagal dimuat.</p>
+          <Button className="mt-2" onClick={() => void demos.refetch()}>
+            Coba lagi
+          </Button>
+        </div>
+      )}
       {!canShowListings &&
+        !demos.isError &&
         (id && regions.isError ? (
           <div className="mt-8 space-y-2">
             <p role="alert" className="text-sm">
@@ -133,6 +151,7 @@ function SelectAsset() {
       <div className="mt-9 grid gap-6 md:grid-cols-3">
         {canShowListings &&
           visibleProperties.map((property) => {
+            const sample = demos.data?.find((item) => item.id === property.id);
             const complete = Object.values(property.verification).every(Boolean);
             const bidLimit = calculateSimulation(property.initialValues).bidLimit;
             return (
@@ -153,7 +172,12 @@ function SelectAsset() {
                     <MapPin className="size-3.5" />
                     {property.location}
                   </p>
-                  <h2 className="mt-2 text-xl font-semibold">{property.name}</h2>
+                  <h2 className="mt-2 text-xl font-semibold">
+                    {sample?.project.property.name ?? property.name}
+                  </h2>
+                  {sample && (
+                    <p className="mt-2 text-xs text-muted-foreground">{sample.description}</p>
+                  )}
                   <div
                     className={cn(
                       "mt-4 flex min-h-10 items-center gap-2 text-xs",
@@ -171,7 +195,7 @@ function SelectAsset() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Nilai limit lelang</span>
                       <span className="text-lg font-semibold tabular-nums">
-                        {formatRupiah(property.auctionLimit)}
+                        {formatRupiah(sample?.project.property.limit ?? property.auctionLimit)}
                       </span>
                     </div>
                     <div className="mt-2 flex items-center justify-between">
@@ -186,6 +210,16 @@ function SelectAsset() {
                       </span>
                     </div>
                   </div>
+                  {sample && (
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      Biaya all-in demo:{" "}
+                      <strong>
+                        {formatRupiah(
+                          calculateFlipping(sample.project.finance, sample.project.rab).allIn,
+                        )}
+                      </strong>
+                    </p>
+                  )}
                   <Button asChild variant="outline" className="mt-6 h-11 w-full justify-between">
                     <Link to="/analisis/$assetId" params={{ assetId: property.id }}>
                       Analisis aset

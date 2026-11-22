@@ -44,3 +44,4 @@ use the editor.
 - Use one public project-detail route with an inline sign-in state for private IDs and owner-scoped service reads; show fictional fixtures independently of asset preferences.
 - Route admin and public slider data through the admin service; enforce privileges through database RLS and authenticated directory RPC, with atomic database-trigger audit so browser calls cannot bypass authorization or omit records.
 - Provision admin roles only through owner-authorized privileged operations; never select an account automatically or expose role writes to authenticated users.
+- Keep shared demo drafts and publications in separate RLS-filtered rows; key local demo edits by canonical ID and published revision so stale simulations never shadow new publications or affect private projects.
