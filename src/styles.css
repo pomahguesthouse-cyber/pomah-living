@@ -97,13 +97,6 @@
   --hero-foreground: oklch(0.99 0.003 85);
   --hero-muted: oklch(0.88 0.011 170);
   --hero-line: oklch(1 0 0 / 22%);
-  --hero-overlay: linear-gradient(
-    90deg,
-    oklch(0.21 0.036 182 / 96%) 0%,
-    oklch(0.21 0.036 182 / 89%) 30%,
-    oklch(0.21 0.036 182 / 42%) 57%,
-    oklch(0.21 0.036 182 / 5%) 100%
-  );
   --shadow-card: 0 5px 25px oklch(0.25 0.02 180 / 4%);
   --background: oklch(0.988 0.004 90);
   --foreground: oklch(0.265 0.022 182);
@@ -222,11 +215,6 @@
   height: 100%;
   object-fit: cover;
   object-position: 65% 55%;
-}
-.hero-shade {
-  position: absolute;
-  inset: 0;
-  background: var(--hero-overlay);
 }
 .hero-content {
   position: relative;
@@ -443,9 +431,6 @@
   }
   .hero-photo {
     object-position: 62% center;
-  }
-  .hero-shade {
-    background: linear-gradient(90deg, oklch(0.21 0.036 182 / 92%), oklch(0.21 0.036 182 / 58%));
   }
   .section-title {
     font-size: 27px;
