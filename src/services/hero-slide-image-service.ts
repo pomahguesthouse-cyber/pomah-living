@@ -3,6 +3,9 @@ import { heroSlideImagePath, isSafeImageUrl, slideImageExtension } from "@/lib/a
 
 const bucket = "hero-slide-images";
 const signedUrlSeconds = 300;
+const imageReplacements = new Map([
+  ["06ca0225-c50a-4552-b5aa-7df43173b053.png", "/images/hero-banner-no-corner-logo.png"],
+]);
 
 export async function uploadHeroSlideImage(file: File) {
   const extension = slideImageExtension(file);
@@ -20,9 +23,12 @@ export async function resolveHeroSlideImages(images: string[]) {
   const uploaded = new Map<string, string>();
   for (const image of images.filter(isSafeImageUrl)) {
     const path = heroSlideImagePath(image);
-    if (path && supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl === image)
-      uploaded.set(path, image);
-    else urls.set(image, image);
+    if (path && supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl === image) {
+      // Replace only the original banner; later admin uploads keep their own images.
+      const replacement = imageReplacements.get(path);
+      if (replacement) urls.set(image, replacement);
+      else uploaded.set(path, image);
+    } else urls.set(image, image);
   }
   if (uploaded.size === 0) return urls;
 
