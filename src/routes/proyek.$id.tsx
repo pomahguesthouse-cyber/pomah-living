@@ -641,7 +641,7 @@ function ProjectPage() {
               </TabsContent>
             </Tabs>
           </div>
-          <aside className="investment-summary result-panel min-w-0 p-5 lg:sticky lg:top-5">
+          <aside className="investment-summary result-panel min-w-0 p-5 lg:sticky lg:top-25">
             <p className="eyebrow text-brand">Ringkasan investasi</p>
             <h2 className="mt-4 text-xs text-muted-foreground">Proyeksi laba / rugi bersih</h2>
             <p
