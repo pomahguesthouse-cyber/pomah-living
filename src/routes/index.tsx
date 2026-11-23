@@ -165,6 +165,14 @@ function Index() {
           </div>
         )}
         <h1 className="sr-only">{slide.title}</h1>
+        <div className="absolute inset-0 z-[5] flex items-center justify-center pointer-events-none">
+          <Button asChild className="pointer-events-auto min-h-16 rounded-xl bg-white px-9 py-5 text-lg font-bold text-slate-950 shadow-2xl ring-2 ring-white/80 transition-transform hover:scale-105 hover:bg-white sm:min-h-20 sm:px-14 sm:text-2xl">
+            <Link to="/aset-baru">
+              Mulai Sekarang
+              <ArrowRight className="ml-3 size-6" aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
         {!heroLoading && slides.length > 1 && (
           <div className="absolute bottom-3 left-0 right-0 z-10 sm:bottom-5">
             <div className="page-container flex items-center justify-between gap-4">
@@ -218,19 +226,9 @@ function Index() {
         <p className="text-xs text-muted-foreground">
           Tanpa login untuk demo · Data simulasi, bukan listing BTN
         </p>
-        <Button asChild variant="hero" className="gap-3">
-          {slide.href === "/pilih-aset" ? (
-            <Link to="/pilih-aset">
-              {slide.action}
-              <ArrowRight />
-            </Link>
-          ) : (
-            <Link to="/proyek/$id" params={{ id: "demo" }}>
-              {slide.action}
-              <ArrowRight />
-            </Link>
-          )}
-        </Button>
+        <p className="text-xs font-medium text-muted-foreground">
+          Mulai dengan tautan lelang BTN/DJKN atau masukkan data aset sendiri.
+        </p>
       </div>
       <section className="page-container py-14 sm:py-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
