@@ -91,6 +91,17 @@ function SelectAsset() {
           )}
         </span>
       </div>
+      <section className="mt-7 rounded-xl border border-border bg-card p-5 sm:p-6">
+        <p className="eyebrow text-brand">Aset Anda sendiri</p>
+        <h2 className="mt-2 text-xl font-semibold">Punya aset lelang atau properti lain?</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          Mulai dari tautan lelang BTN atau DJKN, atau isi data properti secara manual.
+          Setelah itu hitung estimasi biaya, laba, dan batas tawar.
+        </p>
+        <Button asChild className="mt-4">
+          <Link to="/aset-baru">Tambah aset sendiri <ArrowRight className="ml-2 size-4" /></Link>
+        </Button>
+      </section>
       <section className="mt-7 flex flex-wrap items-center justify-between gap-4 border-y border-border py-5">
         <div>
           <h2 className="text-base font-semibold">
