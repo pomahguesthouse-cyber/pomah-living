@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AcademyRouteImport } from './routes/academy'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AsetBaruRouteImport } from './routes/aset-baru'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PilihAsetRouteImport } from './routes/pilih-aset'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
@@ -38,6 +39,11 @@ const AcademyRoute = AcademyRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AsetBaruRoute = AsetBaruRouteImport.update({
+  id: '/aset-baru',
+  path: '/aset-baru',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/academy': typeof AcademyRoute
   '/admin': typeof AdminRoute
+  '/aset-baru': typeof AsetBaruRoute
   '/auth': typeof AuthRoute
   '/pilih-aset': typeof PilihAsetRoute
   '/profil': typeof AuthenticatedProfilRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/academy': typeof AcademyRoute
   '/admin': typeof AdminRoute
+  '/aset-baru': typeof AsetBaruRoute
   '/auth': typeof AuthRoute
   '/pilih-aset': typeof PilihAsetRoute
   '/profil': typeof AuthenticatedProfilRoute
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/academy': typeof AcademyRoute
   '/admin': typeof AdminRoute
+  '/aset-baru': typeof AsetBaruRoute
   '/auth': typeof AuthRoute
   '/pilih-aset': typeof PilihAsetRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/'
     | '/academy'
     | '/admin'
+    | '/aset-baru'
     | '/auth'
     | '/pilih-aset'
     | '/profil'
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/'
     | '/academy'
     | '/admin'
+    | '/aset-baru'
     | '/auth'
     | '/pilih-aset'
     | '/profil'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/academy'
     | '/admin'
+    | '/aset-baru'
     | '/auth'
     | '/pilih-aset'
     | '/_authenticated/profil'
@@ -159,6 +171,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AcademyRoute: typeof AcademyRoute
   AdminRoute: typeof AdminRoute
+  AsetBaruRoute: typeof AsetBaruRoute
   AuthRoute: typeof AuthRoute
   PilihAsetRoute: typeof PilihAsetRoute
   AnalisisAssetIdRoute: typeof AnalisisAssetIdRoute
@@ -193,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aset-baru': {
+      id: '/aset-baru'
+      path: '/aset-baru'
+      fullPath: '/aset-baru'
+      preLoaderRoute: typeof AsetBaruRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -267,6 +287,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AcademyRoute: AcademyRoute,
   AdminRoute: AdminRoute,
+  AsetBaruRoute: AsetBaruRoute,
   AuthRoute: AuthRoute,
   PilihAsetRoute: PilihAsetRoute,
   AnalisisAssetIdRoute: AnalisisAssetIdRoute,
