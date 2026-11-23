@@ -4,6 +4,7 @@ import { ArrowRight, FileSearch, Link2, PenLine, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { calculateSimulation, formatRupiah } from "@/lib/simulation";
 import { importAuctionUrl } from "@/lib/import-auction";
+import { parseAuctionText } from "@/lib/auction-text-parser";
 
 export const Route = createFileRoute("/aset-baru")({
   head: () => ({ meta: [{ title: "Tambah aset — Pomah Living" }] }),
@@ -58,6 +59,7 @@ const fields: { key: keyof AssetDraft; label: string; type?: string; hint?: stri
 function NewAsset() {
   const [mode, setMode] = useState<"url" | "manual">("url");
   const [url, setUrl] = useState("");
+  const [copiedText, setCopiedText] = useState("");
   const [asset, setAsset] = useState<AssetDraft>(empty);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
@@ -95,6 +97,26 @@ function NewAsset() {
     } finally {
       setBusy(false);
     }
+  }
+  function importCopiedText() {
+    const parsed = parseAuctionText(copiedText);
+    if (![parsed.name, parsed.address, parsed.limit, parsed.deposit, parsed.landArea, parsed.buildingArea].some(Boolean)) {
+      setError("Teks detail lelang belum dikenali. Salin bagian ringkasan lelang dan tab Uraian.");
+      return;
+    }
+    setAsset((prev) => ({
+      ...prev,
+      name: parsed.name || prev.name,
+      address: parsed.address || prev.address,
+      auctionLimit: parsed.limit === null ? prev.auctionLimit : String(parsed.limit),
+      auctionDeposit: parsed.deposit === null ? prev.auctionDeposit : String(parsed.deposit),
+      landArea: parsed.landArea === null ? prev.landArea : String(parsed.landArea),
+      buildingArea: parsed.buildingArea === null ? prev.buildingArea : String(parsed.buildingArea),
+      notes: [prev.notes, parsed.certificate && "Sertifikat: " + parsed.certificate, parsed.lotCode && "Kode lot: " + parsed.lotCode].filter(Boolean).join("\n"),
+    }));
+    setError("");
+    setNotice("Informasi dari teks halaman sudah dimasukkan. Periksa kembali berdasarkan pengumuman resmi.");
+    setSaved(false);
   }
   const num = (key: keyof AssetDraft) => Number(asset[key] || 0);
   const validMoney = [
@@ -190,6 +212,21 @@ function NewAsset() {
             Mendukung halaman HTTPS lelang.go.id dan balelelang.btn.co.id. Situs yang memerlukan
             login atau membatasi akses mungkin tidak bisa diimpor. Data tetap perlu diverifikasi.
           </p>
+        </section>
+      )}
+      {mode === "url" && (
+        <section className="mt-5 max-w-2xl rounded-xl border border-border p-5">
+          <h2 className="text-base font-semibold">Alternatif: tempel teks detail DJKN</h2>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            Jika impor URL tidak menemukan detail aset, buka halaman lelang, salin teks ringkasan dan tab Uraian, lalu tempel di sini. Data yang ditemukan akan mengisi formulir. Tidak perlu menunggu scraper browser.
+          </p>
+          <label htmlFor="auction-copy" className="mt-4 block text-sm font-medium">Teks halaman DJKN</label>
+          <textarea id="auction-copy" value={copiedText} onChange={(e) => setCopiedText(e.target.value)}
+            rows={5} placeholder="Nilai Limit Rp223.000.000 ... Uang Jaminan ... Luas: 77 M² ... Alamat: ..."
+            className="mt-2 w-full rounded-md border border-input bg-background p-3 text-sm" />
+          <Button type="button" variant="outline" className="mt-3" disabled={!copiedText.trim()} onClick={importCopiedText}>
+            Isi formulir dari teks
+          </Button>
         </section>
       )}
       {notice && (

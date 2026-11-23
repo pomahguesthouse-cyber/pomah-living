@@ -1,3 +1,4 @@
+import { parseAuctionText } from "@/lib/auction-text-parser";
 import { createServerFn } from "@tanstack/react-start";
 
 export type AuctionMetadata = {
@@ -78,6 +79,14 @@ function area(raw: string): number | null {
   return raw && Number.isFinite(n) && n > 0 ? n : null;
 }
 
+function textFromHtml(html: string): string {
+  return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<\/(?:div|p|h[1-6]|li|td|tr|section)>/gi, "\n")
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<[^>]+>/g, " ");
+}
+
 export const importAuctionUrl = createServerFn({ method: "POST" })
   .inputValidator((data: { url: string }) => {
     if (typeof data?.url !== "string" || data.url.length > 2048)
@@ -111,10 +120,16 @@ export const importAuctionUrl = createServerFn({ method: "POST" })
       const landArea = area(field(html, /\bLuas\s+Tanah\b/i, "area"));
       const buildingArea = area(field(html, /\bLuas\s+Bangunan\b/i, "area"));
       const address = field(html, /\b(?:Alamat(?:\s+(?:Aset|Objek))?|Lokasi\s+(?:Aset|Objek))\b/i, "address");
-      const found = [limit, deposit, landArea, buildingArea, address].filter(Boolean).length;
+      const parsed = parseAuctionText(decodeEntities(textFromHtml(html)));
+      const actualLimit = limit ?? parsed.limit;
+      const actualDeposit = deposit ?? parsed.deposit;
+      const actualLandArea = landArea ?? parsed.landArea;
+      const actualBuildingArea = buildingArea ?? parsed.buildingArea;
+      const actualAddress = address || parsed.address;
+      const found = [actualLimit, actualDeposit, actualLandArea, actualBuildingArea, actualAddress].filter(Boolean).length;
       return {
         title: title.slice(0, 180), description: description.slice(0, 500),
-        limit, deposit, landArea, buildingArea, address, sourceUrl: data.url,
+        limit: actualLimit, deposit: actualDeposit, landArea: actualLandArea, buildingArea: actualBuildingArea, address: actualAddress, sourceUrl: data.url,
         warning: found === 0
           ? "Detail aset tidak tersedia pada HTML awal; situs mungkin memuat datanya lewat JavaScript. Lengkapi menggunakan dokumen resmi atau input manual."
           : "Data diambil dari HTML publik; verifikasi seluruh nilai dan informasi sesuai pengumuman resmi.",
