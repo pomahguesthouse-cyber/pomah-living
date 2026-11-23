@@ -15,6 +15,7 @@ type AssetDraft = {
   address: string;
   sourceUrl: string;
   auctionLimit: string;
+  auctionDeposit: string;
   landArea: string;
   buildingArea: string;
   salePrice: string;
@@ -30,6 +31,7 @@ const empty: AssetDraft = {
   address: "",
   sourceUrl: "",
   auctionLimit: "",
+  auctionDeposit: "",
   landArea: "",
   buildingArea: "",
   salePrice: "",
@@ -43,6 +45,7 @@ const fields: { key: keyof AssetDraft; label: string; type?: string; hint?: stri
   { key: "name", label: "Nama aset" },
   { key: "address", label: "Alamat / lokasi properti" },
   { key: "auctionLimit", label: "Nilai limit / harga akuisisi (Rp)", type: "number" },
+  { key: "auctionDeposit", label: "Uang jaminan lelang (Rp)", type: "number" },
   { key: "landArea", label: "Luas tanah (m²)", type: "number" },
   { key: "buildingArea", label: "Luas bangunan (m²)", type: "number" },
   { key: "salePrice", label: "Perkiraan harga jual setelah renovasi (Rp)", type: "number" },
@@ -75,6 +78,10 @@ function NewAsset() {
         sourceUrl: data.sourceUrl,
         name: data.title || prev.name,
         auctionLimit: data.limit === null ? prev.auctionLimit : String(data.limit),
+        auctionDeposit: data.deposit === null ? prev.auctionDeposit : String(data.deposit),
+        address: data.address || prev.address,
+        landArea: data.landArea === null ? prev.landArea : String(data.landArea),
+        buildingArea: data.buildingArea === null ? prev.buildingArea : String(data.buildingArea),
         notes: data.description || prev.notes,
       }));
       setNotice(data.warning ?? "Data awal berhasil dibaca. Periksa dan lengkapi kolom di bawah.");
