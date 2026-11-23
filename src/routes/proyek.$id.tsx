@@ -136,6 +136,7 @@ function ProjectPage() {
   const [saving, setSaving] = useState(false);
   const [revision, setRevision] = useState(0);
   const [tab, setTab] = useState("asset");
+  const [activeWizardStep, setActiveWizardStep] = useState(0);
   const form = useRef<HTMLFormElement>(null);
   const detail = useQuery({
     queryKey: ["flipping-project", userId, id],
@@ -274,8 +275,10 @@ function ProjectPage() {
     { title: "2. Simulasi renovasi", detail: "RAB pekerjaan, foto kondisi dan durasi pelaksanaan", tabs: ["rab", "photos", "timeline"] },
     { title: "3. Simulasi penjualan", detail: "Harga jual, biaya penjualan, skenario dan laba bersih", tabs: ["scenarios", "analysis", "market"] },
   ] as const;
-  const activeWizardStep = tab === "rab" || tab === "photos" || tab === "timeline" ? 1 : tab === "scenarios" ? 2 : 0;
-  const wizardTab = (step: number) => setTab(step === 0 ? "asset" : step === 1 ? "rab" : "scenarios");
+  const wizardTab = (step: number) => {
+    setActiveWizardStep(step);
+    setTab(step === 0 ? "asset" : step === 1 ? "rab" : "scenarios");
+  };
   const reviewed = stages.filter(({ id }) => project.stageReviews?.[id]).length;
   const progressPercent = Math.round((reviewed / stages.length) * 100);
   const result = calculateFlipping(project.finance, project.rab);
