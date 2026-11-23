@@ -167,8 +167,8 @@ function Index() {
         <h1 className="sr-only">{slide.title}</h1>
         <div className="absolute inset-0 z-[5] flex items-center justify-center pointer-events-none">
           <Button asChild className="pointer-events-auto min-h-16 rounded-xl bg-white px-9 py-5 text-lg font-bold text-slate-950 shadow-2xl ring-2 ring-white/80 transition-transform hover:scale-105 hover:bg-white sm:min-h-20 sm:px-14 sm:text-2xl">
-            <Link to="/aset-baru">
-              Mulai Sekarang
+            <Link to="/pilih-aset">
+              Mulai dari Sini
               <ArrowRight className="ml-3 size-6" aria-hidden="true" />
             </Link>
           </Button>
