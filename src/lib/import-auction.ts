@@ -4,6 +4,10 @@ export type AuctionMetadata = {
   title: string;
   description: string;
   limit: number | null;
+  deposit: number | null;
+  address: string;
+  landArea: number | null;
+  buildingArea: number | null;
   sourceUrl: string;
   warning: string | null;
 };
@@ -56,6 +60,24 @@ function extractLimit(text: string): number | null {
   return Number.isSafeInteger(value) && value > 0 ? value : null;
 }
 
+function field(html: string, label: RegExp, kind: "money" | "area" | "address"): string {
+  const text = decodeEntities(html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
+  const match = label.exec(text);
+  if (!match) return "";
+  const after = text.slice(match.index + match[0].length).replace(/^\s*[:=\-]?\s*/, "");
+  if (kind === "money") return after.match(/^(?:Rp\.?\s*)?([\d.,]+)/i)?.[1] ?? "";
+  if (kind === "area") return after.match(/^([\d.,]+)/)?.[1] ?? "";
+  return after.split(/\s+(?=Nilai Limit|Uang Jaminan|Luas Tanah|Luas Bangunan|KPKNL|Nomor Lot)/i)[0].slice(0, 250).trim();
+}
+function amount(raw: string): number | null {
+  const n = Number(raw.replace(/\D/g, ""));
+  return raw && Number.isSafeInteger(n) && n > 0 ? n : null;
+}
+function area(raw: string): number | null {
+  const n = Number(raw.replace(/\.(?=\d{3}(?:\D|$))/g, "").replace(",", "."));
+  return raw && Number.isFinite(n) && n > 0 ? n : null;
+}
+
 export const importAuctionUrl = createServerFn({ method: "POST" })
   .inputValidator((data: { url: string }) => {
     if (typeof data?.url !== "string" || data.url.length > 2048)
@@ -84,18 +106,18 @@ export const importAuctionUrl = createServerFn({ method: "POST" })
       ).trim();
       const title = metadata(html, "og:title") || pageTitle;
       const description = metadata(html, "og:description") || metadata(html, "description");
-      const text = html
-        .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
-        .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
-        .replace(/<[^>]+>/g, " ")
-        .replace(/\s+/g, " ");
+      const limit = amount(field(html, /\b(?:Nilai\s+Limit|Harga\s+Limit|Limit\s+Lelang)\b/i, "money"));
+      const deposit = amount(field(html, /\b(?:Uang\s+Jaminan|Nilai\s+Jaminan)\b/i, "money"));
+      const landArea = area(field(html, /\bLuas\s+Tanah\b/i, "area"));
+      const buildingArea = area(field(html, /\bLuas\s+Bangunan\b/i, "area"));
+      const address = field(html, /\b(?:Alamat(?:\s+(?:Aset|Objek))?|Lokasi\s+(?:Aset|Objek))\b/i, "address");
+      const found = [limit, deposit, landArea, buildingArea, address].filter(Boolean).length;
       return {
-        title: title.slice(0, 180),
-        description: description.slice(0, 500),
-        limit: extractLimit(decodeEntities(text)),
-        sourceUrl: data.url,
-        warning:
-          "Data berasal dari metadata halaman dan belum diverifikasi. Periksa nominal dan dokumen resmi sebelum mengambil keputusan.",
+        title: title.slice(0, 180), description: description.slice(0, 500),
+        limit, deposit, landArea, buildingArea, address, sourceUrl: data.url,
+        warning: found === 0
+          ? "Detail aset tidak tersedia pada HTML awal; situs mungkin memuat datanya lewat JavaScript. Lengkapi menggunakan dokumen resmi atau input manual."
+          : "Data diambil dari HTML publik; verifikasi seluruh nilai dan informasi sesuai pengumuman resmi.",
       };
     } finally {
       clearTimeout(timeout);
