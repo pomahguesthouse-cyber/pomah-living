@@ -9,6 +9,9 @@ import {
   FlaskConical,
   FilePlus,
   MapPin,
+  ClipboardCheck,
+  Calculator,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-session";
@@ -112,6 +115,28 @@ function SelectAsset() {
             </span>
           </Link>
         </div>
+      </section>
+      <section aria-labelledby="wizard-next-steps" className="mt-7 rounded-2xl border border-border bg-card p-5 sm:p-7">
+        <p className="eyebrow text-brand">Wizard flipping · Langkah berikutnya</p>
+        <h2 id="wizard-next-steps" className="mt-2 text-xl font-semibold">Setelah memilih aset, apa selanjutnya?</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Pilih salah satu aset di bawah untuk melanjutkan analisis. Urutan ini membantu menilai kelayakan sebelum memutuskan membeli.</p>
+        <ol className="mt-5 grid gap-3 sm:grid-cols-3">
+          <li className="rounded-xl border border-border p-4">
+            <ClipboardCheck className="mb-3 size-5 text-brand" aria-hidden="true" />
+            <p className="font-semibold">2. Periksa kondisi aset</p>
+            <p className="mt-1 text-sm text-muted-foreground">Tinjau legalitas, penghunian, lokasi, dan kondisi fisik.</p>
+          </li>
+          <li className="rounded-xl border border-border p-4">
+            <Calculator className="mb-3 size-5 text-brand" aria-hidden="true" />
+            <p className="font-semibold">3. Hitung total modal</p>
+            <p className="mt-1 text-sm text-muted-foreground">Masukkan harga perolehan, pajak, biaya lelang, dan renovasi.</p>
+          </li>
+          <li className="rounded-xl border border-border p-4">
+            <TrendingUp className="mb-3 size-5 text-brand" aria-hidden="true" />
+            <p className="font-semibold">4. Evaluasi keuntungan</p>
+            <p className="mt-1 text-sm text-muted-foreground">Bandingkan total modal dengan estimasi harga jual dan laba.</p>
+          </li>
+        </ol>
       </section>
       <section className="mt-7 flex flex-wrap items-center justify-between gap-4 border-y border-border py-5">
         <div>
@@ -244,7 +269,7 @@ function SelectAsset() {
                   )}
                   <Button asChild variant="outline" className="mt-6 h-11 w-full justify-between">
                     <Link to="/analisis/$assetId" params={{ assetId: property.id }}>
-                      Analisis aset
+                      Lanjut ke langkah 2 · Analisis aset
                       <ArrowUpRight />
                     </Link>
                   </Button>
