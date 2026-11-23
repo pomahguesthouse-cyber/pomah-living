@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   CircleAlert,
   FlaskConical,
+  FilePlus,
   MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,7 @@ function SelectAsset() {
       <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
           <p className="eyebrow text-brand">Mulai simulasi Anda</p>
-          <h1 className="section-title mt-3">Pilih rumah, lihat potensinya.</h1>
+          <h1 className="section-title mt-3">Mulai analisis flipping rumah.</h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             Bandingkan rumah contoh sebelum menghitung batas tawar.
           </p>
@@ -91,16 +92,26 @@ function SelectAsset() {
           )}
         </span>
       </div>
-      <section className="mt-7 rounded-xl border border-border bg-card p-5 sm:p-6">
-        <p className="eyebrow text-brand">Aset Anda sendiri</p>
-        <h2 className="mt-2 text-xl font-semibold">Punya aset lelang atau properti lain?</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Mulai dari tautan lelang BTN atau DJKN, atau isi data properti secara manual.
-          Setelah itu hitung estimasi biaya, laba, dan batas tawar.
+      <section aria-labelledby="wizard-step-one" className="mt-7 rounded-2xl border border-border bg-card p-5 sm:p-7">
+        <p className="eyebrow text-brand">Wizard flipping · Langkah 1</p>
+        <h2 id="wizard-step-one" className="mt-2 text-2xl font-semibold">Pilih sumber aset properti</h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          Kamu bisa memilih aset simulasi atau memasukkan aset sendiri dari tautan lelang BTN/DJKN maupun secara manual.
         </p>
-        <Button asChild className="mt-4">
-          <Link to="/aset-baru">Tambah aset sendiri <ArrowRight className="ml-2 size-4" /></Link>
-        </Button>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <a href="#daftar-aset" className="flex min-h-36 flex-col justify-between rounded-xl border border-border bg-background p-5 transition-colors hover:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+            <span className="flex items-center gap-3 text-lg font-semibold"><FlaskConical className="size-6 text-brand" /> Pilih aset contoh</span>
+            <span className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+              Gunakan aset simulasi yang tersedia <ArrowRight className="size-5 text-brand" />
+            </span>
+          </a>
+          <Link to="/aset-baru" className="flex min-h-36 flex-col justify-between rounded-xl border border-border bg-background p-5 transition-colors hover:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+            <span className="flex items-center gap-3 text-lg font-semibold"><FilePlus className="size-6 text-brand" /> Input aset sendiri</span>
+            <span className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+              Tempel URL lelang atau isi data manual <ArrowRight className="size-5 text-brand" />
+            </span>
+          </Link>
+        </div>
       </section>
       <section className="mt-7 flex flex-wrap items-center justify-between gap-4 border-y border-border py-5">
         <div>
@@ -159,7 +170,7 @@ function SelectAsset() {
       {canShowListings && visibleProperties.length === 0 && (
         <p className="mt-8 text-sm text-muted-foreground">Belum ada aset di wilayah pilihanmu.</p>
       )}
-      <div className="mt-9 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      <div id="daftar-aset" className="mt-9 grid scroll-mt-8 gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {canShowListings &&
           visibleProperties.map((property) => {
             const sample = demos.data?.find((item) => item.id === property.id);
