@@ -165,6 +165,25 @@ function NewAsset() {
     : null;
   const roi =
     result && result.totalCost > 0 ? (result.estimatedProfit / result.totalCost) * 100 : null;
+  function restoreDraft() {
+    try {
+      const items: unknown = JSON.parse(window.localStorage.getItem("pomah-living-asset-drafts") || "[]");
+      if (!Array.isArray(items) || !items.length) {
+        setNotice("Belum ada draf tersimpan di perangkat ini.");
+        return;
+      }
+      const latest: unknown = items[items.length - 1];
+      if (!latest || typeof latest !== "object") throw new Error("Draf tidak valid");
+      const restored = latest as Record<string, unknown>;
+      setAsset(Object.fromEntries(Object.keys(empty).map((key) => [key, typeof restored[key] === "string" ? restored[key] : ""])) as AssetDraft);
+      setPhotoNames([]);
+      setSaved(false);
+      setNotice("Draf terakhir dimuat. Berkas foto harus dipilih ulang.");
+      setError("");
+    } catch {
+      setError("Draf tersimpan tidak dapat dibuka.");
+    }
+  }
   function saveDraft() {
     if (!asset.name.trim()) {
       setError("Isi nama aset sebelum menyimpan draf.");
@@ -263,6 +282,13 @@ function NewAsset() {
       <section className="mt-8 max-w-4xl">
         <h2 className="text-xl font-semibold">1. Data aset lelang</h2>
         <p className="mt-2 text-sm text-muted-foreground">Isi informasi yang tersedia terlebih dahulu. Kolom yang belum diketahui boleh dikosongkan.</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button type="button" onClick={saveDraft}><Save className="mr-2 size-4" /> Simpan draf aset</Button>
+          <Button type="button" variant="outline" onClick={restoreDraft}>Muat draf terakhir</Button>
+        </div>
+        <label className="mt-5 block text-sm font-medium">Link sumber lelang (opsional)
+          <input type="url" value={asset.sourceUrl} onChange={(e) => update("sourceUrl", e.target.value)} placeholder="https://lelang.go.id/..." className="mt-2 h-11 w-full rounded-md border border-input bg-background px-3 text-sm" />
+        </label>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           {fields.map(({ key, label, type }) => (
             <label key={key} className="block text-sm font-medium">
