@@ -137,10 +137,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <div className="flex min-h-screen flex-col">
         <header
-          className={`top-0 z-20 border-b ${pathname === "/" ? "header-glass fixed inset-x-0" : "sticky border-border bg-card"}`}
+          className={`site-header top-0 z-20 border-b ${pathname === "/" ? "header-glass fixed inset-x-0" : "sticky border-border bg-card"}`}
         >
-          <div className="page-container flex h-20 items-center justify-between gap-3">
-            <Link to="/" aria-label="Pomah Living — Beranda">
+          <div className="site-header-inner page-container flex items-center justify-between gap-2 sm:gap-3">
+            <Link to="/" aria-label="Pomah Living — Beranda" className="shrink-0">
               <img
                 className="brand-logo"
                 src={pathname === "/" ? "/images/pomah-logo-on-dark.svg" : logo.url}
@@ -152,7 +152,7 @@ function RootComponent() {
                 asChild
                 variant="nav"
                 data-active={pathname === "/"}
-                className="px-2 text-xs sm:px-4 sm:text-sm"
+                className="hidden px-2 text-xs sm:inline-flex sm:px-4 sm:text-sm"
               >
                 <Link to="/">Beranda</Link>
               </Button>
@@ -183,13 +183,13 @@ function RootComponent() {
                 </Button>
               ))}
             </nav>
-            <span className="hidden items-center gap-2 border-l border-border pl-6 text-xs text-muted-foreground md:flex">
+            <span className="hidden items-center gap-2 border-l border-border pl-6 text-xs text-muted-foreground lg:flex">
               <FlaskConical className="size-4 text-brand" />
               Versi demo
             </span>
           </div>
         </header>
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <Outlet />
         </div>
         <footer className="border-t border-border bg-card py-7">

@@ -176,8 +176,12 @@ function Index() {
                     onClick={() => setActiveSlide(index)}
                     aria-label={`Tampilkan slide ${index + 1} dari ${slides.length}`}
                     aria-current={index === currentSlide ? "true" : undefined}
-                    className={`h-2 rounded-full transition-all ${index === currentSlide ? "w-9 bg-white" : "w-2 bg-white/50 hover:bg-white/80"}`}
+                    className="size-11 rounded-full bg-transparent p-0 shadow-none hover:bg-white/10"
                   >
+                    <span
+                      aria-hidden="true"
+                      className={`block h-2 rounded-full transition-all ${index === currentSlide ? "w-9 bg-white" : "w-2 bg-white/50"}`}
+                    />
                     <span className="sr-only">{index + 1}</span>
                   </Button>
                 ))}
@@ -210,7 +214,7 @@ function Index() {
           </div>
         )}
       </section>
-      <div className="page-container flex flex-wrap items-center justify-between gap-4 py-5">
+      <div className="hero-actions page-container flex flex-wrap items-center justify-between gap-4 py-5">
         <p className="text-xs text-muted-foreground">
           Tanpa login untuk demo · Data simulasi, bukan listing BTN
         </p>

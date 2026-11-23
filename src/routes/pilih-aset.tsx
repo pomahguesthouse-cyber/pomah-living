@@ -148,7 +148,7 @@ function SelectAsset() {
       {canShowListings && visibleProperties.length === 0 && (
         <p className="mt-8 text-sm text-muted-foreground">Belum ada aset di wilayah pilihanmu.</p>
       )}
-      <div className="mt-9 grid gap-6 md:grid-cols-3">
+      <div className="mt-9 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {canShowListings &&
           visibleProperties.map((property) => {
             const sample = demos.data?.find((item) => item.id === property.id);
