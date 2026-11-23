@@ -235,6 +235,43 @@
   object-fit: contain;
   align-self: center;
 }
+.hero-scene[data-loading="true"] {
+  min-height: calc(100vw * 941 / 1670);
+}
+.hero-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px 12px;
+  background: oklch(0.25 0.065 255);
+  color: oklch(0.96 0.012 250);
+}
+.hero-loading-track {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: oklch(1 0 0 / 18%);
+}
+.hero-loading-track span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  animation: hero-loading 1.2s ease-in-out infinite;
+}
+@keyframes hero-loading {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(350%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-loading-track span {
+    width: 100%;
+    animation: none;
+  }
+}
 .hero-content {
   position: relative;
   padding-block: 68px 76px;

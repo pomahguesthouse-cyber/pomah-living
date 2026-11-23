@@ -90,20 +90,32 @@ function Index() {
   const slides = publicSlides.data?.length ? publicSlides.data : heroSlides;
   const [activeSlide, setActiveSlide] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [imageStates, setImageStates] = useState<Record<string, "ready" | "error">>({});
+  const currentSlide = activeSlide % slides.length;
+  const slide = slides[currentSlide] ?? heroSlides[0];
+  const imageState = slide ? imageStates[slide.image] : undefined;
+  const heroLoading = publicSlides.isPending || !imageState;
+
+  function settleImage(source: string, state: "ready" | "error") {
+    setImageStates((current) =>
+      current[source] === state ? current : { ...current, [source]: state },
+    );
+  }
   useEffect(() => {
-    if (paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (paused || heroLoading || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      return;
     const timer = window.setInterval(() => {
       setActiveSlide((current) => (current + 1) % slides.length);
     }, 6500);
     return () => window.clearInterval(timer);
-  }, [paused, activeSlide, slides.length]);
-  const currentSlide = activeSlide % slides.length;
-  const slide = slides[currentSlide] ?? heroSlides[0];
+  }, [paused, heroLoading, activeSlide, slides.length]);
   if (!slide) return null;
   return (
     <main>
       <section
         className="hero-scene"
+        data-loading={heroLoading || imageState === "error"}
+        aria-busy={heroLoading}
         aria-label="Sorotan POMAH Living"
         aria-roledescription="carousel"
         onMouseEnter={() => setPaused(true)}
@@ -115,17 +127,45 @@ function Index() {
       >
         {slides.map((item, index) => (
           <img
-            key={item.alt}
-            className={`hero-photo transition-opacity duration-700 motion-reduce:transition-none ${currentSlide === index ? "opacity-100" : "opacity-0"}`}
+            key={item.image}
+            className={`hero-photo transition-opacity duration-700 motion-reduce:transition-none ${!heroLoading && currentSlide === index && imageState === "ready" ? "opacity-100" : "opacity-0"}`}
             src={item.image}
+            ref={(image) => {
+              if (image?.complete) {
+                settleImage(item.image, image.naturalWidth > 0 ? "ready" : "error");
+              }
+            }}
+            onLoad={() => settleImage(item.image, "ready")}
+            onError={() => settleImage(item.image, "error")}
             alt={currentSlide === index ? item.alt : ""}
             aria-hidden={currentSlide !== index}
             fetchPriority={index === 0 ? "high" : undefined}
             loading={index === 0 ? "eager" : "lazy"}
           />
         ))}
+        {heroLoading && (
+          <div className="hero-loading">
+            <div className="w-56 max-w-full text-center">
+              <p className="mb-3 text-sm" role="status">
+                Memuat banner…
+              </p>
+              <div
+                className="hero-loading-track"
+                role="progressbar"
+                aria-label="Memuat hero slider"
+              >
+                <span />
+              </div>
+            </div>
+          </div>
+        )}
+        {!heroLoading && imageState === "error" && (
+          <div className="hero-loading" role="status">
+            Banner belum dapat dimuat.
+          </div>
+        )}
         <h1 className="sr-only">{slide.title}</h1>
-        {slides.length > 1 && (
+        {!heroLoading && slides.length > 1 && (
           <div className="absolute bottom-3 left-0 right-0 z-10 sm:bottom-5">
             <div className="page-container flex items-center justify-between gap-4">
               <div className="flex items-center gap-2" aria-label="Pilih slide">
