@@ -19,6 +19,12 @@ type AssetDraft = {
   auctionDeposit: string;
   landArea: string;
   buildingArea: string;
+  bedrooms: string;
+  bathrooms: string;
+  floors: string;
+  carport: string;
+  electricPower: string;
+  legalStatus: string;
   salePrice: string;
   purchaseCosts: string;
   renovationCosts: string;
@@ -35,6 +41,12 @@ const empty: AssetDraft = {
   auctionDeposit: "",
   landArea: "",
   buildingArea: "",
+  bedrooms: "",
+  bathrooms: "",
+  floors: "",
+  carport: "",
+  electricPower: "",
+  legalStatus: "",
   salePrice: "",
   purchaseCosts: "",
   renovationCosts: "",
@@ -49,6 +61,14 @@ const fields: { key: keyof AssetDraft; label: string; type?: string; hint?: stri
   { key: "auctionDeposit", label: "Uang jaminan lelang (Rp)", type: "number" },
   { key: "landArea", label: "Luas tanah (m²)", type: "number" },
   { key: "buildingArea", label: "Luas bangunan (m²)", type: "number" },
+  { key: "bedrooms", label: "Jumlah kamar tidur", type: "number" },
+  { key: "bathrooms", label: "Jumlah kamar mandi", type: "number" },
+  { key: "floors", label: "Jumlah lantai", type: "number" },
+  { key: "carport", label: "Fasilitas carport / parkir" },
+  { key: "electricPower", label: "Daya listrik terpasang (VA)", type: "number" },
+  { key: "legalStatus", label: "Status legalitas (SHM, HGB, lainnya)" },
+];
+const simulationFields: typeof fields = [
   { key: "salePrice", label: "Perkiraan harga jual setelah renovasi (Rp)", type: "number" },
   { key: "purchaseCosts", label: "Pajak, legalitas, dan biaya pembelian (Rp)", type: "number" },
   { key: "renovationCosts", label: "Estimasi RAB renovasi termasuk cadangan (Rp)", type: "number" },
@@ -65,6 +85,7 @@ function NewAsset() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [photoNames, setPhotoNames] = useState<string[]>([]);
   function update(key: keyof AssetDraft, value: string) {
     setAsset((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
@@ -145,8 +166,8 @@ function NewAsset() {
   const roi =
     result && result.totalCost > 0 ? (result.estimatedProfit / result.totalCost) * 100 : null;
   function saveDraft() {
-    if (!asset.name.trim() || !canCalculate) {
-      setError("Lengkapi nama aset dan semua angka simulasi sebelum menyimpan.");
+    if (!asset.name.trim()) {
+      setError("Isi nama aset sebelum menyimpan draf.");
       return;
     }
     try {
@@ -155,7 +176,7 @@ function NewAsset() {
       const items = Array.isArray(previous) ? previous : [];
       window.localStorage.setItem(
         key,
-        JSON.stringify([...items, { ...asset, savedAt: new Date().toISOString() }]),
+        JSON.stringify([...items, { ...asset, photoNames, savedAt: new Date().toISOString() }]),
       );
       setSaved(true);
       setError("");
@@ -173,8 +194,8 @@ function NewAsset() {
       <p className="eyebrow mt-8 text-brand">Aset properti</p>
       <h1 className="section-title mt-2">Tambahkan aset untuk dianalisis.</h1>
       <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-        Gunakan URL lelang BTN atau DJKN, atau masukkan data properti sendiri. Semua nilai impor
-        dapat diperiksa dan dikoreksi.
+        Masukkan data properti dari sumber lelang secara bertahap. Simpan draf tanpa harus
+        mengetahui RAB renovasi atau harga jual terlebih dahulu.
       </p>
       <div className="mt-7 grid max-w-2xl gap-3 sm:grid-cols-2">
         <Button
@@ -240,7 +261,8 @@ function NewAsset() {
         </p>
       )}
       <section className="mt-8 max-w-4xl">
-        <h2 className="text-xl font-semibold">Data aset dan simulasi awal</h2>
+        <h2 className="text-xl font-semibold">1. Data aset lelang</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Isi informasi yang tersedia terlebih dahulu. Kolom yang belum diketahui boleh dikosongkan.</p>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           {fields.map(({ key, label, type }) => (
             <label key={key} className="block text-sm font-medium">
@@ -272,7 +294,31 @@ function NewAsset() {
         )}
       </section>
       <section className="mt-8 max-w-4xl rounded-xl border border-border bg-card p-5">
-        <h2 className="text-xl font-semibold">Analisis flipping awal</h2>
+        <h2 className="text-xl font-semibold">2. Foto kondisi aset</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Foto wajib tersedia sebelum analisis kondisi bangunan. Draf teks boleh disimpan lebih dulu. Foto di tahap ini hanya dipilih di sesi browser dan belum tersimpan ke server.</p>
+        <label className="mt-4 block text-sm font-medium">Pilih foto kondisi rumah (JPG, PNG, WebP)
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="mt-2 block w-full text-sm" onChange={(e) => {
+            const files = Array.from(e.target.files ?? []);
+            const valid = files.filter((f) => ["image/jpeg", "image/png", "image/webp"].includes(f.type) && f.size <= 10 * 1024 * 1024);
+            setPhotoNames(valid.map((f) => f.name));
+            setNotice(valid.length !== files.length ? "Sebagian foto ditolak: gunakan JPG/PNG/WebP maksimal 10 MB per foto." : "Foto dipilih untuk sesi ini. Penyimpanan permanen belum aktif.");
+            setSaved(false);
+          }} />
+        </label>
+        <p className="mt-3 text-sm">{photoNames.length} foto dipilih {photoNames.length === 0 ? "— analisis foto belum dapat dilanjutkan." : "— siap ditinjau."}</p>
+        <p className="mt-3 text-xs text-muted-foreground">Analisis AI dan pengiriman foto ke RAB belum tersedia dari formulir ini. Modul pemeriksaan manual dan RAB sudah ada di halaman proyek flipping.</p>
+      </section>
+      <section className="mt-8 max-w-4xl rounded-xl border border-border bg-card p-5">
+        <h2 className="text-xl font-semibold">3. Simulasi indikatif (opsional, setelah RAB)</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Harga jual, biaya renovasi, dan target laba bukan bagian dari data awal aset. Lengkapi jika analisis dan RAB sudah siap.</p>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          {simulationFields.map(({ key, label, type }) => (
+            <label key={key} className="block text-sm font-medium">{label}
+              <input type={type ?? "text"} min={type === "number" ? "0" : undefined} step="1" value={asset[key]} onChange={(e) => update(key, e.target.value)} className="mt-2 h-11 w-full rounded-md border border-input bg-background px-3 text-sm" />
+            </label>
+          ))}
+        </div>
+        <h3 className="mt-6 text-lg font-semibold">Hasil simulasi awal</h3>
         {!result ? (
           <p className="mt-3 text-sm text-muted-foreground">
             Lengkapi semua angka biaya dan harga jual (isi 0 jika belum ada biaya) untuk melihat
@@ -307,19 +353,17 @@ function NewAsset() {
           harga pasar. Nilai limit dipakai sebagai asumsi harga menang; perbarui sesuai hasil
           lelang.
         </p>
-        <Button className="mt-5" onClick={saveDraft} disabled={!canCalculate}>
+        <Button className="mt-5" onClick={saveDraft}>
           <Save className="mr-2 size-4" /> Simpan draf di perangkat
         </Button>
         {saved && (
           <p role="status" className="mt-2 text-sm text-green-700">
-            Draf tersimpan di browser perangkat ini, belum tersinkron ke akun atau modul proyek.
+            Draf data tersimpan di browser perangkat ini. Berkas foto belum tersimpan; pilih ulang foto saat kembali ke tahap analisis. Draf belum tersinkron ke akun atau modul proyek.
           </p>
         )}
       </section>
       <p className="mt-8 max-w-4xl text-sm text-muted-foreground">
-        Tahap berikutnya: menghubungkan aset ini ke RAB terperinci, gambar kerja, dan proposal
-        investasi. Saat ini fitur yang aktif adalah input data, pembacaan metadata sumber, dan
-        simulasi keuangan awal.
+        Perhitungan RAB terperinci dan analisis manual tersedia di halaman proyek flipping. Integrasi draf aset, unggahan foto permanen, dan analisis AI masih memerlukan pengembangan lanjutan.
       </p>
       <Button asChild variant="outline" className="mt-4">
         <Link to="/pilih-aset">
