@@ -200,6 +200,28 @@
   height: 60px;
   object-fit: contain;
 }
+.header-glass {
+  background: oklch(0.27 0.065 255 / 65%);
+  border-color: oklch(1 0 0 / 16%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 4px 24px oklch(0.16 0.04 255 / 12%);
+}
+.header-glass nav a,
+.header-glass nav button,
+.header-glass > div > span {
+  color: oklch(0.96 0.012 250);
+}
+.header-glass nav a:hover,
+.header-glass nav a[data-active="true"],
+.header-glass nav button:hover,
+.header-glass nav button[data-active="true"] {
+  color: oklch(1 0 0);
+  background: oklch(1 0 0 / 14%);
+}
+.header-glass > div > span {
+  border-color: oklch(1 0 0 / 20%);
+}
 .hero-scene {
   position: relative;
   display: grid;
