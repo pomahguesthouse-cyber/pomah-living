@@ -269,6 +269,13 @@ function ProjectPage() {
     { id: "timeline", label: "Timeline" },
     { id: "photos", label: "Foto & Before-After" },
   ] as const;
+  const wizardSteps = [
+    { title: "1. Analisa aset", detail: "Data properti, harga pasar, dokumen dan biaya akuisisi", tabs: ["asset", "market", "risks", "analysis"] },
+    { title: "2. Simulasi renovasi", detail: "RAB pekerjaan, foto kondisi dan durasi pelaksanaan", tabs: ["rab", "photos", "timeline"] },
+    { title: "3. Simulasi penjualan", detail: "Harga jual, biaya penjualan, skenario dan laba bersih", tabs: ["scenarios", "analysis", "market"] },
+  ] as const;
+  const activeWizardStep = tab === "rab" || tab === "photos" || tab === "timeline" ? 1 : tab === "scenarios" ? 2 : 0;
+  const wizardTab = (step: number) => setTab(step === 0 ? "asset" : step === 1 ? "rab" : "scenarios");
   const reviewed = stages.filter(({ id }) => project.stageReviews?.[id]).length;
   const progressPercent = Math.round((reviewed / stages.length) * 100);
   const result = calculateFlipping(project.finance, project.rab);
@@ -551,7 +558,26 @@ function ProjectPage() {
         </section>
         <div className="mt-7 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_310px]">
           <div className="min-w-0">
-            <Tabs value={tab} onValueChange={setTab} className="min-w-0">
+            <section className="no-print mb-6 rounded-xl border border-border bg-card p-4 sm:p-5" aria-label="Tahapan flipping">
+          <p className="text-sm font-semibold">Wizard flipping · Tiga tahap</p>
+          <p className="mt-1 text-xs text-muted-foreground">Gunakan modul yang sudah tersedia. Semua perubahan tetap pada proyek yang sama.</p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {wizardSteps.map((step, index) => (
+              <button key={step.title} type="button" onClick={() => wizardTab(index)}
+                aria-current={activeWizardStep === index ? "step" : undefined}
+                className={`rounded-lg border p-3 text-left transition-colors ${activeWizardStep === index ? "border-brand bg-brand-soft" : "border-border bg-background hover:border-brand"}`}>
+                <span className="block text-sm font-semibold">{step.title}</span>
+                <span className="mt-1 block text-xs text-muted-foreground">{step.detail}</span>
+              </button>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+            <Button type="button" size="sm" variant="outline" disabled={activeWizardStep === 0} onClick={() => wizardTab(activeWizardStep - 1)}>← Tahap sebelumnya</Button>
+            <span className="text-xs text-muted-foreground">Tahap {activeWizardStep + 1} dari 3</span>
+            <Button type="button" size="sm" disabled={activeWizardStep === 2} onClick={() => wizardTab(activeWizardStep + 1)}>Tahap berikutnya →</Button>
+          </div>
+        </section>
+        <Tabs value={tab} onValueChange={setTab} className="min-w-0">
               <div className="no-print max-w-full overflow-x-auto border-b border-border pb-2">
                 <TabsList className="h-11 w-max justify-start gap-0 rounded-none bg-transparent p-0">
                   {[
@@ -595,7 +621,7 @@ function ProjectPage() {
                       "Foto & before-after",
                       "bg-purple-100 text-purple-900 data-[state=active]:!bg-purple-600 data-[state=active]:!text-white dark:bg-purple-950 dark:text-purple-200",
                     ],
-                  ].map(([value = "", label, color]) => (
+                  ].filter(([value]) => wizardSteps[activeWizardStep].tabs.some((item) => item === value)).map(([value = "", label, color]) => (
                     <TabsTrigger
                       key={value}
                       value={value}
