@@ -305,10 +305,10 @@ function Index() {
           ].map(({ image, title, description }) => (
             <div key={image} className="border-t border-border pt-5">
               <img
-                src={`/images/flipping-stages/${image}.${image === "renovasi" ? "png" : "webp"}`}
+                src={`/images/flipping-stages/${image}.${image === "renovasi" || image === "akuisisi" ? "png" : "webp"}`}
                 alt=""
-                width={image === "renovasi" ? 1024 : 400}
-                height={image === "renovasi" ? 1024 : 360}
+                width={image === "akuisisi" ? 1484 : image === "renovasi" ? 1254 : 400}
+                height={image === "akuisisi" ? 1060 : image === "renovasi" ? 1254 : 360}
                 loading="lazy"
                 decoding="async"
                 className="mb-4 h-28 w-full object-contain object-left sm:h-36"
