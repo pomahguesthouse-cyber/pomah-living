@@ -53,6 +53,7 @@ import {
   publishedListingsKey,
   removeListingPhotos,
   saveListing,
+  saveListingPhotos,
   setListingStatus,
   uploadListingPhoto,
 } from "@/services/listing-service";
@@ -126,6 +127,7 @@ export function AdminListings({ userId }: { userId: string }) {
           setEditing(null);
           setFailure("");
         }}
+        onPhotosSaved={() => void refresh(editing.row?.slug)}
         onSave={(next, publish) =>
           void run(
             async () => {
@@ -362,12 +364,15 @@ function ListingEditor({
   failure,
   onCancel,
   onSave,
+  onPhotosSaved,
 }: {
   editing: Editing;
   busy: boolean;
   failure: string;
   onCancel: () => void;
   onSave: (next: Editing, publish: boolean) => void;
+  /** Dipanggil setelah foto properti yang sudah ada tersimpan langsung. */
+  onPhotosSaved?: () => void;
 }) {
   const [form, setForm] = useState(editing.form);
   const [cover, setCover] = useState(editing.cover);
@@ -383,6 +388,7 @@ function ListingEditor({
   const [fetchingSource, setFetchingSource] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState("");
+  const [photoNote, setPhotoNote] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   const photoUrls = useQuery({
@@ -460,6 +466,7 @@ function ListingEditor({
   async function addPhotos(files: FileList | File[] | null) {
     if (!files?.length) return;
     setPhotoError("");
+    setPhotoNote("");
     const list = Array.from(files);
     if (paths.length + list.length > maxListingPhotos) {
       setPhotoError(`Maksimal ${maxListingPhotos} foto per properti.`);
@@ -473,9 +480,22 @@ function ListingEditor({
     try {
       const added: string[] = [];
       for (const file of list) added.push(await uploadListingPhoto(file));
-      setUploaded((current) => [...current, ...added]);
-      setPaths((current) => [...current, ...added]);
-      setCover((current) => current ?? added[0] ?? null);
+      const nextPaths = [...paths, ...added];
+      const nextCover = cover ?? added[0] ?? null;
+      setPaths(nextPaths);
+      setCover(nextCover);
+      const id = editing.row?.id;
+      if (id) {
+        // Properti yang sudah ada: foto langsung tersimpan, tidak menunggu tombol Simpan.
+        await saveListingPhotos(id, { cover: nextCover, paths: nextPaths });
+        onPhotosSaved?.();
+        setPhotoNote(
+          `${added.length} foto tersimpan${editing.row?.status === "published" ? " dan tampil di katalog" : ""}.`,
+        );
+      } else {
+        setUploaded((current) => [...current, ...added]);
+        setPhotoNote("Foto akan tersimpan saat formulir disimpan.");
+      }
     } catch (error) {
       setPhotoError(adminError(error));
     } finally {
@@ -848,6 +868,11 @@ function ListingEditor({
                 }}
               />
             </label>
+            {photoNote && !photoError && (
+              <p role="status" className="mt-2 text-xs text-success">
+                {photoNote}
+              </p>
+            )}
             {photoError && (
               <p role="alert" className="mt-2 text-xs text-destructive">
                 {photoError}
