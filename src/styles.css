@@ -246,6 +246,12 @@
   object-fit: contain;
   align-self: center;
 }
+.hero-start-action {
+  position: absolute;
+  z-index: 5;
+  left: 7%;
+  top: calc(100vw * 941 / 1670 * 0.695);
+}
 .hero-scene[data-loading="true"] {
   min-height: calc(100vw * 941 / 1670);
 }
@@ -510,8 +516,21 @@
     top: calc(var(--site-header-height) + env(safe-area-inset-top, 0px));
     padding-top: 12px;
   }
+  .hero-start-action {
+    margin-top: calc(var(--site-header-height) + env(safe-area-inset-top, 0px));
+  }
 }
 @media (max-width: 639px) {
+  .hero-start-action {
+    position: relative;
+    grid-area: 2 / 1;
+    inset: auto;
+    margin: 0;
+    padding: 16px;
+  }
+  .hero-start-action > a {
+    width: 100%;
+  }
   .brand-logo {
     width: 108px;
     height: 44px;
