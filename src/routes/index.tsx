@@ -6,7 +6,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CaseStudyShowcase } from "@/components/case-study-showcase";
-import { bedahanCibinong } from "@/lib/case-studies";
+import { caseStudies } from "@/lib/case-studies";
 import houseImage from "@/assets/rumah-banyumanik.webp.asset.json";
 import secondHouse from "@/assets/rumah-tembalang.webp.asset.json";
 import thirdHouse from "@/assets/rumah-ngaliyan.webp.asset.json";
@@ -319,7 +319,9 @@ function Index() {
           ))}
         </div>
       </section>
-      <CaseStudyShowcase study={bedahanCibinong} />
+      {caseStudies.map((study) => (
+        <CaseStudyShowcase key={study.id} study={study} />
+      ))}
     </main>
   );
 }

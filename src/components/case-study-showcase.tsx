@@ -16,6 +16,7 @@ const stageTone: Record<string, string> = {
   Sebelum: "bg-orange-100 text-orange-900",
   Proses: "bg-white text-foreground",
   Sesudah: "bg-brand-deep text-primary-foreground",
+  Desain: "bg-sky-100 text-sky-900",
 };
 
 export function CaseStudyShowcase({ study }: { study: CaseStudy }) {
@@ -39,12 +40,16 @@ export function CaseStudyShowcase({ study }: { study: CaseStudy }) {
   }, [api]);
 
   const result = caseStudyResult(study.figures);
+  const estimate = study.inProgress ? "Estimasi " : "";
   const stats = [
-    { label: "Harga beli", value: juta(study.figures.purchase) },
-    { label: "Biaya renovasi", value: juta(study.figures.renovation) },
-    { label: "Harga jual", value: juta(study.figures.sale) },
     {
-      label: "Laba kotor",
+      label: study.inProgress ? "Harga perolehan" : "Harga beli",
+      value: juta(study.figures.purchase),
+    },
+    { label: "Biaya renovasi", value: juta(study.figures.renovation) },
+    { label: `${estimate}harga jual`.replace(/^h/, "H"), value: juta(study.figures.sale) },
+    {
+      label: `${estimate}laba kotor`.replace(/^l/, "L"),
       value: `${juta(result.grossProfit)} (${Math.round(result.margin * 100)}%)`,
       highlight: true,
     },
@@ -58,7 +63,9 @@ export function CaseStudyShowcase({ study }: { study: CaseStudy }) {
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="eyebrow text-brand">Contoh proyek flipping</p>
+          <p className="eyebrow text-brand">
+            Contoh proyek flipping{study.inProgress ? " · sedang berjalan" : ""}
+          </p>
           <h2 id={`judul-${study.id}`} className="section-title mt-3">
             {study.title}
           </h2>
@@ -142,7 +149,9 @@ export function CaseStudyShowcase({ study }: { study: CaseStudy }) {
         ))}
       </dl>
       <p className="mt-3 text-xs text-muted-foreground">
-        Laba kotor = harga jual − (harga beli + renovasi), sebelum pajak dan biaya transaksi.
+        {study.inProgress ? "Proyek masih berjalan; harga jual dan laba masih estimasi. " : ""}
+        Laba kotor = harga jual − (harga {study.inProgress ? "perolehan" : "beli"} + renovasi),
+        sebelum pajak dan biaya transaksi.
       </p>
 
       <ul className="mt-6 flex flex-wrap gap-2" aria-label="Pekerjaan renovasi">
