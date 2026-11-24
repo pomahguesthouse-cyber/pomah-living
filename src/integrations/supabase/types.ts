@@ -188,6 +188,108 @@ export type Database = {
         }
         Relationships: []
       }
+      pomah_listings: {
+        Row: {
+          access_verified: boolean
+          address: string
+          auction_date: string | null
+          auction_limit: number
+          bathrooms: number | null
+          bedrooms: number | null
+          building_area: number | null
+          cover_photo_path: string | null
+          created_at: string
+          created_by: string | null
+          documents_verified: boolean
+          est_holding_sale: number
+          est_purchase_costs: number
+          est_renovation: number
+          est_sale_price: number
+          est_winning_price: number | null
+          id: string
+          land_area: number | null
+          legal: string
+          name: string
+          notes: string
+          occupancy_verified: boolean
+          photo_paths: string[]
+          regency_code: string
+          slug: string
+          sort_order: number
+          source: string
+          source_url: string | null
+          status: string
+          target_profit: number
+          updated_at: string
+        }
+        Insert: {
+          access_verified?: boolean
+          address?: string
+          auction_date?: string | null
+          auction_limit: number
+          bathrooms?: number | null
+          bedrooms?: number | null
+          building_area?: number | null
+          cover_photo_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          documents_verified?: boolean
+          est_holding_sale?: number
+          est_purchase_costs?: number
+          est_renovation?: number
+          est_sale_price?: number
+          est_winning_price?: number | null
+          id?: string
+          land_area?: number | null
+          legal?: string
+          name: string
+          notes?: string
+          occupancy_verified?: boolean
+          photo_paths?: string[]
+          regency_code: string
+          slug: string
+          sort_order?: number
+          source: string
+          source_url?: string | null
+          status?: string
+          target_profit?: number
+          updated_at?: string
+        }
+        Update: {
+          access_verified?: boolean
+          address?: string
+          auction_date?: string | null
+          auction_limit?: number
+          bathrooms?: number | null
+          bedrooms?: number | null
+          building_area?: number | null
+          cover_photo_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          documents_verified?: boolean
+          est_holding_sale?: number
+          est_purchase_costs?: number
+          est_renovation?: number
+          est_sale_price?: number
+          est_winning_price?: number | null
+          id?: string
+          land_area?: number | null
+          legal?: string
+          name?: string
+          notes?: string
+          occupancy_verified?: boolean
+          photo_paths?: string[]
+          regency_code?: string
+          slug?: string
+          sort_order?: number
+          source?: string
+          source_url?: string | null
+          status?: string
+          target_profit?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pomah_project_details: {
         Row: {
           payload: Json
