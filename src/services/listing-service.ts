@@ -69,6 +69,18 @@ export async function saveListing(
   return data;
 }
 
+/** Simpan daftar foto dan sampul saja, tanpa menyentuh kolom lain. */
+export async function saveListingPhotos(
+  id: string,
+  photos: { cover: string | null; paths: string[] },
+) {
+  const { error } = await supabase
+    .from("pomah_listings")
+    .update({ cover_photo_path: photos.cover, photo_paths: photos.paths })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function setListingStatus(id: string, status: ListingStatus) {
   const { error } = await supabase.from("pomah_listings").update({ status }).eq("id", id);
   if (error) throw error;
