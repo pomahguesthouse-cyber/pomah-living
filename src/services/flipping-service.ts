@@ -54,6 +54,32 @@ export async function saveFlippingProject(id: string, project: FlippingProject, 
   return response.data.revision;
 }
 
+export type ExistingProject = { id: string; name: string; updated_at: string };
+export const projectsForListingKey = (userId: string, slug: string) =>
+  ["projects-for-listing", userId, slug] as const;
+
+/** Proyek milik pengguna yang dibuat dari properti katalog tertentu (terbaru dulu). */
+export async function findProjectsForListing(
+  userId: string,
+  listingSlug: string,
+): Promise<ExistingProject[]> {
+  const details = await supabase
+    .from("pomah_project_details")
+    .select("project_id")
+    .eq("payload->origin->>listingSlug", listingSlug);
+  if (details.error) throw new Error("Gagal memeriksa proyek yang sudah ada.");
+  const ids = details.data.map((row) => row.project_id);
+  if (!ids.length) return [];
+  const parents = await supabase
+    .from("pomah_projects")
+    .select("id,name,updated_at")
+    .in("id", ids)
+    .eq("owner_id", userId)
+    .order("updated_at", { ascending: false });
+  if (parents.error) throw new Error("Gagal memeriksa proyek yang sudah ada.");
+  return parents.data;
+}
+
 /** Membuat proyek milik pengguna dari hasil analisis aset, lalu menyimpan rincian awalnya. */
 export async function createProjectFromAnalysis(snapshot: AnalysisSnapshot) {
   const project = makeProjectFromAnalysis(snapshot);
@@ -72,4 +98,22 @@ export async function createProjectFromAnalysis(snapshot: AnalysisSnapshot) {
   if (parent.error || !parent.data) throw new Error("Proyek gagal dibuat. Coba lagi.");
   await saveFlippingProject(parent.data.id, project, 0);
   return parent.data.id;
+}
+
+/**
+ * Menghapus proyek milik pengguna. Rincian proyek ikut terhapus lewat ON DELETE CASCADE.
+ * Bila kebijakan database tidak mengizinkan, tidak ada baris yang terhapus dan kita beri tahu.
+ */
+export async function deleteProject(id: string, userId: string) {
+  const { data, error } = await supabase
+    .from("pomah_projects")
+    .delete()
+    .eq("id", id)
+    .eq("owner_id", userId)
+    .select("id");
+  if (error) throw new Error("Proyek gagal dihapus. Coba lagi.");
+  if (!data.length)
+    throw new Error(
+      "Proyek tidak terhapus. Proyek mungkin sudah dihapus atau akun ini belum diizinkan menghapusnya.",
+    );
 }

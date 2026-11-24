@@ -80,6 +80,15 @@ export const financeSchema = z.object({
 });
 export const flippingSchema = z.object({
   version: z.literal(1),
+  // Asal proyek: slug properti katalog yang dianalisis, untuk mencegah proyek ganda.
+  origin: z
+    .object({
+      listingSlug: z
+        .string()
+        .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+        .max(80),
+    })
+    .optional(),
   property: z.object({
     name: text,
     address: text,
@@ -434,6 +443,7 @@ export function makeFlippingProject(id: string, name?: string, location?: string
   };
 }
 export type AnalysisSnapshot = {
+  listingSlug?: string;
   name: string;
   location: string;
   auctionLimit: number;
@@ -461,6 +471,7 @@ export function makeProjectFromAnalysis(snapshot: AnalysisSnapshot): FlippingPro
   const verified = (ok: boolean) => (ok ? "Terverifikasi saat analisis" : "Belum diverifikasi");
   return {
     ...base,
+    ...(snapshot.listingSlug ? { origin: { listingSlug: snapshot.listingSlug } } : {}),
     property: {
       ...base.property,
       name: snapshot.name,
