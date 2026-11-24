@@ -68,7 +68,7 @@ function field(html: string, label: RegExp, kind: "money" | "area" | "address"):
   const after = text.slice(match.index + match[0].length).replace(/^\s*[:=\-]?\s*/, "");
   if (kind === "money") return after.match(/^(?:Rp\.?\s*)?([\d.,]+)/i)?.[1] ?? "";
   if (kind === "area") return after.match(/^([\d.,]+)/)?.[1] ?? "";
-  return after.split(/\s+(?=Nilai Limit|Uang Jaminan|Luas Tanah|Luas Bangunan|KPKNL|Nomor Lot)/i)[0].slice(0, 250).trim();
+  return (after.split(/\s+(?=Nilai Limit|Uang Jaminan|Luas Tanah|Luas Bangunan|KPKNL|Nomor Lot)/i)[0]?.slice(0, 250) ?? "").trim();
 }
 function amount(raw: string): number | null {
   const n = Number(raw.replace(/\D/g, ""));

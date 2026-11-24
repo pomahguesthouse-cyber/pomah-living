@@ -624,7 +624,7 @@ function ProjectPage() {
                       "Foto & before-after",
                       "bg-purple-100 text-purple-900 data-[state=active]:!bg-purple-600 data-[state=active]:!text-white dark:bg-purple-950 dark:text-purple-200",
                     ],
-                  ].filter(([value]) => wizardSteps[activeWizardStep].tabs.some((item) => item === value)).map(([value = "", label, color]) => (
+                  ].filter(([value]) => (wizardSteps[activeWizardStep]?.tabs ?? []).some((item) => item === value)).map(([value = "", label, color]) => (
                     <TabsTrigger
                       key={value}
                       value={value}

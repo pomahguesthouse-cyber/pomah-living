@@ -15,7 +15,7 @@ function moneyAfter(text: string, label: RegExp): number | null {
   const after = text.slice(location.index + location[0].length);
   const match = after.match(/^\s*[:\-]?\s*(?:Rp\s*)?([\d.,]+)/i);
   if (!match) return null;
-  const amount = Number(match[1].replace(/\D/g, ""));
+  const amount = Number((match[1] ?? "").replace(/\D/g, ""));
   return Number.isSafeInteger(amount) && amount > 0 ? amount : null;
 }
 function areaNumber(value: string): number | null {
