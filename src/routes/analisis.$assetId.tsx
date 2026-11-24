@@ -10,7 +10,6 @@ import {
   ClipboardCheck,
   ExternalLink,
   FlaskConical,
-  FolderPlus,
   ImageOff,
   LogIn,
   MapPin,
@@ -713,7 +712,7 @@ function CreateProjectFromAsset({
         </div>
       ) : (
         <Button className="mt-4 h-11" disabled={busy || !values} onClick={() => void create()}>
-          <FolderPlus className="size-4" aria-hidden="true" />
+          <HouseFlipIcon />
           {busy ? "Membuat proyek…" : "Flip aset ini"}
         </Button>
       )}
@@ -732,5 +731,19 @@ function CreateProjectFromAsset({
         </p>
       )}
     </section>
+  );
+}
+
+/** Ikon tangan memegang rumah (putih), untuk tombol oranye "Flip aset ini". */
+function HouseFlipIcon() {
+  return (
+    <img
+      src="/icons/house-flip.png"
+      alt=""
+      aria-hidden="true"
+      width={33}
+      height={24}
+      className="h-6 w-auto shrink-0"
+    />
   );
 }
