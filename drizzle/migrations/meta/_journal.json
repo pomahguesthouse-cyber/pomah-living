@@ -50,6 +50,13 @@
       "when": 1795482702002,
       "tag": "0006_restrict_listing_photo_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795484092985,
+      "tag": "0007_allow_owner_delete_projects",
+      "breakpoints": true
     }
   ]
 }
