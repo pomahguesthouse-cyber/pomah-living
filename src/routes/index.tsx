@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchPublishedSlides } from "@/services/admin-service";
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, ClipboardCheck, House, TrendingUp } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import houseImage from "@/assets/rumah-banyumanik.webp.asset.json";
 import secondHouse from "@/assets/rumah-tembalang.webp.asset.json";
@@ -278,34 +278,39 @@ function Index() {
             <br className="hidden sm:block" /> menjadi investasi yang tepat.
           </p>
         </div>
-        <div className="mt-9 grid gap-7 sm:grid-cols-3 sm:gap-9">
+        <div className="mt-9 grid grid-cols-2 gap-x-5 gap-y-8 lg:grid-cols-4 lg:gap-x-9">
           {[
             {
-              number: "01",
-              icon: House,
-              title: "Pilih aset",
-              description: "Rumah contoh di Bodetabek dengan nilai limit lelang.",
+              image: "analisis-aset",
+              title: "Analisis Aset Properti",
+              description: "Periksa kondisi rumah, legalitas, dan nilai limit lelang.",
             },
             {
-              number: "02",
-              icon: ClipboardCheck,
-              title: "Cek kondisi",
-              description: "Status penghunian, akses fisik, dan kelengkapan dokumen.",
+              image: "akuisisi",
+              title: "Akuisisi",
+              description: "Hitung batas tawar dan total biaya perolehan aset.",
             },
             {
-              number: "03",
-              icon: TrendingUp,
-              title: "Hitung batas tawar",
-              description: "Biaya renovasi, potensi laba, dan batas penawaran Anda.",
+              image: "renovasi",
+              title: "Simulasi Renovasi",
+              description: "Susun RAB dan perkirakan biaya perbaikan rumah.",
             },
-          ].map(({ number, icon: Icon, title, description }) => (
-            <div key={number} className="border-t border-border pt-6">
-              <div className="mb-5 flex items-center justify-between">
-                <span className="flex size-11 items-center justify-center rounded-md bg-brand-soft text-brand-deep">
-                  <Icon className="size-5" />
-                </span>
-                <span className="step-number">{number}</span>
-              </div>
+            {
+              image: "penjualan",
+              title: "Penjualan",
+              description: "Uji target harga jual, titik impas, dan potensi laba.",
+            },
+          ].map(({ image, title, description }) => (
+            <div key={image} className="border-t border-border pt-5">
+              <img
+                src={`/images/flipping-stages/${image}.webp`}
+                alt=""
+                width={400}
+                height={360}
+                loading="lazy"
+                decoding="async"
+                className="mb-4 h-28 w-full object-contain object-left sm:h-36"
+              />
               <h3 className="text-base font-semibold">{title}</h3>
               <p className="mt-2 max-w-xs text-sm leading-6 text-muted-foreground">{description}</p>
             </div>
