@@ -18,10 +18,9 @@ import { useSession } from "@/hooks/use-session";
 import { matchesPreferredRegions } from "@/lib/indonesia-regions";
 import { fetchPreferredRegions, preferredRegionsKey } from "@/services/account-details";
 import { properties } from "@/lib/properties";
-import { calculateSimulation, formatRupiah } from "@/lib/simulation";
+import { calculateSimulation, formatRupiah, getDecision } from "@/lib/simulation";
 import { cn } from "@/lib/utils";
 import { fetchPublishedDemos, publishedDemoKey } from "@/services/flipping-demo-service";
-import { calculateFlipping } from "@/lib/flipping";
 
 export const Route = createFileRoute("/pilih-aset")({
   head: () => ({
@@ -95,46 +94,76 @@ function SelectAsset() {
           )}
         </span>
       </div>
-      <section aria-labelledby="wizard-step-one" className="mt-7 rounded-2xl border border-border bg-card p-5 sm:p-7">
+      <section
+        aria-labelledby="wizard-step-one"
+        className="mt-7 rounded-2xl border border-border bg-card p-5 sm:p-7"
+      >
         <p className="eyebrow text-brand">Wizard flipping · Langkah 1</p>
-        <h2 id="wizard-step-one" className="mt-2 text-2xl font-semibold">Pilih sumber aset properti</h2>
+        <h2 id="wizard-step-one" className="mt-2 text-2xl font-semibold">
+          Pilih sumber aset properti
+        </h2>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Kamu bisa memilih aset simulasi atau memasukkan aset sendiri dari tautan lelang BTN/DJKN maupun secara manual.
+          Kamu bisa memilih aset simulasi atau memasukkan aset sendiri dari tautan lelang BTN/DJKN
+          maupun secara manual.
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <a href="#daftar-aset" className="flex min-h-36 flex-col justify-between rounded-xl border border-border bg-background p-5 transition-colors hover:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
-            <span className="flex items-center gap-3 text-lg font-semibold"><FlaskConical className="size-6 text-brand" /> Pilih aset contoh</span>
+          <a
+            href="#daftar-aset"
+            className="flex min-h-36 flex-col justify-between rounded-xl border border-border bg-background p-5 transition-colors hover:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+          >
+            <span className="flex items-center gap-3 text-lg font-semibold">
+              <FlaskConical className="size-6 text-brand" /> Pilih aset contoh
+            </span>
             <span className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
               Gunakan aset simulasi yang tersedia <ArrowRight className="size-5 text-brand" />
             </span>
           </a>
-          <Link to="/aset-baru" className="flex min-h-36 flex-col justify-between rounded-xl border border-border bg-background p-5 transition-colors hover:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
-            <span className="flex items-center gap-3 text-lg font-semibold"><FilePlus className="size-6 text-brand" /> Input aset sendiri</span>
+          <Link
+            to="/aset-baru"
+            className="flex min-h-36 flex-col justify-between rounded-xl border border-border bg-background p-5 transition-colors hover:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+          >
+            <span className="flex items-center gap-3 text-lg font-semibold">
+              <FilePlus className="size-6 text-brand" /> Input aset sendiri
+            </span>
             <span className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
               Tempel URL lelang atau isi data manual <ArrowRight className="size-5 text-brand" />
             </span>
           </Link>
         </div>
       </section>
-      <section aria-labelledby="wizard-next-steps" className="mt-7 rounded-2xl border border-border bg-card p-5 sm:p-7">
+      <section
+        aria-labelledby="wizard-next-steps"
+        className="mt-7 rounded-2xl border border-border bg-card p-5 sm:p-7"
+      >
         <p className="eyebrow text-brand">Wizard flipping · Langkah berikutnya</p>
-        <h2 id="wizard-next-steps" className="mt-2 text-xl font-semibold">Setelah memilih aset, apa selanjutnya?</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Pilih salah satu aset di bawah untuk melanjutkan analisis. Urutan ini membantu menilai kelayakan sebelum memutuskan membeli.</p>
+        <h2 id="wizard-next-steps" className="mt-2 text-xl font-semibold">
+          Setelah memilih aset, apa selanjutnya?
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Pilih salah satu aset di bawah untuk melanjutkan analisis. Urutan ini membantu menilai
+          kelayakan sebelum memutuskan membeli.
+        </p>
         <ol className="mt-5 grid gap-3 sm:grid-cols-3">
           <li className="rounded-xl border border-border p-4">
             <ClipboardCheck className="mb-3 size-5 text-brand" aria-hidden="true" />
             <p className="font-semibold">2. Periksa kondisi aset</p>
-            <p className="mt-1 text-sm text-muted-foreground">Tinjau legalitas, penghunian, lokasi, dan kondisi fisik.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Tinjau legalitas, penghunian, lokasi, dan kondisi fisik.
+            </p>
           </li>
           <li className="rounded-xl border border-border p-4">
             <Calculator className="mb-3 size-5 text-brand" aria-hidden="true" />
             <p className="font-semibold">3. Hitung total modal</p>
-            <p className="mt-1 text-sm text-muted-foreground">Masukkan harga perolehan, pajak, biaya lelang, dan renovasi.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Masukkan harga perolehan, pajak, biaya lelang, dan renovasi.
+            </p>
           </li>
           <li className="rounded-xl border border-border p-4">
             <TrendingUp className="mb-3 size-5 text-brand" aria-hidden="true" />
             <p className="font-semibold">4. Evaluasi keuntungan</p>
-            <p className="mt-1 text-sm text-muted-foreground">Bandingkan total modal dengan estimasi harga jual dan laba.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Bandingkan total modal dengan estimasi harga jual dan laba.
+            </p>
           </li>
         </ol>
       </section>
@@ -199,8 +228,13 @@ function SelectAsset() {
         {canShowListings &&
           visibleProperties.map((property) => {
             const sample = demos.data?.find((item) => item.id === property.id);
-            const complete = Object.values(property.verification).every(Boolean);
-            const bidLimit = calculateSimulation(property.initialValues).bidLimit;
+            const simulation = calculateSimulation(property.initialValues);
+            const bidLimit = simulation.bidLimit;
+            const decision = getDecision(
+              property.initialValues,
+              property.auctionLimit,
+              property.verification,
+            );
             return (
               <article className="property-card" key={property.id}>
                 <div className="relative">
@@ -226,23 +260,29 @@ function SelectAsset() {
                     <p className="mt-2 text-xs text-muted-foreground">{sample.description}</p>
                   )}
                   <div
+                    data-testid={`card-decision-${property.id}`}
                     className={cn(
-                      "mt-4 flex min-h-10 items-center gap-2 text-xs",
-                      complete ? "text-success" : "text-warning",
+                      "mt-4 flex min-h-10 items-start gap-2 rounded-md px-3 py-2 text-xs",
+                      decision.tone === "success" && "bg-success-soft text-success",
+                      decision.tone === "warning" && "bg-warning-soft text-warning",
+                      decision.tone === "danger" && "bg-danger-soft text-destructive",
                     )}
                   >
-                    {complete ? (
-                      <CheckCircle2 className="size-4 shrink-0" />
+                    {decision.tone === "success" ? (
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
                     ) : (
-                      <CircleAlert className="size-4 shrink-0" />
+                      <CircleAlert className="mt-0.5 size-4 shrink-0" />
                     )}
-                    <span>{property.inspection}</span>
+                    <span>
+                      <strong className="font-semibold">{decision.label}</strong>
+                      <span className="block text-muted-foreground">{property.inspection}</span>
+                    </span>
                   </div>
                   <div className="mt-4 border-t border-border pt-4">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Nilai limit lelang</span>
                       <span className="text-lg font-semibold tabular-nums">
-                        {formatRupiah(sample?.project.property.limit ?? property.auctionLimit)}
+                        {formatRupiah(property.auctionLimit)}
                       </span>
                     </div>
                     <div className="mt-2 flex items-center justify-between">
@@ -257,16 +297,25 @@ function SelectAsset() {
                       </span>
                     </div>
                   </div>
-                  {sample && (
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      Biaya all-in demo:{" "}
-                      <strong>
-                        {formatRupiah(
-                          calculateFlipping(sample.project.finance, sample.project.rab).allIn,
-                        )}
-                      </strong>
-                    </p>
-                  )}
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Total biaya proyek</span>
+                    <span className="text-sm font-semibold tabular-nums">
+                      {formatRupiah(simulation.totalCost)}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Estimasi laba</span>
+                    <span
+                      className={cn(
+                        "text-sm font-semibold tabular-nums",
+                        simulation.estimatedProfit >= property.initialValues.targetProfit
+                          ? "text-success"
+                          : "text-warning",
+                      )}
+                    >
+                      {formatRupiah(simulation.estimatedProfit)}
+                    </span>
+                  </div>
                   <Button asChild variant="outline" className="mt-6 h-11 w-full justify-between">
                     <Link to="/analisis/$assetId" params={{ assetId: property.id }}>
                       Lanjut ke langkah 2 · Analisis aset

@@ -258,7 +258,7 @@ function NewAsset() {
         <section className="mt-5 max-w-2xl rounded-xl border border-border p-5">
           <h2 className="text-base font-semibold">Alternatif: tempel teks detail DJKN</h2>
           <p className="mt-2 text-xs leading-5 text-muted-foreground">
-            Jika impor URL tidak menemukan detail aset, buka halaman lelang, salin teks ringkasan dan tab Uraian, lalu tempel di sini. Data yang ditemukan akan mengisi formulir. Tidak perlu menunggu scraper browser.
+            Jika impor URL tidak menemukan detail aset, buka halaman lelang, salin teks ringkasan dan tab Uraian, lalu tempel di sini. Data yang ditemukan akan mengisi formulir.
           </p>
           <label htmlFor="auction-copy" className="mt-4 block text-sm font-medium">Teks halaman DJKN</label>
           <textarea id="auction-copy" value={copiedText} onChange={(e) => setCopiedText(e.target.value)}
@@ -321,7 +321,7 @@ function NewAsset() {
       </section>
       <section className="mt-8 max-w-4xl rounded-xl border border-border bg-card p-5">
         <h2 className="text-xl font-semibold">2. Foto kondisi aset</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Foto wajib tersedia sebelum analisis kondisi bangunan. Draf teks boleh disimpan lebih dulu. Foto di tahap ini hanya dipilih di sesi browser dan belum tersimpan ke server.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Unggah foto setiap ruangan dan detail kerusakan. Foto menjadi dasar pemeriksaan kondisi bangunan dan estimasi RAB renovasi.</p>
         <label className="mt-4 block text-sm font-medium">Pilih foto kondisi rumah (JPG, PNG, WebP)
           <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="mt-2 block w-full text-sm" onChange={(e) => {
             const files = Array.from(e.target.files ?? []);
@@ -332,7 +332,7 @@ function NewAsset() {
           }} />
         </label>
         <p className="mt-3 text-sm">{photoNames.length} foto dipilih {photoNames.length === 0 ? "— analisis foto belum dapat dilanjutkan." : "— siap ditinjau."}</p>
-        <p className="mt-3 text-xs text-muted-foreground">Analisis AI dan pengiriman foto ke RAB belum tersedia dari formulir ini. Modul pemeriksaan manual dan RAB sudah ada di halaman proyek flipping.</p>
+        <p className="mt-3 text-xs text-muted-foreground">Segera hadir: analisis foto otomatis yang langsung mengisi RAB. Saat ini pemeriksaan kondisi dan RAB terperinci tersedia di halaman proyek flipping.</p>
       </section>
       <section className="mt-8 max-w-4xl rounded-xl border border-border bg-card p-5">
         <h2 className="text-xl font-semibold">3. Simulasi indikatif (opsional, setelah RAB)</h2>
@@ -384,12 +384,12 @@ function NewAsset() {
         </Button>
         {saved && (
           <p role="status" className="mt-2 text-sm text-green-700">
-            Draf data tersimpan di browser perangkat ini. Berkas foto belum tersimpan; pilih ulang foto saat kembali ke tahap analisis. Draf belum tersinkron ke akun atau modul proyek.
+            Draf tersimpan di perangkat ini. Pilih ulang foto saat kembali melanjutkan analisis.
           </p>
         )}
       </section>
       <p className="mt-8 max-w-4xl text-sm text-muted-foreground">
-        Perhitungan RAB terperinci dan analisis manual tersedia di halaman proyek flipping. Integrasi draf aset, unggahan foto permanen, dan analisis AI masih memerlukan pengembangan lanjutan.
+        Lanjutkan ke halaman proyek flipping untuk menyusun RAB terperinci, memantau risiko, dan mengelola tahapan renovasi.
       </p>
       <Button asChild variant="outline" className="mt-4">
         <Link to="/pilih-aset">

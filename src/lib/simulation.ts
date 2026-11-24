@@ -26,6 +26,14 @@ export const baseScenario: SimulationValues = {
   holdingAndSaleCosts: 20_000_000,
   targetProfit: 50_000_000,
 };
+export const sawanganScenario: SimulationValues = {
+  salePrice: 430_000_000,
+  winningPrice: 260_000_000,
+  purchaseCosts: 22_000_000,
+  renovationCosts: 60_000_000,
+  holdingAndSaleCosts: 18_000_000,
+  targetProfit: 45_000_000,
+};
 export const stressedScenario: SimulationValues = {
   salePrice: 450_000_000,
   winningPrice: 300_000_000,
@@ -127,5 +135,37 @@ export function getDecision(
     tone: "success",
     description:
       "Pemeriksaan awal lengkap dan harga menang simulasi berada dalam rentang nilai limit hingga batas tawar.",
+  };
+}
+
+export type MortgageAssumptions = {
+  downPaymentRate: number;
+  annualRatePercent: number;
+  years: number;
+};
+export const defaultMortgage: MortgageAssumptions = {
+  downPaymentRate: 0.1,
+  annualRatePercent: 7.5,
+  years: 15,
+};
+export function calculateMortgage(
+  price: number,
+  assumptions: MortgageAssumptions = defaultMortgage,
+) {
+  const downPayment = Math.round(price * assumptions.downPaymentRate);
+  const principal = Math.max(price - downPayment, 0);
+  const months = assumptions.years * 12;
+  const monthlyRate = assumptions.annualRatePercent / 100 / 12;
+  const monthlyPayment =
+    months <= 0
+      ? 0
+      : monthlyRate === 0
+        ? principal / months
+        : (principal * monthlyRate) / (1 - (1 + monthlyRate) ** -months);
+  return {
+    downPayment,
+    principal,
+    monthlyPayment: Math.round(monthlyPayment),
+    minimumIncome: Math.round(monthlyPayment / 0.3),
   };
 }

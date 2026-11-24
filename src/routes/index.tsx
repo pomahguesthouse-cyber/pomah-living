@@ -70,11 +70,42 @@ const heroSlides = [
   },
 ];
 
+const heroSlideCacheKey = "pomah-hero-slides-v1";
+type HeroSlide =
+  | (typeof heroSlides)[number]
+  | {
+      image: string;
+      eyebrow: string;
+      title: string;
+      description: string;
+      action: string;
+      href: string;
+      alt: string;
+    };
+function readCachedSlides(): HeroSlide[] | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = window.localStorage.getItem(heroSlideCacheKey);
+    const parsed: unknown = raw ? JSON.parse(raw) : undefined;
+    return Array.isArray(parsed) && parsed.length > 0 ? (parsed as HeroSlide[]) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+function writeCachedSlides(slides: HeroSlide[]) {
+  try {
+    window.localStorage.setItem(heroSlideCacheKey, JSON.stringify(slides));
+  } catch {
+    // Penyimpanan browser tidak tersedia; banner tetap dimuat dari server.
+  }
+}
+
 function Index() {
   const publicSlides = useQuery({
     queryKey: ["public-hero-slides"],
-    queryFn: async () =>
-      (await fetchPublishedSlides()).map((item) => ({
+    placeholderData: readCachedSlides,
+    queryFn: async () => {
+      const fresh = (await fetchPublishedSlides()).map((item) => ({
         image: item.image_url,
         eyebrow: item.eyebrow,
         title: item.title,
@@ -82,7 +113,10 @@ function Index() {
         action: item.button_label,
         href: item.button_href,
         alt: item.image_alt,
-      })),
+      }));
+      if (fresh.length) writeCachedSlides(fresh);
+      return fresh;
+    },
     retry: false,
     staleTime: 60_000,
     refetchInterval: 240_000,
@@ -94,7 +128,7 @@ function Index() {
   const currentSlide = activeSlide % slides.length;
   const slide = slides[currentSlide] ?? heroSlides[0];
   const imageState = slide ? imageStates[slide.image] : undefined;
-  const heroLoading = publicSlides.isPending || !imageState;
+  const heroLoading = (publicSlides.isPending && !publicSlides.data) || !imageState;
 
   function settleImage(source: string, state: "ready" | "error") {
     setImageStates((current) =>
@@ -146,7 +180,7 @@ function Index() {
         {heroLoading && (
           <div className="hero-loading">
             <div className="w-56 max-w-full text-center">
-              <p className="mb-3 text-sm" role="status">
+              <p className="sr-only" role="status">
                 Memuat banner…
               </p>
               <div
@@ -165,19 +199,17 @@ function Index() {
           </div>
         )}
         <h1 className="sr-only">{slide.title}</h1>
-        {!heroLoading && (
-          <div className="hero-start-action">
-            <Button
-              asChild
-              className="min-h-12 rounded-full bg-white px-6 py-3 text-sm font-semibold tracking-tight text-slate-950 shadow-xl ring-2 ring-white/80 transition-colors hover:bg-emerald-50 hover:shadow-emerald-900/30 focus-visible:ring-4 focus-visible:ring-emerald-300 sm:min-h-14 sm:px-8 sm:text-base"
-            >
-              <Link to="/pilih-aset">
-                Start Flipping
-                <ArrowRight className="ml-3 size-6" aria-hidden="true" />
-              </Link>
-            </Button>
-          </div>
-        )}
+        <div className="hero-start-action">
+          <Button
+            asChild
+            className="min-h-12 rounded-full bg-white px-6 py-3 text-sm font-semibold tracking-tight text-slate-950 shadow-xl ring-2 ring-white/80 transition-colors hover:bg-emerald-50 hover:shadow-emerald-900/30 focus-visible:ring-4 focus-visible:ring-emerald-300 sm:min-h-14 sm:px-8 sm:text-base"
+          >
+            <Link to="/pilih-aset">
+              Start Flipping
+              <ArrowRight className="ml-3 size-6" aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
         {!heroLoading && slides.length > 1 && (
           <div className="absolute bottom-3 left-0 right-0 z-10 sm:bottom-5">
             <div className="page-container flex items-center justify-between gap-4">
