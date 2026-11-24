@@ -28,7 +28,7 @@ const fields: { key: keyof LandSettings; label: string; unit: string; hint: stri
     key: "kdbPercent",
     label: "KDB bawaan",
     unit: "%",
-    hint: "Batas luas lantai dasar per kavling.",
+    hint: "100% = seluruh kavling boleh terbangun. Turunkan bila Perda setempat membatasi.",
   },
   {
     key: "maxFloors",

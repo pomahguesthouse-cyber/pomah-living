@@ -49,11 +49,11 @@ describe("renovationStrategy", () => {
 describe("splitStrategy", () => {
   it("menghitung biaya dan laba pecah 2 kavling", () => {
     const result = splitStrategy(2, baseScenario, rules, build);
-    // Kavling 75 m², maksimal 75 × 60% × 2 lantai = 90 m², target 45 m² tidak dipotong.
+    // Kavling 75 m², maksimal 75 × 100% × 2 lantai = 150 m², target 45 m² tidak dipotong.
     expect(result.detail).toMatchObject({
       lotArea: 75,
       buildingArea: 45,
-      maxBuildingArea: 90,
+      maxBuildingArea: 150,
       buildingCapped: false,
       buildCost: 360_000_000,
       sellingCost: 45_000_000,
