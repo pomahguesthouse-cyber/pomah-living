@@ -38,6 +38,12 @@ export type AnalysisAsset = Omit<Property, "id"> & {
   sourceUrl: string | null;
   notes: string;
   status: ListingStatus | "sample";
+  details?: {
+    auctionDate: string | null;
+    landArea: number | null;
+    buildingArea: number | null;
+    legal: string;
+  };
 };
 
 const rupiah = z
@@ -233,6 +239,12 @@ export function listingToAsset(row: ListingRow, coverUrl?: string): AnalysisAsse
     status: (listingStatuses as readonly string[]).includes(row.status)
       ? (row.status as ListingStatus)
       : "draft",
+    details: {
+      auctionDate: row.auction_date,
+      landArea: row.land_area,
+      buildingArea: row.building_area,
+      legal: row.legal,
+    },
   };
 }
 
