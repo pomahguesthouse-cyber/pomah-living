@@ -304,9 +304,9 @@ function Index() {
               description: "Susun RAB dan perkirakan biaya perbaikan rumah.",
             },
             {
-              image: "penjualan.webp",
-              width: 400,
-              height: 360,
+              image: "penjualan.png",
+              width: 1484,
+              height: 1060,
               title: "Penjualan",
               description: "Uji target harga jual, titik impas, dan potensi laba.",
             },
