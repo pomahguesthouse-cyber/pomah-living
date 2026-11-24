@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { Input } from "@/components/ui/input";
 import { projectsClient } from "@/lib/projects-client";
 import {
@@ -126,7 +127,19 @@ export function ProjectWorkspace({ userId }: { userId: string }) {
           </ul>
         </section>
         {(selection === "new" || selected) && (
-          <ProjectForm key={selected?.id ?? "new"} project={selected} onSave={save} />
+          <ProjectForm
+            key={selected?.id ?? "new"}
+            project={selected}
+            onSave={save}
+            userId={userId}
+            onDeleted={(deletedId) => {
+              cache.setQueryData<ProjectRecord[]>(queryKey, (existing = []) =>
+                existing.filter(({ id }) => id !== deletedId),
+              );
+              setSelection(null);
+              void cache.invalidateQueries({ queryKey, exact: true });
+            }}
+          />
         )}
       </div>
     </section>
@@ -136,9 +149,13 @@ export function ProjectWorkspace({ userId }: { userId: string }) {
 function ProjectForm({
   project,
   onSave,
+  userId,
+  onDeleted,
 }: {
   project: ProjectRecord | undefined;
   onSave: (fields: FormData, baseline: ProjectRecord | undefined) => Promise<ProjectRecord>;
+  userId: string;
+  onDeleted: (id: string) => void;
 }) {
   const [baseline, setBaseline] = useState(project);
   const [message, setMessage] = useState("");
@@ -227,9 +244,19 @@ function ProjectForm({
           {message}
         </p>
       )}
-      <Button className="mt-4" type="submit" disabled={saving}>
-        {saving ? "Menyimpan…" : "Simpan proyek"}
-      </Button>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <Button type="submit" disabled={saving}>
+          {saving ? "Menyimpan…" : "Simpan proyek"}
+        </Button>
+        {project && (
+          <DeleteProjectDialog
+            projectId={project.id}
+            projectName={project.name}
+            userId={userId}
+            onDeleted={() => onDeleted(project.id)}
+          />
+        )}
+      </div>
     </form>
   );
 }

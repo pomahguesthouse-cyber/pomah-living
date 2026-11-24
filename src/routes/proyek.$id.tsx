@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,6 +12,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { DemoPhotoGallery } from "@/components/demo-photo-gallery";
 import { PropertyPhotoWorkspace } from "@/components/property-photo-workspace";
 import { FlippingOverview } from "@/components/flipping-overview";
@@ -115,6 +116,8 @@ export const Route = createFileRoute("/proyek/$id")({
 
 function ProjectPage() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const demo = isDemoProject(id);
   const { session, ready } = useSession();
   const userId = session?.user.id;
@@ -327,6 +330,18 @@ function ProjectPage() {
                 <Save />
                 {saving ? "Menyimpan…" : "Simpan rincian"}
               </Button>
+            )}
+            {!demo && userId && (
+              <DeleteProjectDialog
+                projectId={id}
+                projectName={project.property.name}
+                userId={userId}
+                onDeleted={() => {
+                  removeProject(key);
+                  void queryClient.invalidateQueries({ queryKey: ["pomah-projects", userId] });
+                  void navigate({ to: "/profil", hash: "proyek-saya", replace: true });
+                }}
+              />
             )}
             <Button type="button" variant="outline" onClick={() => print("summary")}>
               <Printer />

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
   ChevronUp,
+  CircleAlert,
   ClipboardCheck,
   ExternalLink,
   FlaskConical,
@@ -38,7 +39,11 @@ import {
 } from "@/lib/simulation";
 import { seedSimulation, useSimulationStore } from "@/stores/simulation-store";
 import { useSession } from "@/hooks/use-session";
-import { createProjectFromAnalysis } from "@/services/flipping-service";
+import {
+  createProjectFromAnalysis,
+  findProjectsForListing,
+  projectsForListingKey,
+} from "@/services/flipping-service";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/analisis/$assetId")({
@@ -470,15 +475,36 @@ function CreateProjectFromAsset({
   values: SimulationValues | null;
 }) {
   const { session, ready } = useSession();
+  const userId = session?.user.id;
   const navigate = useNavigate();
+  const client = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [confirmDuplicate, setConfirmDuplicate] = useState(false);
+  const existing = useQuery({
+    queryKey: projectsForListingKey(userId ?? "signed-out", property.id),
+    queryFn: () => findProjectsForListing(userId ?? "", property.id),
+    enabled: Boolean(userId),
+    retry: false,
+  });
+  const projects = existing.data ?? [];
+  const hasDuplicate = projects.length > 0;
+
   async function create() {
-    if (!values) return;
+    if (!values || !userId) return;
     setBusy(true);
     setError("");
     try {
+      if (!confirmDuplicate) {
+        const latest = await findProjectsForListing(userId, property.id);
+        if (latest.length) {
+          client.setQueryData(projectsForListingKey(userId, property.id), latest);
+          setBusy(false);
+          return;
+        }
+      }
       const id = await createProjectFromAnalysis({
+        listingSlug: property.id,
         name: property.name,
         location: property.location,
         auctionLimit: property.auctionLimit,
@@ -490,6 +516,7 @@ function CreateProjectFromAsset({
         verification: property.verification,
         values,
       });
+      void client.invalidateQueries({ queryKey: projectsForListingKey(userId, property.id) });
       await navigate({ to: "/proyek/$id", params: { id } });
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Proyek gagal dibuat. Coba lagi.");
@@ -513,20 +540,80 @@ function CreateProjectFromAsset({
         dari asumsi di atas. Di halaman proyek Anda bisa merinci pajak, bunga pendanaan, biaya jual,
         RAB, timeline, dan risiko.
       </p>
-      {!ready ? null : session ? (
-        <Button className="mt-4 h-11" disabled={busy || !values} onClick={() => void create()}>
-          <FolderPlus className="size-4" aria-hidden="true" />
-          {busy ? "Membuat proyek…" : "Buat proyek dari aset ini"}
-        </Button>
-      ) : (
+      {!ready ? null : !session ? (
         <Button asChild className="mt-4 h-11">
           <Link to="/auth" search={{ redirect: `/analisis/${property.id}` }}>
             <LogIn className="size-4" aria-hidden="true" /> Masuk untuk membuat proyek
           </Link>
         </Button>
+      ) : existing.isPending ? (
+        <p role="status" className="mt-4 text-xs text-muted-foreground">
+          Memeriksa proyek Anda…
+        </p>
+      ) : hasDuplicate ? (
+        <div
+          className="mt-4 rounded-md bg-warning-soft p-4 text-sm text-warning"
+          data-testid="duplicate-warning"
+        >
+          <p className="flex items-center gap-2 font-semibold">
+            <CircleAlert className="size-4 shrink-0" aria-hidden="true" />
+            Kamu sudah punya proyek untuk aset ini
+          </p>
+          <ul className="mt-2 space-y-1 text-xs">
+            {projects.map((project) => (
+              <li key={project.id}>
+                <Link
+                  to="/proyek/$id"
+                  params={{ id: project.id }}
+                  className="font-medium underline underline-offset-2"
+                >
+                  {project.name}
+                </Link>{" "}
+                · diperbarui {new Date(project.updated_at).toLocaleDateString("id-ID")}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button asChild className="h-10">
+              <Link to="/proyek/$id" params={{ id: projects[0]!.id }}>
+                Buka proyek <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            {confirmDuplicate ? (
+              <Button
+                variant="outline"
+                className="h-10"
+                disabled={busy || !values}
+                onClick={() => void create()}
+              >
+                {busy ? "Membuat proyek…" : "Ya, buat proyek baru"}
+              </Button>
+            ) : (
+              <Button variant="ghost" className="h-10" onClick={() => setConfirmDuplicate(true)}>
+                Tetap buat proyek baru
+              </Button>
+            )}
+          </div>
+          {confirmDuplicate && (
+            <p className="mt-2 text-xs">
+              Proyek kedua akan dibuat terpisah dari angka analisis saat ini.
+            </p>
+          )}
+        </div>
+      ) : (
+        <Button className="mt-4 h-11" disabled={busy || !values} onClick={() => void create()}>
+          <FolderPlus className="size-4" aria-hidden="true" />
+          {busy ? "Membuat proyek…" : "Buat proyek dari aset ini"}
+        </Button>
       )}
       {!values && (
         <p className="mt-2 text-xs text-warning">Lengkapi asumsi perhitungan terlebih dahulu.</p>
+      )}
+      {existing.isError && (
+        <p role="alert" className="mt-2 text-xs text-warning">
+          Proyek yang sudah ada belum bisa diperiksa. Pastikan Anda belum membuat proyek untuk aset
+          ini sebelum melanjutkan.
+        </p>
       )}
       {error && (
         <p role="alert" className="mt-2 text-xs text-destructive">

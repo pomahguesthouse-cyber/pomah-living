@@ -191,3 +191,29 @@ describe("Projects created from a catalog analysis", () => {
     expect(() => readFlippingProject(makeProjectFromAnalysis(snapshot))).not.toThrow();
   });
 });
+
+describe("Project origin for duplicate checks", () => {
+  const snapshot = {
+    listingSlug: "rumah-cilodong",
+    name: "Rumah Cilodong",
+    location: "Depok",
+    auctionLimit: 270_000_000,
+    source: "Lelang BTN",
+    verification: { occupancy: false, access: false, documents: false },
+    values: { salePrice: 450_000_000, winningPrice: 270_000_000, renovationCosts: 60_000_000 },
+  };
+  it("stores the catalog slug so existing projects can be found", () => {
+    const project = readFlippingProject(makeProjectFromAnalysis(snapshot));
+    expect(project.origin?.listingSlug).toBe("rumah-cilodong");
+  });
+  it("still reads older projects without an origin", () => {
+    const older = { ...makeFlippingProject("demo") } as Record<string, unknown>;
+    delete older["origin"];
+    expect(readFlippingProject(older).origin).toBeUndefined();
+  });
+  it("rejects an invalid origin slug", () => {
+    expect(() =>
+      readFlippingProject({ ...makeFlippingProject("demo"), origin: { listingSlug: "Bad Slug" } }),
+    ).toThrow();
+  });
+});
