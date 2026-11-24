@@ -20,6 +20,20 @@ export type Property = {
   initialValues: SimulationValues;
   verification: Verification;
   inspection: string;
+  /** Fakta aset seperti di katalog. Aset contoh memakai angka fiktif. */
+  details?: AssetDetails;
+};
+
+export type AssetDetails = {
+  auctionDate: string | null;
+  landArea: number | null;
+  /** Lebar muka (menghadap jalan) dan panjang tanah, m. */
+  landWidth?: number | null;
+  landLength?: number | null;
+  buildingArea: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  legal: string;
 };
 export const properties: Property[] = [
   {
@@ -32,6 +46,14 @@ export const properties: Property[] = [
     initialValues: baseScenario,
     verification: { occupancy: true, access: true, documents: true },
     inspection: "Pemeriksaan awal lengkap",
+    details: {
+      auctionDate: "2026-12-15",
+      landArea: 120,
+      landWidth: 8,
+      landLength: 15,
+      buildingArea: 70,
+      legal: "SHM",
+    },
   },
   {
     id: "sawangan",
@@ -43,6 +65,7 @@ export const properties: Property[] = [
     initialValues: sawanganScenario,
     verification: { occupancy: false, access: true, documents: true },
     inspection: "Penghunian belum terverifikasi",
+    details: { auctionDate: "2026-12-18", landArea: 90, buildingArea: 45, legal: "SHM" },
   },
   {
     id: "jatiasih",
@@ -53,7 +76,16 @@ export const properties: Property[] = [
     auctionLimit: 320_000_000,
     initialValues: { ...stressedScenario, winningPrice: 320_000_000 },
     verification: { occupancy: true, access: true, documents: true },
-    inspection: "Pemeriksaan lengkap, tetapi margin tidak cukup",
+    // Teks ini hanya status pemeriksaan; penilaian margin dilakukan di halaman analisis.
+    inspection: "Pemeriksaan awal lengkap",
+    details: {
+      auctionDate: "2026-12-22",
+      landArea: 150,
+      landWidth: 12,
+      landLength: 12.5,
+      buildingArea: 80,
+      legal: "SHM",
+    },
   },
 ];
 const previousPropertyIds = new Map<string, PropertyId>([

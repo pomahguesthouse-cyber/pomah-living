@@ -43,16 +43,6 @@ export type AnalysisAsset = Omit<Property, "id"> & {
   sourceUrl: string | null;
   notes: string;
   status: ListingStatus | "sample";
-  details?: {
-    auctionDate: string | null;
-    landArea: number | null;
-    landWidth?: number | null;
-    landLength?: number | null;
-    buildingArea: number | null;
-    bedrooms?: number | null;
-    bathrooms?: number | null;
-    legal: string;
-  };
 };
 
 const rupiah = z
