@@ -280,7 +280,7 @@ function Index() {
             <br className="hidden sm:block" /> menjadi investasi yang tepat.
           </p>
         </div>
-        <div className="mt-9 grid grid-cols-2 gap-x-5 gap-y-8 lg:grid-cols-4 lg:gap-x-9">
+        <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-6 sm:mt-9 sm:gap-x-5 sm:gap-y-8 lg:grid-cols-4 lg:gap-x-9">
           {[
             {
               image: "analisis-aset.png",
@@ -311,7 +311,7 @@ function Index() {
               description: "Uji target harga jual, titik impas, dan potensi laba.",
             },
           ].map(({ image, width, height, title, description }) => (
-            <div key={image} className="border-t border-border pt-5">
+            <div key={image} className="border-t border-border pt-4 sm:pt-5">
               <img
                 src={`/images/flipping-stages/${image}`}
                 alt=""
@@ -319,10 +319,12 @@ function Index() {
                 height={height}
                 loading="lazy"
                 decoding="async"
-                className="mb-4 h-28 w-full object-contain object-left sm:h-36"
+                className="mb-3 h-20 w-full object-contain object-left sm:mb-4 sm:h-36"
               />
-              <h3 className="text-base font-semibold">{title}</h3>
-              <p className="mt-2 max-w-xs text-sm leading-6 text-muted-foreground">{description}</p>
+              <h3 className="text-sm font-semibold sm:text-base">{title}</h3>
+              <p className="mt-1.5 max-w-xs text-xs leading-5 text-muted-foreground sm:mt-2 sm:text-sm sm:leading-6">
+                {description}
+              </p>
             </div>
           ))}
         </div>
