@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { FormattedNumberInput } from "@/components/formatted-number-input";
-import { importAuctionUrl } from "@/lib/import-auction";
+import { importAuctionPhotos, importAuctionUrl } from "@/lib/import-auction";
 import { provinceOptions, regencyOptions, regionName } from "@/lib/indonesia-regions";
 import {
   emptyListingForm,
@@ -378,6 +378,9 @@ function ListingEditor({
   const [auctionUrl, setAuctionUrl] = useState(form.source_url ?? "");
   const [importing, setImporting] = useState(false);
   const [importNote, setImportNote] = useState("");
+  /** Foto objek di situs lelang dari hasil impor tautan; belum diunduh sampai admin memilih. */
+  const [sourcePhotos, setSourcePhotos] = useState<string[]>([]);
+  const [fetchingSource, setFetchingSource] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -435,10 +438,13 @@ function ListingEditor({
           address: data.address || current.address,
           auction_limit: limit,
           land_area: data.landArea ?? current.land_area,
+          auction_date: data.auctionDate ?? current.auction_date,
+          legal: data.legal || current.legal,
           building_area: data.buildingArea ?? current.building_area,
           notes: current.notes || data.description,
         };
       });
+      setSourcePhotos(data.photoUrls ?? []);
       setImportNote(data.warning ?? "Data awal terisi. Periksa kembali sebelum menyimpan.");
     } catch (error) {
       setImportNote(
@@ -451,7 +457,7 @@ function ListingEditor({
     }
   }
 
-  async function addPhotos(files: FileList | null) {
+  async function addPhotos(files: FileList | File[] | null) {
     if (!files?.length) return;
     setPhotoError("");
     const list = Array.from(files);
@@ -474,6 +480,30 @@ function ListingEditor({
       setPhotoError(adminError(error));
     } finally {
       setUploading(false);
+    }
+  }
+  async function takeSourcePhotos() {
+    const room = maxListingPhotos - paths.length;
+    if (room <= 0) {
+      setPhotoError(`Maksimal ${maxListingPhotos} foto per properti.`);
+      return;
+    }
+    setFetchingSource(true);
+    setPhotoError("");
+    try {
+      const photos = await importAuctionPhotos({
+        data: { urls: sourcePhotos.slice(0, Math.min(8, room)) },
+      });
+      const files = photos.map(({ name, type, base64 }) => {
+        const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+        return new File([bytes], name, { type });
+      });
+      await addPhotos(files);
+      setSourcePhotos([]);
+    } catch (error) {
+      setPhotoError(error instanceof Error ? error.message : adminError(error));
+    } finally {
+      setFetchingSource(false);
     }
   }
   function removePhoto(path: string) {
@@ -725,6 +755,41 @@ function ListingEditor({
             <p className="text-xs text-muted-foreground">
               Foto tersimpan saat formulir disimpan. Tandai bintang untuk foto sampul katalog.
             </p>
+            {sourcePhotos.length > 0 && (
+              <div className="mt-3 rounded-md border border-brand/40 bg-brand-soft/40 p-3">
+                <p className="text-xs font-medium">
+                  {sourcePhotos.length} foto objek tersedia di situs lelang
+                </p>
+                <div className="mt-2 flex gap-2 overflow-x-auto">
+                  {sourcePhotos.slice(0, 8).map((url) => (
+                    <img
+                      key={url}
+                      src={url}
+                      alt="Foto objek dari situs lelang"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      className="h-16 w-24 shrink-0 rounded object-cover"
+                    />
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="brand"
+                  className="mt-3"
+                  disabled={fetchingSource || uploading}
+                  onClick={() => void takeSourcePhotos()}
+                >
+                  {fetchingSource
+                    ? "Mengambil foto…"
+                    : `Ambil ${Math.min(sourcePhotos.length, 8)} foto ke katalog`}
+                </Button>
+                <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+                  Foto diunduh dari lelang.go.id dan disimpan di katalog. Tautan sumber tetap
+                  ditampilkan di halaman analisis.
+                </p>
+              </div>
+            )}
             {paths.length > 0 && (
               <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {paths.map((path) => (

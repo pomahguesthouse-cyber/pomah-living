@@ -1,5 +1,12 @@
 import { parseAuctionText } from "@/lib/auction-text-parser";
 import { createServerFn } from "@tanstack/react-start";
+import {
+  isLelangPhotoUrl,
+  lelangApiBase,
+  lelangLotId,
+  parseLelangInfo,
+  type LelangLot,
+} from "@/lib/lelang-go-id";
 
 export type AuctionMetadata = {
   title: string;
@@ -11,7 +18,32 @@ export type AuctionMetadata = {
   buildingArea: number | null;
   sourceUrl: string;
   warning: string | null;
+  /** Tanggal lelang (YYYY-MM-DD) dan legalitas bila sumber menyediakannya. */
+  auctionDate?: string | null;
+  legal?: string;
+  /** Foto objek lelang di situs sumber; diunduh ke katalog hanya bila admin memintanya. */
+  photoUrls?: string[];
 };
+
+async function fetchLelangLot(lotId: string): Promise<LelangLot | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(`${lelangApiBase}/landing-page/info/${lotId}`, {
+      signal: controller.signal,
+      redirect: "manual",
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) return null;
+    const length = Number(response.headers.get("content-length") ?? "0");
+    if (length > 2_000_000) return null;
+    return parseLelangInfo(JSON.parse((await response.text()).slice(0, 2_000_000)));
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 const allowedHosts = new Set(["lelang.go.id", "www.lelang.go.id", "balelelang.btn.co.id"]);
 
@@ -94,6 +126,24 @@ export const importAuctionUrl = createServerFn({ method: "POST" })
     return { url: parseAllowedUrl(data.url).toString() };
   })
   .handler(async ({ data }): Promise<AuctionMetadata> => {
+    const lotId = lelangLotId(data.url);
+    const lot = lotId ? await fetchLelangLot(lotId) : null;
+    if (lot)
+      return {
+        title: lot.title,
+        description: "",
+        limit: lot.limit,
+        deposit: lot.deposit,
+        address: lot.address,
+        landArea: lot.landArea,
+        buildingArea: null,
+        sourceUrl: data.url,
+        auctionDate: lot.auctionDate,
+        legal: lot.legal,
+        photoUrls: lot.photoUrls.slice(0, 12),
+        warning:
+          "Data diambil dari lelang.go.id; verifikasi seluruh nilai sesuai pengumuman resmi. Luas bangunan tidak tersedia di sumber.",
+      };
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
     try {
@@ -137,4 +187,54 @@ export const importAuctionUrl = createServerFn({ method: "POST" })
     } finally {
       clearTimeout(timeout);
     }
+  });
+
+
+export type ImportedPhoto = { name: string; type: string; base64: string };
+
+const photoTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const maxPhotoBytes = 10 * 1024 * 1024;
+
+function toBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let index = 0; index < bytes.length; index += 0x8000)
+    binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+  return btoa(binary);
+}
+
+/** Unduh foto objek lelang (hanya dari file.lelang.go.id) agar admin bisa menyimpannya ke katalog. */
+export const importAuctionPhotos = createServerFn({ method: "POST" })
+  .inputValidator((data: { urls: string[] }) => {
+    if (!Array.isArray(data?.urls) || data.urls.length === 0 || data.urls.length > 8)
+      throw new Error("Pilih 1 sampai 8 foto.");
+    if (!data.urls.every((url) => typeof url === "string" && isLelangPhotoUrl(url)))
+      throw new Error("Foto hanya bisa diambil dari file.lelang.go.id.");
+    return { urls: data.urls };
+  })
+  .handler(async ({ data }): Promise<ImportedPhoto[]> => {
+    const photos: ImportedPhoto[] = [];
+    for (const url of data.urls) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10_000);
+      try {
+        const response = await fetch(url, { signal: controller.signal, redirect: "manual" });
+        if (!response.ok) continue;
+        const type = (response.headers.get("content-type") ?? "").split(";")[0]!.trim().toLowerCase();
+        if (!photoTypes.has(type)) continue;
+        if (Number(response.headers.get("content-length") ?? "0") > maxPhotoBytes) continue;
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        if (bytes.byteLength === 0 || bytes.byteLength > maxPhotoBytes) continue;
+        photos.push({
+          name: decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "foto.jpg"),
+          type,
+          base64: toBase64(bytes),
+        });
+      } catch {
+        // Lewati foto yang gagal diunduh; admin tetap bisa mengunggah manual.
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+    if (photos.length === 0) throw new Error("Foto dari sumber lelang tidak dapat diunduh. Unggah foto secara manual.");
+    return photos;
   });
