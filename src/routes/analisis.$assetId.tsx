@@ -1,12 +1,15 @@
-import { useRef, useState } from "react";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
   ChevronUp,
   ClipboardCheck,
+  ExternalLink,
   FlaskConical,
+  ImageOff,
   MapPin,
   Pencil,
   SlidersHorizontal,
@@ -18,6 +21,8 @@ import { ConditionPhotoPilot } from "@/components/condition-photo-pilot";
 import { NearbyAskingPrices } from "@/components/nearby-asking-prices";
 import { SimulationResults } from "@/components/simulation-results";
 import { getProperty } from "@/lib/properties";
+import { listingToAsset, sampleToAsset, type AnalysisAsset } from "@/lib/listings";
+import { fetchListingBySlug, fetchListingPhotoUrls, listingKey } from "@/services/listing-service";
 import {
   baseScenario,
   checkItems,
@@ -28,31 +33,30 @@ import {
   stressedScenario,
   validateAmount,
 } from "@/lib/simulation";
-import { useSimulationStore } from "@/stores/simulation-store";
+import { seedSimulation, useSimulationStore } from "@/stores/simulation-store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/analisis/$assetId")({
   loader: ({ params }) => {
-    const property = getProperty(params.assetId);
-    if (!property) throw notFound();
-    return { property };
+    const sample = getProperty(params.assetId);
+    return { property: sample ? sampleToAsset(sample) : null, slug: params.assetId };
   },
   head: ({ loaderData }) => ({
     meta: [
       {
-        title: loaderData
+        title: loaderData?.property
           ? `Analisis ${loaderData.property.name} — Pomah Living`
-          : "Aset tidak tersedia — Pomah Living",
+          : "Analisis properti — Pomah Living",
       },
       {
         name: "description",
-        content: loaderData
+        content: loaderData?.property
           ? `Simulasi biaya renovasi, laba jual kembali, dan batas tawar ${loaderData.property.name} di ${loaderData.property.location}.`
-          : "Aset simulasi tidak tersedia.",
+          : "Analisis batas tawar, biaya renovasi, dan laba properti dari katalog Pomah Living.",
       },
       {
         property: "og:title",
-        content: loaderData
+        content: loaderData?.property
           ? `Analisis ${loaderData.property.name} — Pomah Living`
           : "Aset tidak tersedia — Pomah Living",
       },
@@ -63,13 +67,12 @@ export const Route = createFileRoute("/analisis/$assetId")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      ...(loaderData?.property.image.startsWith("https://")
+      ...(loaderData?.property?.image.startsWith("https://")
         ? [
             { property: "og:image", content: loaderData.property.image },
             { name: "twitter:image", content: loaderData.property.image },
           ]
         : []),
-      ...(!loaderData ? [{ name: "robots", content: "noindex" }] : []),
     ],
   }),
   component: AnalyzeAsset,
@@ -92,8 +95,64 @@ export const Route = createFileRoute("/analisis/$assetId")({
 });
 
 function AnalyzeAsset() {
-  const { property } = Route.useLoaderData();
-  const simulation = useSimulationStore((state) => state.simulations[property.id]);
+  const { property, slug } = Route.useLoaderData();
+  if (property) return <AssetAnalysisView property={property} />;
+  return <ListingAnalysis slug={slug} />;
+}
+
+function ListingAnalysis({ slug }: { slug: string }) {
+  const listing = useQuery({
+    queryKey: listingKey(slug),
+    queryFn: async () => {
+      const row = await fetchListingBySlug(slug);
+      if (!row) return null;
+      const cover = row.cover_photo_path;
+      const urls = cover ? await fetchListingPhotoUrls([cover]).catch(() => ({})) : {};
+      return listingToAsset(row, cover ? (urls as Record<string, string>)[cover] : undefined);
+    },
+    retry: false,
+  });
+  if (listing.isPending)
+    return (
+      <main className="page-container py-12">
+        <p role="status" className="text-sm text-muted-foreground">
+          Memuat data properti…
+        </p>
+      </main>
+    );
+  if (listing.isError || !listing.data)
+    return (
+      <main className="page-container py-12">
+        <h1 className="text-xl font-semibold">
+          {listing.isError ? "Analisis belum bisa dimuat" : "Aset tidak ditemukan"}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {listing.isError
+            ? "Periksa koneksi lalu coba lagi."
+            : "Properti ini tidak ada di katalog atau belum dipublikasikan."}
+        </p>
+        <Button asChild className="mt-5">
+          <Link to="/pilih-aset">Kembali ke aset</Link>
+        </Button>
+      </main>
+    );
+  return <AssetAnalysisView property={listing.data} />;
+}
+
+function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
+  const stored = useSimulationStore((state) => state.simulations[property.id]);
+  const register = useSimulationStore((state) => state.register);
+  const seed = useMemo(
+    () =>
+      seedSimulation(
+        property.initialValues,
+        property.verification,
+        property.id === "jatiasih" ? "stressed" : "base",
+      ),
+    [property],
+  );
+  useEffect(() => register(property.id, seed), [register, property.id, seed]);
+  const simulation = stored ?? seed;
   const setField = useSimulationStore((state) => state.setField);
   const setCheck = useSimulationStore((state) => state.setCheck);
   const setScenario = useSimulationStore((state) => state.setScenario);
@@ -125,9 +184,24 @@ function AnalyzeAsset() {
             {property.location}
             <span className="ml-3 flex items-center gap-1.5 border-l border-border pl-3">
               <FlaskConical className="size-3" />
-              Data simulasi
+              {property.isSample ? "Data simulasi" : property.sourceLabel}
             </span>
+            {property.sourceUrl && (
+              <a
+                href={property.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="ml-3 inline-flex items-center gap-1 border-l border-border pl-3 text-brand hover:underline"
+              >
+                Lihat sumber <ExternalLink className="size-3" />
+              </a>
+            )}
           </p>
+          {property.status === "draft" || property.status === "archived" ? (
+            <p className="mt-3 inline-block rounded-md bg-warning-soft px-3 py-1.5 text-xs text-warning">
+              {property.status === "draft" ? "Draf" : "Diarsipkan"} · hanya terlihat oleh admin
+            </p>
+          ) : null}
         </div>
         <Button asChild variant="outline" size="sm">
           <Link to="/pilih-aset">
@@ -139,11 +213,17 @@ function AnalyzeAsset() {
       <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_370px]">
         <div>
           <div className="flex items-center gap-5 border-y border-border py-5">
-            <img
-              className="h-24 w-32 rounded-md object-cover sm:w-36"
-              src={property.image}
-              alt={`Ilustrasi ${property.name}`}
-            />
+            {property.image ? (
+              <img
+                className="h-24 w-32 rounded-md object-cover sm:w-36"
+                src={property.image}
+                alt={property.isSample ? `Ilustrasi ${property.name}` : `Foto ${property.name}`}
+              />
+            ) : (
+              <div className="flex h-24 w-32 items-center justify-center rounded-md bg-muted text-muted-foreground sm:w-36">
+                <ImageOff className="size-6" aria-hidden="true" />
+              </div>
+            )}
             <div>
               <p className="text-xs text-muted-foreground">Nilai limit lelang</p>
               <p className="mt-1 text-2xl font-semibold tabular-nums">
@@ -331,28 +411,40 @@ function AnalyzeAsset() {
               </div>
             )}
           </section>
-          <section
-            className="border-t border-border py-7"
-            aria-labelledby="next-step-title"
-            data-testid="next-step"
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-brand">
-              Langkah berikutnya
-            </p>
-            <h2 id="next-step-title" className="mt-1 text-base font-semibold">
-              Rencanakan proyek setelah menang lelang
-            </h2>
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              Angka di halaman ini adalah estimasi cepat untuk menentukan batas tawar. Halaman
-              proyek memakai harga beli, harga jual, dan RAB yang sama sebagai titik awal, lalu
-              merinci pajak, bunga pendanaan, biaya jual, timeline, dan risiko.
-            </p>
-            <Button asChild className="mt-4 h-11">
-              <Link to="/proyek/$id" params={{ id: property.id }}>
-                Lanjut ke perencanaan proyek <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-          </section>
+          {property.notes && (
+            <section className="border-t border-border py-7" aria-labelledby="notes-title">
+              <h2 id="notes-title" className="text-base font-semibold">
+                Catatan aset
+              </h2>
+              <p className="mt-2 whitespace-pre-line text-sm leading-6 text-muted-foreground">
+                {property.notes}
+              </p>
+            </section>
+          )}
+          {property.isSample && (
+            <section
+              className="border-t border-border py-7"
+              aria-labelledby="next-step-title"
+              data-testid="next-step"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-brand">
+                Langkah berikutnya
+              </p>
+              <h2 id="next-step-title" className="mt-1 text-base font-semibold">
+                Rencanakan proyek setelah menang lelang
+              </h2>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                Angka di halaman ini adalah estimasi cepat untuk menentukan batas tawar. Halaman
+                proyek memakai harga beli, harga jual, dan RAB yang sama sebagai titik awal, lalu
+                merinci pajak, bunga pendanaan, biaya jual, timeline, dan risiko.
+              </p>
+              <Button asChild className="mt-4 h-11">
+                <Link to="/proyek/$id" params={{ id: property.id }}>
+                  Lanjut ke perencanaan proyek <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </section>
+          )}
         </div>
         <SimulationResults
           values={values}

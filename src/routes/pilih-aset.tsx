@@ -6,8 +6,10 @@ import {
   ArrowUpRight,
   CheckCircle2,
   CircleAlert,
+  Building2,
   FlaskConical,
   FilePlus,
+  ImageOff,
   MapPin,
   ClipboardCheck,
   Calculator,
@@ -18,6 +20,12 @@ import { useSession } from "@/hooks/use-session";
 import { matchesPreferredRegions } from "@/lib/indonesia-regions";
 import { fetchPreferredRegions, preferredRegionsKey } from "@/services/account-details";
 import { properties } from "@/lib/properties";
+import { listingToAsset, sampleToAsset, type AnalysisAsset } from "@/lib/listings";
+import {
+  fetchListingPhotoUrls,
+  fetchPublishedListings,
+  publishedListingsKey,
+} from "@/services/listing-service";
 import { calculateSimulation, formatRupiah, getDecision } from "@/lib/simulation";
 import { cn } from "@/lib/utils";
 import { fetchPublishedDemos, publishedDemoKey } from "@/services/flipping-demo-service";
@@ -62,10 +70,25 @@ function SelectAsset() {
   const [unfilteredUser, setUnfilteredUser] = useState<string | null>(null);
   const preferences = regions.data ?? [];
   const isFiltering = Boolean(id && preferences.length && unfilteredUser !== id);
+  const listings = useQuery({
+    queryKey: publishedListingsKey,
+    queryFn: async () => {
+      const rows = await fetchPublishedListings();
+      const covers = rows.flatMap((row) => (row.cover_photo_path ? [row.cover_photo_path] : []));
+      const urls = await fetchListingPhotoUrls(covers).catch(() => ({}) as Record<string, string>);
+      return rows.map((row) =>
+        listingToAsset(row, row.cover_photo_path ? urls[row.cover_photo_path] : undefined),
+      );
+    },
+    retry: false,
+    staleTime: 60_000,
+  });
+  const catalog: AnalysisAsset[] = [...(listings.data ?? []), ...properties.map(sampleToAsset)];
   const visibleProperties = isFiltering
-    ? properties.filter((property) => matchesPreferredRegions(property.regionCode, preferences))
-    : properties;
-  const canShowListings = ready && (!id || regions.isSuccess) && demos.isSuccess;
+    ? catalog.filter((property) => matchesPreferredRegions(property.regionCode, preferences))
+    : catalog;
+  const canShowListings =
+    ready && (!id || regions.isSuccess) && demos.isSuccess && !listings.isPending;
 
   return (
     <main className="page-container reveal py-10 sm:py-14">
@@ -200,8 +223,8 @@ function SelectAsset() {
       <div className="mt-9">
         <h2 className="text-xl font-semibold">Katalog aset</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Saat ini berisi rumah contoh untuk mencoba alur analisis. Properti yang ditambahkan admin
-          akan tampil di daftar ini.
+          Properti pilihan Pomah Living tampil lebih dulu, disusul rumah contoh untuk mencoba alur
+          analisis.
         </p>
       </div>
       {demos.isError && (
@@ -234,7 +257,9 @@ function SelectAsset() {
       <div id="daftar-aset" className="mt-6 grid scroll-mt-8 gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {canShowListings &&
           visibleProperties.map((property) => {
-            const sample = demos.data?.find((item) => item.id === property.id);
+            const sample = property.isSample
+              ? demos.data?.find((item) => item.id === property.id)
+              : undefined;
             const simulation = calculateSimulation(property.initialValues);
             const bidLimit = simulation.bidLimit;
             const decision = getDecision(
@@ -245,14 +270,26 @@ function SelectAsset() {
             return (
               <article className="property-card" key={property.id}>
                 <div className="relative">
-                  <img
-                    className="property-photo"
-                    src={property.image}
-                    alt={`Ilustrasi ${property.name}`}
-                  />
+                  {property.image ? (
+                    <img
+                      className="property-photo"
+                      src={property.image}
+                      alt={
+                        property.isSample ? `Ilustrasi ${property.name}` : `Foto ${property.name}`
+                      }
+                    />
+                  ) : (
+                    <div className="property-photo flex items-center justify-center bg-muted text-muted-foreground">
+                      <ImageOff className="size-8" aria-hidden="true" />
+                    </div>
+                  )}
                   <span className="absolute left-4 top-4 flex items-center gap-1.5 rounded bg-card/95 px-2.5 py-1.5 text-[10px] font-semibold text-brand-deep">
-                    <FlaskConical className="size-3" />
-                    Contoh · data simulasi
+                    {property.isSample ? (
+                      <FlaskConical className="size-3" />
+                    ) : (
+                      <Building2 className="size-3" />
+                    )}
+                    {property.sourceLabel}
                   </span>
                 </div>
                 <div className="p-5">
@@ -329,11 +366,13 @@ function SelectAsset() {
                       <ArrowUpRight />
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" className="mt-2 w-full justify-between">
-                    <Link to="/proyek/$id" params={{ id: property.id }}>
-                      Proyek flipping demo <ArrowRight />
-                    </Link>
-                  </Button>
+                  {property.isSample && (
+                    <Button asChild variant="ghost" className="mt-2 w-full justify-between">
+                      <Link to="/proyek/$id" params={{ id: property.id }}>
+                        Proyek flipping demo <ArrowRight />
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               </article>
             );
@@ -342,8 +381,9 @@ function SelectAsset() {
       <div className="mt-9 flex items-start gap-3 border-t border-border pt-6 text-xs leading-6 text-muted-foreground">
         <FlaskConical className="mt-1 size-4 shrink-0 text-brand" />
         <p>
-          Seluruh rumah, foto, dan angka merupakan ilustrasi simulasi, bukan penawaran lelang yang
-          sedang berlangsung.
+          Rumah berlabel "Contoh" adalah ilustrasi simulasi. Angka pada properti katalog adalah
+          estimasi awal Pomah Living, bukan jaminan keuntungan; selalu verifikasi data lelang dan
+          kondisi fisik sebelum menawar.
         </p>
       </div>
     </main>

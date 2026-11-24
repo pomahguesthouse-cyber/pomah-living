@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { properties, type PropertyId } from "@/lib/properties";
+import { properties } from "@/lib/properties";
 import {
   toInputs,
   type CheckKey,
@@ -23,42 +23,61 @@ const initialSimulations = Object.fromEntries(
       scenario: property.id === "jatiasih" ? "stressed" : "base",
     },
   ]),
-) as Record<PropertyId, AssetSimulation>;
+) as Record<string, AssetSimulation>;
+
+export function seedSimulation(
+  values: SimulationValues,
+  verification: Verification,
+  scenario: AssetSimulation["scenario"] = "base",
+): AssetSimulation {
+  return { inputs: toInputs(values), verification: { ...verification }, scenario };
+}
 
 type SimulationStore = {
-  simulations: Record<PropertyId, AssetSimulation>;
-  setField: (id: PropertyId, field: SimulationField, value: string) => void;
-  setCheck: (id: PropertyId, key: CheckKey, verified: boolean) => void;
-  setScenario: (id: PropertyId, scenario: "base" | "stressed", values: SimulationValues) => void;
+  simulations: Record<string, AssetSimulation>;
+  /** Mendaftarkan simulasi awal untuk aset katalog; tidak menimpa simulasi yang sudah ada. */
+  register: (id: string, seed: AssetSimulation) => void;
+  setField: (id: string, field: SimulationField, value: string) => void;
+  setCheck: (id: string, key: CheckKey, verified: boolean) => void;
+  setScenario: (id: string, scenario: "base" | "stressed", values: SimulationValues) => void;
 };
 export const useSimulationStore = create<SimulationStore>((set) => ({
   simulations: initialSimulations,
+  register: (id, seed) =>
+    set((state) =>
+      state.simulations[id] ? state : { simulations: { ...state.simulations, [id]: seed } },
+    ),
   setField: (id, field, value) =>
-    set((state) => ({
-      simulations: {
-        ...state.simulations,
-        [id]: {
-          ...state.simulations[id],
-          scenario: "custom",
-          inputs: { ...state.simulations[id].inputs, [field]: value },
+    set((state) => {
+      const current = state.simulations[id];
+      if (!current) return state;
+      return {
+        simulations: {
+          ...state.simulations,
+          [id]: { ...current, scenario: "custom", inputs: { ...current.inputs, [field]: value } },
         },
-      },
-    })),
+      };
+    }),
   setCheck: (id, key, verified) =>
-    set((state) => ({
-      simulations: {
-        ...state.simulations,
-        [id]: {
-          ...state.simulations[id],
-          verification: { ...state.simulations[id].verification, [key]: verified },
+    set((state) => {
+      const current = state.simulations[id];
+      if (!current) return state;
+      return {
+        simulations: {
+          ...state.simulations,
+          [id]: { ...current, verification: { ...current.verification, [key]: verified } },
         },
-      },
-    })),
+      };
+    }),
   setScenario: (id, scenario, values) =>
-    set((state) => ({
-      simulations: {
-        ...state.simulations,
-        [id]: { ...state.simulations[id], scenario, inputs: toInputs(values) },
-      },
-    })),
+    set((state) => {
+      const current = state.simulations[id];
+      if (!current) return state;
+      return {
+        simulations: {
+          ...state.simulations,
+          [id]: { ...current, scenario, inputs: toInputs(values) },
+        },
+      };
+    }),
 }));
