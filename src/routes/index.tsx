@@ -283,32 +283,40 @@ function Index() {
         <div className="mt-9 grid grid-cols-2 gap-x-5 gap-y-8 lg:grid-cols-4 lg:gap-x-9">
           {[
             {
-              image: "analisis-aset",
+              image: "analisis-aset.png",
+              width: 1312,
+              height: 1199,
               title: "Analisis Aset Properti",
               description: "Periksa kondisi rumah, legalitas, dan nilai limit lelang.",
             },
             {
-              image: "akuisisi",
+              image: "akuisisi.png",
+              width: 1484,
+              height: 1060,
               title: "Akuisisi",
               description: "Hitung batas tawar dan total biaya perolehan aset.",
             },
             {
-              image: "renovasi",
+              image: "renovasi.png",
+              width: 4677,
+              height: 3673,
               title: "Simulasi Renovasi",
               description: "Susun RAB dan perkirakan biaya perbaikan rumah.",
             },
             {
-              image: "penjualan",
+              image: "penjualan.webp",
+              width: 400,
+              height: 360,
               title: "Penjualan",
               description: "Uji target harga jual, titik impas, dan potensi laba.",
             },
-          ].map(({ image, title, description }) => (
+          ].map(({ image, width, height, title, description }) => (
             <div key={image} className="border-t border-border pt-5">
               <img
-                src={`/images/flipping-stages/${image}.${image === "renovasi" || image === "akuisisi" ? "png" : "webp"}`}
+                src={`/images/flipping-stages/${image}`}
                 alt=""
-                width={image === "akuisisi" ? 1484 : image === "renovasi" ? 4677 : 400}
-                height={image === "akuisisi" ? 1060 : image === "renovasi" ? 3673 : 360}
+                width={width}
+                height={height}
                 loading="lazy"
                 decoding="async"
                 className="mb-4 h-28 w-full object-contain object-left sm:h-36"
