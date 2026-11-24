@@ -3,6 +3,7 @@ import sawanganImage from "@/assets/rumah-tembalang.webp.asset.json";
 import jatiasihImage from "@/assets/rumah-ngaliyan.webp.asset.json";
 import {
   baseScenario,
+  sawanganScenario,
   stressedScenario,
   type SimulationValues,
   type Verification,
@@ -39,7 +40,7 @@ export const properties: Property[] = [
     regionCode: "3276",
     image: sawanganImage.url,
     auctionLimit: 250_000_000,
-    initialValues: baseScenario,
+    initialValues: sawanganScenario,
     verification: { occupancy: false, access: true, documents: true },
     inspection: "Penghunian belum terverifikasi",
   },
@@ -52,7 +53,7 @@ export const properties: Property[] = [
     auctionLimit: 320_000_000,
     initialValues: { ...stressedScenario, winningPrice: 320_000_000 },
     verification: { occupancy: true, access: true, documents: true },
-    inspection: "Pemeriksaan awal lengkap",
+    inspection: "Pemeriksaan lengkap, tetapi margin tidak cukup",
   },
 ];
 const previousPropertyIds = new Map<string, PropertyId>([

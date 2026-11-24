@@ -1,13 +1,16 @@
 import {
   AlertTriangle,
   ArrowDownRight,
+  Landmark,
   CheckCircle2,
   CircleDollarSign,
   ShieldCheck,
   TrendingUp,
 } from "lucide-react";
 import {
+  calculateMortgage,
   calculateSimulation,
+  defaultMortgage,
   formatRupiah,
   getDecision,
   type SimulationValues,
@@ -39,6 +42,7 @@ export function SimulationResults({ values, auctionLimit, verification }: Result
       </aside>
     );
   const result = calculateSimulation(values);
+  const mortgage = calculateMortgage(values.salePrice);
   const decision = getDecision(values, auctionLimit, verification);
   const DecisionIcon =
     decision.tone === "success"
@@ -120,6 +124,37 @@ export function SimulationResults({ values, auctionLimit, verification }: Result
           <span>Target laba</span>
           <span className="tabular-nums">{formatRupiah(values.targetProfit)}</span>
         </div>
+      </div>
+      <div className="border-b border-border px-6 py-5" data-testid="buyer-mortgage">
+        <h3 className="flex items-center gap-2 text-sm font-semibold">
+          <Landmark className="size-4 text-brand" />
+          Simulasi KPR BTN untuk pembeli
+        </h3>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          Harga jual {formatRupiah(values.salePrice)}, uang muka{" "}
+          {Math.round(defaultMortgage.downPaymentRate * 100)}%, tenor {defaultMortgage.years} tahun,
+          bunga {defaultMortgage.annualRatePercent.toLocaleString("id-ID")}% per tahun.
+        </p>
+        <div className="mt-3 flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Uang muka</span>
+          <span className="font-semibold tabular-nums">{formatRupiah(mortgage.downPayment)}</span>
+        </div>
+        <div className="mt-2 flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Cicilan per bulan</span>
+          <span
+            data-testid="monthly-payment"
+            className="text-lg font-semibold tabular-nums text-brand-deep"
+          >
+            {formatRupiah(mortgage.monthlyPayment)}
+          </span>
+        </div>
+        <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+          <span>Perkiraan penghasilan minimal</span>
+          <span className="tabular-nums">{formatRupiah(mortgage.minimumIncome)}/bulan</span>
+        </div>
+        <p className="mt-3 text-[11px] leading-4 text-muted-foreground">
+          Asumsi ilustrasi, bukan penawaran KPR. Suku bunga dan syarat mengikuti ketentuan BTN.
+        </p>
       </div>
       <div className="p-6" aria-live="polite" aria-atomic="true">
         <div

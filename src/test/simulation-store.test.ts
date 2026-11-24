@@ -13,7 +13,7 @@ describe("Asset simulation state", () => {
       "85000000",
     );
     expect(useSimulationStore.getState().simulations.sawangan.inputs.renovationCosts).toBe(
-      "70000000",
+      "60000000",
     );
   });
   it("updates verification independently", () => {

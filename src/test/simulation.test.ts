@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   baseScenario,
+  sawanganScenario,
   stressedScenario,
+  calculateMortgage,
   calculateSimulation,
   formatInput,
   formatRupiah,
@@ -91,8 +93,9 @@ describe("Property data", () => {
   it("sets Sawangan auction limit to Rp250 million", () => {
     expect(getProperty("sawangan")?.auctionLimit).toBe(250_000_000);
   });
-  it("starts Sawangan with base scenario and unverified occupancy", () => {
-    expect(getProperty("sawangan")?.initialValues).toEqual(baseScenario);
+  it("starts Sawangan with its own scenario and unverified occupancy", () => {
+    expect(getProperty("sawangan")?.initialValues).toEqual(sawanganScenario);
+    expect(calculateSimulation(sawanganScenario).bidLimit).toBe(285_000_000);
     expect(getProperty("sawangan")?.verification.occupancy).toBe(false);
   });
   it("sets Jatiasih auction limit to Rp320 million", () => {
@@ -139,5 +142,30 @@ describe("Rupiah input validation", () => {
   });
   it("formats editable amounts", () => {
     expect(formatInput("70000000")).toBe("70.000.000");
+  });
+});
+
+describe("Buyer mortgage simulation", () => {
+  it("splits a Rp480 million sale into 10% down payment and loan", () => {
+    const result = calculateMortgage(480_000_000);
+    expect(result.downPayment).toBe(48_000_000);
+    expect(result.principal).toBe(432_000_000);
+  });
+  it("uses the annuity formula for the monthly payment", () => {
+    const result = calculateMortgage(480_000_000, {
+      downPaymentRate: 0.1,
+      annualRatePercent: 7.5,
+      years: 15,
+    });
+    const r = 0.075 / 12;
+    const expected = (432_000_000 * r) / (1 - (1 + r) ** -180);
+    expect(result.monthlyPayment).toBe(Math.round(expected));
+    expect(result.minimumIncome).toBe(Math.round(expected / 0.3));
+  });
+  it("divides evenly when the rate is zero", () => {
+    expect(
+      calculateMortgage(120_000_000, { downPaymentRate: 0, annualRatePercent: 0, years: 10 })
+        .monthlyPayment,
+    ).toBe(1_000_000);
   });
 });
