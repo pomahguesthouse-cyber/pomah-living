@@ -16,6 +16,7 @@ import {
   FolderKanban,
   Database,
   Activity,
+  Settings,
 } from "lucide-react";
 import { useSession } from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AdminSlideForm } from "@/components/admin-slide-form";
 import { AdminFlippingDemos } from "@/components/admin-flipping-demos";
 import { AdminListings } from "@/components/admin-listings";
+import { AdminSettings } from "@/components/admin-settings";
 import { canReviewApproval, statusLabels, type SlideInput } from "@/lib/admin";
 import { formatProjectDate } from "@/lib/flipping";
 import {
@@ -181,6 +183,7 @@ function AdminWorkspace({ userId, role }: { userId: string; role: string }) {
     { value: "flipping", label: "Flipping Demo", icon: Building2 },
     { value: "users", label: "Pengguna & mitra", icon: Users },
     { value: "audit", label: "Riwayat audit", icon: History },
+    { value: "settings", label: "Pengaturan", icon: Settings },
   ];
   return (
     <main className="page-container py-8 sm:py-12">
@@ -361,6 +364,7 @@ function AdminWorkspace({ userId, role }: { userId: string; role: string }) {
         </section>
       )}
       {tab === "listings" && <AdminListings userId={userId} />}
+      {tab === "settings" && <AdminSettings />}
       {tab === "flipping" && <AdminFlippingDemos userId={userId} />}
       {tab === "slides" && (
         <section className="mt-8 space-y-5" aria-label="Manajemen slide">

@@ -216,3 +216,29 @@ export function compareStrategies(
     highestAnnualRoiId: best((strategy) => strategy.annualRoi),
   };
 }
+
+export type SplitOffer =
+  | { tier: "none" }
+  | {
+      /** "recommended": pecah kavling lebih untung dari renovasi; "info": muat, tetapi tidak lebih untung. */
+      tier: "recommended" | "info";
+      maxUnits: number;
+      best: StrategyResult;
+      renovation: StrategyResult;
+    };
+
+/** Apakah platform menawarkan pecah kavling kepada flipper, dan seberapa menonjol. */
+export function splitOffer(comparison: ReturnType<typeof compareStrategies>): SplitOffer {
+  const [renovation, ...splits] = comparison.strategies;
+  if (!renovation || splits.length === 0) return { tier: "none" };
+  const best = splits.reduce((winner, strategy) =>
+    strategy.profit > winner.profit ? strategy : winner,
+  );
+  const better = best.profit > 0 && best.profit > renovation.profit;
+  return {
+    tier: better ? "recommended" : "info",
+    maxUnits: comparison.capacity.maxUnits,
+    best,
+    renovation,
+  };
+}

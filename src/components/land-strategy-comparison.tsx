@@ -1,29 +1,26 @@
 import { useId, useState } from "react";
-import { AlertTriangle, ChevronUp, Layers, Pencil } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  compareStrategies,
-  defaultLandRules,
-  defaultNewBuild,
-  defaultRenovationMonths,
-  type LandRules,
-  type NewBuildAssumptions,
-  type StrategyResult,
-} from "@/lib/land-strategy";
-import { formatInput, type SimulationValues } from "@/lib/simulation";
+  AlertTriangle,
+  ArrowDown,
+  ChevronDown,
+  ChevronUp,
+  Layers,
+  Pencil,
+  Ruler,
+  Sparkles,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FormattedNumberInput } from "@/components/formatted-number-input";
+import type { LandInputMode, LandSize } from "@/lib/land-settings";
+import type { NewBuildAssumptions, StrategyResult } from "@/lib/land-strategy";
 import { cn } from "@/lib/utils";
+import { strategySectionId, type LandAnalysis, type RuleKey } from "@/hooks/use-land-analysis";
 
-type FieldDef<K extends string> = {
-  key: K;
-  label: string;
-  unit: "Rp" | "m²" | "m" | "%" | "lantai" | "bulan";
-};
+type Unit = "Rp" | "m²" | "m" | "%" | "lantai" | "bulan";
+type FieldDef<K extends string> = { key: K; label: string; unit: Unit };
 
-const landFields: FieldDef<keyof LandRules>[] = [
-  { key: "landArea", label: "Luas tanah (sertifikat)", unit: "m²" },
-  { key: "frontage", label: "Lebar muka ke jalan (0 = belum tahu)", unit: "m" },
-  { key: "minLotArea", label: "Luas kavling minimum (KRK/RDTR)", unit: "m²" },
+const ruleFields: FieldDef<RuleKey>[] = [
+  { key: "minLotArea", label: "Luas kavling minimum", unit: "m²" },
   { key: "minFrontage", label: "Lebar muka minimum per kavling", unit: "m" },
   { key: "kdbPercent", label: "KDB", unit: "%" },
   { key: "maxFloors", label: "Jumlah lantai maksimal", unit: "lantai" },
@@ -41,11 +38,13 @@ const buildFields: FieldDef<keyof NewBuildAssumptions>[] = [
   { key: "months", label: "Lama proyek pecah kavling", unit: "bulan" },
 ];
 
-function parseNumber(raw: string) {
-  const cleaned = raw.replace(/\./g, "").replace(",", ".").trim();
-  const value = Number(cleaned);
-  return cleaned === "" || !Number.isFinite(value) || value < 0 ? 0 : value;
-}
+const juta = (value: number) =>
+  `${value < 0 ? "−" : ""}Rp${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 }).format(Math.abs(value) / 1_000_000)} jt`;
+
+const angka = (value: number) =>
+  new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 }).format(value);
+
+/* ------------------------------------------------------------- controls */
 
 function NumberField({
   id,
@@ -56,7 +55,7 @@ function NumberField({
 }: {
   id: string;
   label: string;
-  unit: FieldDef<string>["unit"];
+  unit: Unit;
   value: number;
   onChange: (value: number) => void;
 }) {
@@ -72,15 +71,12 @@ function NumberField({
             Rp
           </span>
         )}
-        <Input
+        <FormattedNumberInput
           id={id}
-          type="text"
-          inputMode="decimal"
           autoComplete="off"
           className={cn("tabular-nums", prefix ? "pl-10" : "pr-14")}
-          value={value === 0 ? "" : prefix ? formatInput(value) : String(value)}
-          placeholder="0"
-          onChange={(event) => onChange(parseNumber(event.target.value))}
+          value={value}
+          onValueChange={onChange}
         />
         {!prefix && (
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
@@ -92,8 +88,218 @@ function NumberField({
   );
 }
 
-const juta = (value: number) =>
-  `${value < 0 ? "−" : ""}Rp${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 }).format(Math.abs(value) / 1_000_000)} jt`;
+/* --------------------------------------------------------- ukuran tanah */
+
+export function LandSizeSection({ land }: { land: LandAnalysis }) {
+  const baseId = useId();
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const { size, setSize, rules, settings, comparison } = land;
+  const setMode = (mode: LandInputMode) => setSize((current) => ({ ...current, mode }));
+  const update = (key: keyof Omit<LandSize, "mode">, value: number) =>
+    setSize((current) => ({ ...current, [key]: value }));
+  const customized = Object.keys(land.ruleOverrides).length > 0;
+  const capacity = comparison?.capacity;
+
+  return (
+    <section className="border-t border-border py-7" aria-labelledby={`${baseId}-title`}>
+      <h2 id={`${baseId}-title`} className="flex items-center gap-2 text-base font-semibold">
+        <Ruler className="size-5 text-brand" />
+        Ukuran tanah
+      </h2>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">
+        Platform menghitung apakah tanah ini bisa dipecah menjadi lebih dari satu rumah. Lebar
+        adalah sisi yang menghadap jalan.
+      </p>
+
+      <div className="mt-4 inline-flex rounded-md border border-border p-1" role="group">
+        {(
+          [
+            ["dimensions", "Panjang × lebar"],
+            ["area", "Luas saja"],
+          ] as const
+        ).map(([mode, label]) => (
+          <Button
+            key={mode}
+            type="button"
+            size="sm"
+            variant={size.mode === mode ? "brand" : "ghost"}
+            aria-pressed={size.mode === mode}
+            onClick={() => setMode(mode)}
+          >
+            {label}
+          </Button>
+        ))}
+      </div>
+
+      <div className="mt-4 grid gap-x-4 gap-y-4 sm:grid-cols-3">
+        {size.mode === "dimensions" ? (
+          <>
+            <NumberField
+              id={`${baseId}-width`}
+              label="Lebar muka (menghadap jalan)"
+              unit="m"
+              value={size.width}
+              onChange={(value) => update("width", value)}
+            />
+            <NumberField
+              id={`${baseId}-length`}
+              label="Panjang (ke belakang)"
+              unit="m"
+              value={size.length}
+              onChange={(value) => update("length", value)}
+            />
+            <div className="flex flex-col justify-end">
+              <p className="mb-1.5 min-h-8 text-xs font-medium leading-4">Luas tanah</p>
+              <p className="flex h-10 items-center rounded-md bg-muted px-3 text-sm font-semibold tabular-nums">
+                {rules.landArea > 0 ? `${angka(rules.landArea)} m²` : "–"}
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <NumberField
+              id={`${baseId}-area`}
+              label="Luas tanah (sertifikat)"
+              unit="m²"
+              value={size.area}
+              onChange={(value) => update("area", value)}
+            />
+            <NumberField
+              id={`${baseId}-frontage`}
+              label="Lebar muka, bila tahu"
+              unit="m"
+              value={size.frontage}
+              onChange={(value) => update("frontage", value)}
+            />
+          </>
+        )}
+      </div>
+
+      {capacity && (
+        <div className="mt-5 rounded-md border border-border p-4">
+          <p className="text-sm">
+            {capacity.maxUnits >= 2 ? (
+              <>
+                Tanah {angka(rules.landArea)} m² muat <strong>{capacity.maxUnits} kavling</strong>{" "}
+                (±{angka(rules.landArea / capacity.maxUnits)} m² per rumah).
+              </>
+            ) : (
+              <>Tanah {angka(rules.landArea)} m² cocok untuk satu rumah.</>
+            )}
+          </p>
+          {capacity.warnings.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {capacity.warnings.map((warning) => (
+                <li
+                  key={warning}
+                  className="flex gap-2 text-[11px] leading-5 text-muted-foreground"
+                >
+                  <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warning" />
+                  {warning}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <p className="mt-3 text-[11px] leading-5 text-muted-foreground">
+        {customized ? "Aturan disesuaikan untuk aset ini" : "Standar platform"}: kavling minimum{" "}
+        {angka(rules.minLotArea)} m², lebar muka minimum {angka(rules.minFrontage)} m, KDB{" "}
+        {angka(rules.kdbPercent)}%, maksimal {rules.maxFloors} lantai.
+        {land.settingsSource === "default" && " (standar bawaan)"}{" "}
+        <button
+          type="button"
+          className="font-medium text-brand underline-offset-2 hover:underline"
+          aria-expanded={rulesOpen}
+          aria-controls={`${baseId}-rules`}
+          onClick={() => setRulesOpen((open) => !open)}
+        >
+          {rulesOpen ? "Tutup" : "Sesuaikan dengan KRK setempat"}
+          {rulesOpen ? (
+            <ChevronUp className="ml-0.5 inline size-3" />
+          ) : (
+            <ChevronDown className="ml-0.5 inline size-3" />
+          )}
+        </button>
+      </p>
+      {rulesOpen && (
+        <div id={`${baseId}-rules`} className="mt-4">
+          <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2 xl:grid-cols-4">
+            {ruleFields.map((field) => (
+              <NumberField
+                key={field.key}
+                id={`${baseId}-${field.key}`}
+                label={field.label}
+                unit={field.unit}
+                value={rules[field.key]}
+                onChange={(value) => land.setRule(field.key, value)}
+              />
+            ))}
+          </div>
+          {customized && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="mt-2"
+              onClick={land.resetRules}
+            >
+              Kembalikan ke standar platform ({angka(settings.minLotArea)} m² /{" "}
+              {angka(settings.minFrontage)} m)
+            </Button>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* --------------------------------------------------------------- tawaran */
+
+export function LandSplitOffer({ land }: { land: LandAnalysis }) {
+  const { offer } = land;
+  if (offer.tier === "none") return null;
+  const recommended = offer.tier === "recommended";
+  return (
+    <aside
+      className={cn(
+        "mt-5 flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between",
+        recommended ? "border-brand bg-brand-soft" : "border-border bg-muted/40",
+      )}
+      aria-label="Potensi pecah kavling"
+    >
+      <div className="flex gap-3">
+        <Sparkles
+          className={cn(
+            "mt-0.5 size-5 shrink-0",
+            recommended ? "text-brand" : "text-muted-foreground",
+          )}
+          aria-hidden="true"
+        />
+        <div>
+          <p className="text-sm font-semibold">
+            {recommended
+              ? `Tanah ini berpotensi jadi ${offer.best.units} rumah`
+              : `Tanah ini muat ${offer.maxUnits} kavling`}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            {recommended
+              ? `Estimasi laba ${juta(offer.best.profit)} dengan ${offer.best.title.toLowerCase()}, dibanding ${juta(offer.renovation.profit)} bila direnovasi. Proyeknya lebih lama (${offer.best.months} vs ${offer.renovation.months} bulan).`
+              : `Dengan asumsi saat ini renovasi lebih menguntungkan (${juta(offer.renovation.profit)} vs ${juta(offer.best.profit)}).`}
+          </p>
+        </div>
+      </div>
+      <Button asChild size="sm" variant={recommended ? "brand" : "outline"} className="shrink-0">
+        <a href={`#${strategySectionId}`}>
+          Lihat perbandingan <ArrowDown className="size-4" />
+        </a>
+      </Button>
+    </aside>
+  );
+}
+
+/* ----------------------------------------------------------- perbandingan */
 
 function StrategyCard({
   strategy,
@@ -179,157 +385,90 @@ function StrategyCard({
 }
 
 export function LandStrategyComparison({
-  values,
+  land,
   auctionLimit,
-  initialLandArea,
 }: {
-  values: SimulationValues | null;
+  land: LandAnalysis;
   auctionLimit: number;
-  initialLandArea: number | null;
 }) {
   const baseId = useId();
-  const [rules, setRules] = useState<LandRules>({
-    landArea: initialLandArea ?? 0,
-    frontage: 0,
-    ...defaultLandRules,
-  });
-  const [build, setBuild] = useState<NewBuildAssumptions>(() => ({
-    ...defaultNewBuild,
-    salePerUnit: values ? Math.round((values.salePrice * 0.8) / 5_000_000) * 5_000_000 : 0,
-  }));
-  const [renovationMonths, setRenovationMonths] = useState(defaultRenovationMonths);
-  const [open, setOpen] = useState(rules.landArea === 0);
-  const needsLand = rules.landArea <= 0;
-  const showForm = open || needsLand;
-  const comparison = values ? compareStrategies(values, rules, build, renovationMonths) : null;
+  const [open, setOpen] = useState(false);
+  const { comparison, offer, build } = land;
+  if (!comparison || offer.tier === "none") return null;
 
   return (
-    <section className="border-t border-border py-7" aria-labelledby={`${baseId}-title`}>
+    <section
+      id={strategySectionId}
+      className="scroll-mt-24 border-t border-border py-7"
+      aria-labelledby={`${baseId}-title`}
+    >
       <h2 id={`${baseId}-title`} className="flex items-center gap-2 text-base font-semibold">
         <Layers className="size-5 text-brand" />
         Bandingkan strategi: renovasi atau pecah kavling
       </h2>
       <p className="mt-2 text-xs leading-5 text-muted-foreground">
-        Bila tanahnya cukup luas, membongkar dan membangun beberapa rumah baru bisa lebih
-        menguntungkan, tetapi modalnya lebih besar dan proyeknya lebih lama. Aturan kavling, KDB,
-        dan jumlah lantai berbeda di tiap daerah; ambil angkanya dari KRK/RDTR setempat.
+        Membongkar dan membangun beberapa rumah baru bisa lebih menguntungkan, tetapi modalnya lebih
+        besar dan proyeknya lebih lama.
+      </p>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {comparison.strategies.map((strategy) => (
+          <StrategyCard
+            key={strategy.id}
+            strategy={strategy}
+            auctionLimit={auctionLimit}
+            highestProfit={comparison.highestProfitId === strategy.id}
+            highestAnnualRoi={comparison.highestAnnualRoiId === strategy.id}
+          />
+        ))}
+      </div>
+      <p className="mt-3 text-[11px] leading-5 text-muted-foreground">
+        Renovasi memakai asumsi perhitungan di atas. Pecah kavling memakai harga menang dan biaya
+        pembelian yang sama, ditambah biaya bangun baru di bawah. Pecah sertifikat dan PBG per rumah
+        harus selesai sebelum pembeli bisa memakai KPR.
       </p>
 
-      {comparison && !needsLand && (
-        <>
-          <p className="mt-4 text-sm">
-            Tanah {formatInput(rules.landArea)} m² muat{" "}
-            <strong>{comparison.capacity.maxUnits} kavling</strong> sesuai aturan yang diisi.
-          </p>
-          {comparison.capacity.warnings.length > 0 && (
-            <ul className="mt-2 space-y-1">
-              {comparison.capacity.warnings.map((warning) => (
-                <li
-                  key={warning}
-                  className="flex gap-2 text-[11px] leading-5 text-muted-foreground"
-                >
-                  <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warning" />
-                  {warning}
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {comparison.strategies.map((strategy) => (
-              <StrategyCard
-                key={strategy.id}
-                strategy={strategy}
-                auctionLimit={auctionLimit}
-                highestProfit={comparison.highestProfitId === strategy.id}
-                highestAnnualRoi={comparison.highestAnnualRoiId === strategy.id}
+      <Button
+        type="button"
+        variant="outline"
+        className="mt-4 h-10"
+        aria-expanded={open}
+        aria-controls={`${baseId}-form`}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {open ? (
+          <>
+            <ChevronUp className="size-4" aria-hidden="true" /> Tutup asumsi bangun baru
+          </>
+        ) : (
+          <>
+            <Pencil className="size-4" aria-hidden="true" /> Ubah asumsi bangun baru
+          </>
+        )}
+      </Button>
+      {open && (
+        <div id={`${baseId}-form`} className="mt-5">
+          <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
+            {buildFields.map((field) => (
+              <NumberField
+                key={field.key}
+                id={`${baseId}-${field.key}`}
+                label={field.label}
+                unit={field.unit}
+                value={build[field.key]}
+                onChange={(value) => land.setBuild(field.key, value)}
               />
             ))}
+            <NumberField
+              id={`${baseId}-renovationMonths`}
+              label="Lama proyek renovasi (pembanding)"
+              unit="bulan"
+              value={land.renovationMonths}
+              onChange={land.setRenovationMonths}
+            />
           </div>
-          <p className="mt-3 text-[11px] leading-5 text-muted-foreground">
-            Renovasi memakai asumsi perhitungan di atas. Pecah kavling memakai harga menang dan
-            biaya pembelian yang sama, ditambah biaya bangun baru di bawah. Pecah sertifikat dan PBG
-            per rumah harus selesai sebelum pembeli bisa memakai KPR.
-          </p>
-        </>
-      )}
-      {!values && (
-        <p className="mt-4 text-xs text-destructive">
-          Perbaiki asumsi perhitungan di atas untuk melihat perbandingan.
-        </p>
-      )}
-
-      {!needsLand && (
-        <Button
-          type="button"
-          variant="outline"
-          className="mt-4 h-10"
-          aria-expanded={showForm}
-          aria-controls={`${baseId}-form`}
-          onClick={() => setOpen((value) => !value)}
-        >
-          {showForm ? (
-            <>
-              <ChevronUp className="size-4" aria-hidden="true" /> Tutup asumsi tanah
-            </>
-          ) : (
-            <>
-              <Pencil className="size-4" aria-hidden="true" /> Ubah asumsi tanah & bangun baru
-            </>
-          )}
-        </Button>
-      )}
-
-      {showForm && (
-        <div id={`${baseId}-form`} className="mt-5 space-y-6">
-          {needsLand && (
-            <p className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
-              Isi luas tanah untuk menghitung berapa rumah yang muat.
-            </p>
-          )}
-          <fieldset>
-            <legend className="text-xs font-semibold uppercase tracking-wider text-brand">
-              Tanah dan aturan setempat
-            </legend>
-            <div className="mt-3 grid gap-x-4 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
-              {landFields.map((field) => (
-                <NumberField
-                  key={field.key}
-                  id={`${baseId}-${field.key}`}
-                  label={field.label}
-                  unit={field.unit}
-                  value={rules[field.key]}
-                  onChange={(value) => setRules((current) => ({ ...current, [field.key]: value }))}
-                />
-              ))}
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend className="text-xs font-semibold uppercase tracking-wider text-brand">
-              Asumsi bangun baru
-            </legend>
-            <div className="mt-3 grid gap-x-4 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
-              {buildFields.map((field) => (
-                <NumberField
-                  key={field.key}
-                  id={`${baseId}-${field.key}`}
-                  label={field.label}
-                  unit={field.unit}
-                  value={build[field.key]}
-                  onChange={(value) => setBuild((current) => ({ ...current, [field.key]: value }))}
-                />
-              ))}
-              <NumberField
-                id={`${baseId}-renovationMonths`}
-                label="Lama proyek renovasi (pembanding)"
-                unit="bulan"
-                value={renovationMonths}
-                onChange={setRenovationMonths}
-              />
-            </div>
-          </fieldset>
-          <p className="text-[11px] leading-5 text-muted-foreground">
-            Semua angka bawaan adalah contoh, bukan harga pasar. Biaya bangun per m², harga jual
-            rumah baru, dan biaya perizinan sebaiknya diisi dari penawaran kontraktor, pembanding
+          <p className="mt-4 text-[11px] leading-5 text-muted-foreground">
+            Angka bawaan adalah contoh, bukan harga pasar. Biaya bangun per m², harga jual rumah
+            baru, dan biaya perizinan sebaiknya diisi dari penawaran kontraktor, pembanding
             setempat, dan notaris/PPAT.
           </p>
         </div>
