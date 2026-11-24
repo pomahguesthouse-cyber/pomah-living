@@ -19,7 +19,15 @@ export type CaseStudy = {
   stages: CaseStage[];
   interior: CasePhoto[];
   works: string[];
+  /** Angka proyek dalam rupiah, sesuai yang dilaporkan pemilik proyek. */
+  figures: { purchase: number; renovation: number; sale: number };
 };
+
+export function caseStudyResult({ purchase, renovation, sale }: CaseStudy["figures"]) {
+  const totalCost = purchase + renovation;
+  const grossProfit = sale - totalCost;
+  return { totalCost, grossProfit, margin: totalCost > 0 ? grossProfit / totalCost : 0 };
+}
 
 const base = "/images/proyek/bedahan-cibinong";
 
@@ -86,4 +94,5 @@ export const bedahanCibinong: CaseStudy = {
     "Cat ulang dinding",
     "Fasad bata tempel",
   ],
+  figures: { purchase: 270_000_000, renovation: 100_000_000, sale: 430_000_000 },
 };

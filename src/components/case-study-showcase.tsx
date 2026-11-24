@@ -1,4 +1,7 @@
-import type { CaseStudy } from "@/lib/case-studies";
+import { caseStudyResult, type CaseStudy } from "@/lib/case-studies";
+
+const juta = (value: number) =>
+  `Rp${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 }).format(value / 1_000_000)} jt`;
 
 const stageTone: Record<string, string> = {
   Sebelum: "bg-orange-100 text-orange-900",
@@ -7,6 +10,17 @@ const stageTone: Record<string, string> = {
 };
 
 export function CaseStudyShowcase({ study }: { study: CaseStudy }) {
+  const result = caseStudyResult(study.figures);
+  const stats = [
+    { label: "Harga beli", value: juta(study.figures.purchase) },
+    { label: "Biaya renovasi", value: juta(study.figures.renovation) },
+    { label: "Harga jual", value: juta(study.figures.sale) },
+    {
+      label: "Laba kotor",
+      value: `${juta(result.grossProfit)} (${Math.round(result.margin * 100)}%)`,
+      highlight: true,
+    },
+  ];
   return (
     <section
       id={`proyek-${study.id}`}
@@ -48,6 +62,22 @@ export function CaseStudyShowcase({ study }: { study: CaseStudy }) {
           </figure>
         ))}
       </div>
+
+      <dl className="mt-8 grid grid-cols-2 gap-x-5 gap-y-6 border-t border-border pt-6 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <div key={stat.label}>
+            <dt className="text-xs text-muted-foreground">{stat.label}</dt>
+            <dd
+              className={`mt-1 text-xl font-semibold tracking-tight sm:text-2xl ${stat.highlight ? "text-brand-deep" : ""}`}
+            >
+              {stat.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-3 text-xs text-muted-foreground">
+        Laba kotor = harga jual − (harga beli + renovasi), sebelum pajak dan biaya transaksi.
+      </p>
 
       <h3 className="mt-12 text-base font-semibold">Interior sesudah renovasi</h3>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
