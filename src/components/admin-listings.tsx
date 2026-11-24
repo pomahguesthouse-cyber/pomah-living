@@ -30,7 +30,7 @@ import {
   listingSources,
   listingStatusLabels,
   listingToForm,
-  listingValues,
+  inspectionLabel,
   listingVerification,
   maxListingPhotos,
   slugify,
@@ -38,7 +38,10 @@ import {
   type ListingRow,
   type ListingStatus,
 } from "@/lib/listings";
-import { calculateSimulation, formatRupiah, getDecision } from "@/lib/simulation";
+import { catalogSummary } from "@/lib/catalog-summary";
+import { defaultLandSettings } from "@/lib/land-settings";
+import { formatRupiah } from "@/lib/simulation";
+import { fetchLandSettings, landSettingsQueryKey } from "@/services/settings-service";
 import { cn } from "@/lib/utils";
 import { adminError } from "@/services/admin-service";
 import {
@@ -221,12 +224,6 @@ export function AdminListings({ userId }: { userId: string }) {
       {rows.length > 0 && (
         <ul className="divide-y divide-border rounded-xl border border-border bg-card">
           {rows.map((row) => {
-            const result = calculateSimulation(listingValues(row));
-            const decision = getDecision(
-              listingValues(row),
-              row.auction_limit,
-              listingVerification(row),
-            );
             return (
               <li key={row.id} className="flex flex-wrap items-center gap-4 p-4">
                 <div className="min-w-0 flex-1">
@@ -243,8 +240,10 @@ export function AdminListings({ userId }: { userId: string }) {
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {regionName(row.regency_code) ?? row.regency_code} · limit{" "}
-                    {formatRupiah(row.auction_limit)} · batas tawar {formatRupiah(result.bidLimit)}{" "}
-                    · {decision.label}
+                    {formatRupiah(row.auction_limit)}
+                    {row.land_area ? ` · LT ${row.land_area} m²` : ""}
+                    {row.building_area ? ` · LB ${row.building_area} m²` : ""} ·{" "}
+                    {inspectionLabel(listingVerification(row))}
                   </p>
                   <p className="mt-1 text-[11px] text-muted-foreground">
                     /analisis/{row.slug} · diperbarui{" "}
@@ -400,30 +399,21 @@ function ListingEditor({
     }
   const showError = (key: string) => (submitted ? errors[key] : undefined);
 
-  const preview = {
-    salePrice: Number(form.est_sale_price) || 0,
-    winningPrice: Number(form.est_winning_price) || 0,
-    purchaseCosts: Number(form.est_purchase_costs) || 0,
-    renovationCosts: Number(form.est_renovation) || 0,
-    holdingAndSaleCosts: Number(form.est_holding_sale) || 0,
-    targetProfit: Number(form.target_profit) || 0,
-  };
-  const result = calculateSimulation(preview);
-  const decision = getDecision(preview, Number(form.auction_limit) || 0, {
-    occupancy: form.occupancy_verified,
-    access: form.access_verified,
-    documents: form.documents_verified,
-  });
+  const landSettings = useQuery({ queryKey: landSettingsQueryKey, queryFn: fetchLandSettings });
+  const summary = catalogSummary(
+    {
+      auctionLimit: Number(form.auction_limit) || 0,
+      landArea: form.land_area ?? null,
+      landWidth: form.land_width ?? null,
+      landLength: form.land_length ?? null,
+    },
+    landSettings.data?.settings ?? defaultLandSettings,
+  );
 
   function set<K extends keyof ListingFormInput>(key: K, value: ListingFormInput[K]) {
     setForm((current) => {
       const next = { ...current, [key]: value };
       if (key === "name" && !slugTouched) next.slug = slugify(String(value));
-      if (
-        key === "auction_limit" &&
-        Number(current.est_winning_price) <= Number(current.auction_limit)
-      )
-        next.est_winning_price = value as number;
       return next;
     });
   }
@@ -444,8 +434,6 @@ function ListingEditor({
           slug: slugTouched ? current.slug : slugify(name),
           address: data.address || current.address,
           auction_limit: limit,
-          est_winning_price:
-            Number(current.est_winning_price) < Number(limit) ? limit : current.est_winning_price,
           land_area: data.landArea ?? current.land_area,
           building_area: data.buildingArea ?? current.building_area,
           notes: current.notes || data.description,
@@ -518,7 +506,7 @@ function ListingEditor({
     </Field>
   );
   const optionalNumber = (
-    key: "land_area" | "building_area" | "bedrooms" | "bathrooms",
+    key: "land_area" | "land_width" | "land_length" | "building_area" | "bedrooms" | "bathrooms",
     label: string,
   ) => (
     <Field label={label} error={showError(key)}>
@@ -673,6 +661,8 @@ function ListingEditor({
               />
             </Field>
             {optionalNumber("land_area", "Luas tanah (m²)")}
+            {optionalNumber("land_width", "Lebar muka tanah (m, menghadap jalan)")}
+            {optionalNumber("land_length", "Panjang tanah (m)")}
             {optionalNumber("building_area", "Luas bangunan (m²)")}
             {optionalNumber("bedrooms", "Kamar tidur")}
             {optionalNumber("bathrooms", "Kamar mandi")}
@@ -799,58 +789,38 @@ function ListingEditor({
               </p>
             )}
           </fieldset>
-
-          <fieldset className="grid gap-4 rounded-xl border border-border bg-card p-5 sm:grid-cols-2">
-            <legend className="px-1 text-sm font-semibold">Asumsi perhitungan</legend>
-            {money("est_sale_price", "Perkiraan harga jual setelah renovasi")}
-            {money(
-              "est_winning_price",
-              "Simulasi harga menang lelang",
-              "Minimal sama dengan limit",
-            )}
-            {money("est_purchase_costs", "Biaya pembelian dan dokumen")}
-            {money("est_renovation", "Biaya renovasi termasuk cadangan")}
-            {money("est_holding_sale", "Biaya kepemilikan sementara dan biaya jual")}
-            {money("target_profit", "Target laba")}
-          </fieldset>
         </div>
 
         <aside className="space-y-4 rounded-xl border border-border bg-card p-5 lg:sticky lg:top-28">
-          <h3 className="font-semibold">Pratinjau hasil</h3>
+          <h3 className="font-semibold">Ringkasan aset</h3>
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">Batas tawar</dt>
-              <dd
-                className={cn(
-                  "font-semibold tabular-nums",
-                  result.bidLimit < (Number(form.auction_limit) || 0)
-                    ? "text-destructive"
-                    : "text-brand-deep",
-                )}
-              >
-                {formatRupiah(result.bidLimit)}
+              <dt className="text-muted-foreground">Nilai limit</dt>
+              <dd className="font-semibold tabular-nums">{formatRupiah(summary.auctionLimit)}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Limit per m² tanah</dt>
+              <dd className="tabular-nums">
+                {summary.limitPerM2 === null ? "–" : formatRupiah(summary.limitPerM2)}
               </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">Total biaya proyek</dt>
-              <dd className="tabular-nums">{formatRupiah(result.totalCost)}</dd>
+              <dt className="text-muted-foreground">Luas tanah</dt>
+              <dd className="tabular-nums">
+                {summary.landArea === null ? "–" : `${summary.landArea} m²`}
+              </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">Estimasi laba</dt>
-              <dd className="tabular-nums">{formatRupiah(result.estimatedProfit)}</dd>
+              <dt className="text-muted-foreground">Potensi kavling</dt>
+              <dd className="tabular-nums">
+                {summary.potentialUnits >= 2 ? `${summary.potentialUnits} rumah` : "1 rumah"}
+              </dd>
             </div>
           </dl>
-          <div
-            className={cn(
-              "rounded-md p-3 text-xs",
-              decision.tone === "success" && "bg-success-soft text-success",
-              decision.tone === "warning" && "bg-warning-soft text-warning",
-              decision.tone === "danger" && "bg-danger-soft text-destructive",
-            )}
-          >
-            <p className="font-semibold">{decision.label}</p>
-            <p className="mt-1 leading-5">{decision.description}</p>
-          </div>
+          <p className="rounded-md bg-muted p-3 text-xs leading-5 text-muted-foreground">
+            Katalog hanya berisi fakta aset. Harga jual, RAB, dan batas tawar dihitung sendiri oleh
+            flipper di halaman analisis.
+          </p>
           {submitted && !parsed.success && (
             <p role="alert" className="text-xs text-destructive">
               Periksa kembali kolom yang ditandai merah.

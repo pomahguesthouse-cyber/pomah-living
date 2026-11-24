@@ -49,8 +49,15 @@ export async function saveListing(
   photos: { cover: string | null; paths: string[] },
   id?: string,
 ): Promise<ListingRow> {
-  const values = listingFormSchema.parse(input);
-  const payload = { ...values, cover_photo_path: photos.cover, photo_paths: photos.paths };
+  const { land_width, land_length, ...values } = listingFormSchema.parse(input);
+  // Kolom ukuran tanah hanya dikirim bila diisi, agar katalog tetap bisa disimpan sebelum
+  // docs/katalog-ukuran-tanah.sql dijalankan.
+  const landSize = {
+    ...(land_width !== null ? { land_width } : {}),
+    ...(land_length !== null ? { land_length } : {}),
+  };
+  const base = { ...values, cover_photo_path: photos.cover, photo_paths: photos.paths };
+  const payload = { ...base, ...landSize } as typeof base;
   const query = id
     ? supabase.from("pomah_listings").update(payload).eq("id", id)
     : supabase.from("pomah_listings").insert({ ...payload, status: "draft" });

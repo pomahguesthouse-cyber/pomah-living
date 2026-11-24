@@ -16,14 +16,22 @@ import {
   type SimulationValues,
   type Verification,
 } from "@/lib/simulation";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type ResultsProps = {
   values: SimulationValues | null;
   auctionLimit: number;
   verification: Verification;
+  /** Dipanggil dari tombol "Isi harga jual" saat harga jual masih kosong. */
+  onFillSalePrice?: () => void;
 };
-export function SimulationResults({ values, auctionLimit, verification }: ResultsProps) {
+export function SimulationResults({
+  values,
+  auctionLimit,
+  verification,
+  onFillSalePrice,
+}: ResultsProps) {
   if (!values)
     return (
       <aside className="result-panel p-6 lg:sticky lg:top-28">
@@ -38,6 +46,29 @@ export function SimulationResults({ values, auctionLimit, verification }: Result
             Isi seluruh kolom dengan angka rupiah yang valid untuk menghitung batas tawar dan
             estimasi laba.
           </p>
+        </div>
+      </aside>
+    );
+  if (values.salePrice <= 0)
+    return (
+      <aside className="result-panel p-6 lg:sticky lg:top-28" aria-label="Hasil simulasi">
+        <div className="flex items-center gap-2 text-brand-deep">
+          <CircleDollarSign className="size-5" />
+          <h2 className="font-semibold">Hasil simulasi</h2>
+        </div>
+        <div className="mt-6 border-t border-border pt-6">
+          <TrendingUp className="mb-3 size-6 text-brand" />
+          <p className="font-semibold">Isi harga jual untuk melihat batas tawar</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Batas tawar dihitung dari harga jual setelah renovasi. Gunakan harga rumah sejenis yang
+            sudah direnovasi di sekitar lokasi. Nilai limit lelang:{" "}
+            <span className="font-semibold text-foreground">{formatRupiah(auctionLimit)}</span>.
+          </p>
+          {onFillSalePrice && (
+            <Button type="button" variant="brand" className="mt-4" onClick={onFillSalePrice}>
+              Isi harga jual
+            </Button>
+          )}
         </div>
       </aside>
     );

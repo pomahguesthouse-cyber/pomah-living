@@ -4,6 +4,7 @@ import {
   inspectionLabel,
   isListingPhotoFile,
   listingFormSchema,
+  listingLandSize,
   listingToAsset,
   listingToForm,
   sampleToAsset,
@@ -11,7 +12,6 @@ import {
   type ListingRow,
 } from "@/lib/listings";
 import { getProperty } from "@/lib/properties";
-import { calculateSimulation, getDecision } from "@/lib/simulation";
 
 const row: ListingRow = {
   id: "8f3e0d8e-0000-4000-8000-000000000001",
@@ -53,27 +53,30 @@ const validForm = () => ({
   name: "Rumah Cilodong",
   regency_code: "3276",
   auction_limit: 270_000_000,
-  est_winning_price: 270_000_000,
-  est_sale_price: 450_000_000,
 });
 
 describe("Catalog listings", () => {
-  it("maps a database row to an analysis asset with the same investment rules", () => {
+  it("starts analysis from platform standards, ignoring old admin estimates", () => {
     const asset = listingToAsset(row, "https://example.test/a.webp");
     expect(asset.id).toBe("rumah-cilodong");
     expect(asset.isSample).toBe(false);
     expect(asset.image).toBe("https://example.test/a.webp");
-    expect(asset.initialValues.winningPrice).toBe(270_000_000);
-    expect(calculateSimulation(asset.initialValues).bidLimit).toBe(297_000_000);
-    expect(getDecision(asset.initialValues, asset.auctionLimit, asset.verification).label).toBe(
-      "Tahan penawaran",
-    );
+    // Kolom est_* lama (harga jual 450 jt, renovasi 65 jt) tidak dipakai lagi.
+    expect(asset.initialValues).toEqual({
+      winningPrice: 270_000_000,
+      salePrice: 0,
+      renovationCosts: 0,
+      purchaseCosts: 21_600_000,
+      holdingAndSaleCosts: 0,
+      targetProfit: 43_740_000,
+    });
+    expect(asset.details?.landArea).toBe(72);
     expect(asset.inspection).toBe("Belum terverifikasi: dokumen");
     expect(asset.sourceLabel).toBe("Lelang BTN");
   });
   it("round-trips a row through the admin form", () => {
     const parsed = listingFormSchema.parse(listingToForm(row));
-    expect(parsed.est_winning_price).toBe(270_000_000);
+    expect(parsed).not.toHaveProperty("est_sale_price");
     expect(parsed.source_url).toBe(row.source_url);
     expect(parsed.auction_date).toBe("2026-12-20");
   });
@@ -82,9 +85,12 @@ describe("Catalog listings", () => {
     expect(parsed.source_url).toBeNull();
     expect(parsed.auction_date).toBeNull();
   });
-  it("rejects a winning price below the auction limit", () => {
-    const result = listingFormSchema.safeParse({ ...validForm(), est_winning_price: 1 });
-    expect(result.success).toBe(false);
+  it("reads optional land dimensions safely", () => {
+    expect(listingLandSize({ ...row, land_width: 8, land_length: "18" } as typeof row)).toEqual({
+      width: 8,
+      length: 18,
+    });
+    expect(listingLandSize(row)).toEqual({ width: null, length: null });
   });
   it("rejects slugs reserved by sample assets or with invalid characters", () => {
     expect(listingFormSchema.safeParse({ ...validForm(), slug: "cibinong" }).success).toBe(false);

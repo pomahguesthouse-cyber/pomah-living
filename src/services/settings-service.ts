@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  analysisDefaultsKey,
+  analysisDefaultsSchema,
+  defaultAnalysisDefaults,
+  parseAnalysisDefaults,
+  type AnalysisDefaults,
+} from "@/lib/analysis-defaults";
+import {
   defaultLandSettings,
   landSettingsKey,
   landSettingsSchema,
@@ -9,44 +16,66 @@ import {
 } from "@/lib/land-settings";
 
 /*
- * Tabel `app_settings` dibuat lewat Lovable (lihat docs/spec-pengaturan-tanah.md). Sampai
- * tipe Supabase diperbarui, tabel ini dipanggil lewat klien tanpa tipe dan hasilnya selalu
- * divalidasi dengan zod.
+ * Tabel `app_settings` dibuat lewat SQL editor (docs/app-settings-setup.sql). Sampai tipe
+ * Supabase diperbarui, tabel ini dipanggil lewat klien tanpa tipe dan hasilnya selalu
+ * divalidasi dengan zod. Baris yang belum ada dibuat saat admin pertama kali menyimpan.
  */
 const untyped = supabase as unknown as SupabaseClient;
 
-export const landSettingsQueryKey = ["app-settings", landSettingsKey] as const;
-
-export type LandSettingsResult = {
-  settings: LandSettings;
-  /** "database" bila terbaca dari tabel; "default" bila tabel belum ada atau gagal dibaca. */
+export type SettingsResult<T> = {
+  settings: T;
+  /** "database" bila terbaca dari tabel; "default" bila belum tersimpan atau gagal dibaca. */
   source: "database" | "default";
 };
 
-export async function fetchLandSettings(): Promise<LandSettingsResult> {
+async function fetchSetting<T>(
+  key: string,
+  parse: (value: unknown) => T,
+  fallback: T,
+): Promise<SettingsResult<T>> {
   try {
     const { data, error } = await untyped
       .from("app_settings")
       .select("value")
-      .eq("key", landSettingsKey)
+      .eq("key", key)
       .maybeSingle();
-    if (error || !data) return { settings: defaultLandSettings, source: "default" };
-    return { settings: parseLandSettings(data.value), source: "database" };
+    if (error || !data) return { settings: fallback, source: "default" };
+    return { settings: parse(data.value), source: "database" };
   } catch {
-    return { settings: defaultLandSettings, source: "default" };
+    return { settings: fallback, source: "default" };
   }
 }
 
-export async function saveLandSettings(value: LandSettings) {
-  const settings = landSettingsSchema.parse(value);
+async function saveSetting(key: string, value: unknown) {
   const { error } = await untyped
     .from("app_settings")
-    .upsert({ key: landSettingsKey, value: settings }, { onConflict: "key" });
+    .upsert({ key, value }, { onConflict: "key" });
   if (error) {
     if (error.code === "42P01" || error.code === "PGRST205")
       throw new Error(
-        "Tabel pengaturan belum dibuat. Minta Lovable membuat tabel app_settings sesuai docs/spec-pengaturan-tanah.md.",
+        "Tabel pengaturan belum dibuat. Jalankan docs/app-settings-setup.sql di SQL editor.",
       );
     throw error;
   }
+}
+
+export const landSettingsQueryKey = ["app-settings", landSettingsKey] as const;
+export type LandSettingsResult = SettingsResult<LandSettings>;
+
+export function fetchLandSettings(): Promise<LandSettingsResult> {
+  return fetchSetting(landSettingsKey, parseLandSettings, defaultLandSettings);
+}
+
+export function saveLandSettings(value: LandSettings) {
+  return saveSetting(landSettingsKey, landSettingsSchema.parse(value));
+}
+
+export const analysisDefaultsQueryKey = ["app-settings", analysisDefaultsKey] as const;
+
+export function fetchAnalysisDefaults(): Promise<SettingsResult<AnalysisDefaults>> {
+  return fetchSetting(analysisDefaultsKey, parseAnalysisDefaults, defaultAnalysisDefaults);
+}
+
+export function saveAnalysisDefaults(value: AnalysisDefaults) {
+  return saveSetting(analysisDefaultsKey, analysisDefaultsSchema.parse(value));
 }

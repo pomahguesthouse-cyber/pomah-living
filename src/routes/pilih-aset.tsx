@@ -14,6 +14,8 @@ import {
   ClipboardCheck,
   Calculator,
   TrendingUp,
+  Layers,
+  CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-session";
@@ -26,7 +28,10 @@ import {
   fetchPublishedListings,
   publishedListingsKey,
 } from "@/services/listing-service";
-import { calculateSimulation, formatRupiah, getDecision } from "@/lib/simulation";
+import { catalogSummary, daysUntilAuction } from "@/lib/catalog-summary";
+import { defaultLandSettings } from "@/lib/land-settings";
+import { formatRupiah } from "@/lib/simulation";
+import { fetchLandSettings, landSettingsQueryKey } from "@/services/settings-service";
 import { cn } from "@/lib/utils";
 import { fetchPublishedDemos, publishedDemoKey } from "@/services/flipping-demo-service";
 
@@ -53,6 +58,12 @@ export const Route = createFileRoute("/pilih-aset")({
 });
 
 function SelectAsset() {
+  const landSettingsQuery = useQuery({
+    queryKey: landSettingsQueryKey,
+    queryFn: fetchLandSettings,
+    staleTime: 5 * 60_000,
+  });
+  const landSettings = landSettingsQuery.data?.settings ?? defaultLandSettings;
   const demos = useQuery({
     queryKey: publishedDemoKey,
     queryFn: fetchPublishedDemos,
@@ -260,13 +271,16 @@ function SelectAsset() {
             const sample = property.isSample
               ? demos.data?.find((item) => item.id === property.id)
               : undefined;
-            const simulation = calculateSimulation(property.initialValues);
-            const bidLimit = simulation.bidLimit;
-            const decision = getDecision(
-              property.initialValues,
-              property.auctionLimit,
-              property.verification,
+            const summary = catalogSummary(
+              {
+                auctionLimit: property.auctionLimit,
+                landArea: property.details?.landArea ?? null,
+                landWidth: property.details?.landWidth ?? null,
+                landLength: property.details?.landLength ?? null,
+              },
+              landSettings,
             );
+            const days = daysUntilAuction(property.details?.auctionDate ?? null);
             return (
               <article className="property-card" key={property.id}>
                 <div className="relative">
@@ -303,66 +317,72 @@ function SelectAsset() {
                   {sample && (
                     <p className="mt-2 text-xs text-muted-foreground">{sample.description}</p>
                   )}
-                  <div
-                    data-testid={`card-decision-${property.id}`}
-                    className={cn(
-                      "mt-4 flex min-h-10 items-start gap-2 rounded-md px-3 py-2 text-xs",
-                      decision.tone === "success" && "bg-success-soft text-success",
-                      decision.tone === "warning" && "bg-warning-soft text-warning",
-                      decision.tone === "danger" && "bg-danger-soft text-destructive",
-                    )}
-                  >
-                    {decision.tone === "success" ? (
-                      <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-                    ) : (
-                      <CircleAlert className="mt-0.5 size-4 shrink-0" />
-                    )}
-                    <span>
-                      <strong className="font-semibold">{decision.label}</strong>
-                      <span className="block text-muted-foreground">{property.inspection}</span>
-                    </span>
-                  </div>
-                  <div className="mt-4 border-t border-border pt-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Nilai limit lelang</span>
-                      <span className="text-lg font-semibold tabular-nums">
-                        {formatRupiah(property.auctionLimit)}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Batas tawar awal</span>
-                      <span
-                        className={cn(
-                          "text-sm font-semibold tabular-nums",
-                          bidLimit < property.auctionLimit ? "text-destructive" : "text-brand-deep",
-                        )}
-                      >
-                        {formatRupiah(bidLimit)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">Total biaya proyek</span>
-                    <span className="text-sm font-semibold tabular-nums">
-                      {formatRupiah(simulation.totalCost)}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">Estimasi laba</span>
+                  <div className="mt-4 flex flex-wrap gap-1.5">
                     <span
+                      data-testid={`card-inspection-${property.id}`}
                       className={cn(
-                        "text-sm font-semibold tabular-nums",
-                        simulation.estimatedProfit >= property.initialValues.targetProfit
-                          ? "text-success"
-                          : "text-warning",
+                        "inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium",
+                        property.verification.occupancy &&
+                          property.verification.access &&
+                          property.verification.documents
+                          ? "bg-success-soft text-success"
+                          : "bg-warning-soft text-warning",
                       )}
                     >
-                      {formatRupiah(simulation.estimatedProfit)}
+                      {property.verification.occupancy &&
+                      property.verification.access &&
+                      property.verification.documents ? (
+                        <CheckCircle2 className="size-3.5" />
+                      ) : (
+                        <CircleAlert className="size-3.5" />
+                      )}
+                      {property.isSample
+                        ? property.inspection
+                        : `${property.inspection} (dicek admin)`}
                     </span>
+                    {summary.potentialUnits >= 2 && (
+                      <span className="inline-flex items-center gap-1 rounded bg-brand-soft px-2 py-1 text-[11px] font-medium text-brand-deep">
+                        <Layers className="size-3.5" />
+                        Potensi {summary.potentialUnits} rumah
+                      </span>
+                    )}
+                    {days !== null && (
+                      <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-1 text-[11px] font-medium">
+                        <CalendarDays className="size-3.5" />
+                        {days === 0 ? "Lelang hari ini" : `Lelang ${days} hari lagi`}
+                      </span>
+                    )}
                   </div>
+                  <dl className="mt-4 space-y-2 border-t border-border pt-4">
+                    <div className="flex items-center justify-between">
+                      <dt className="text-xs text-muted-foreground">Nilai limit lelang</dt>
+                      <dd className="text-lg font-semibold tabular-nums">
+                        {formatRupiah(property.auctionLimit)}
+                      </dd>
+                    </div>
+                    {summary.landArea !== null && (
+                      <div className="flex items-center justify-between">
+                        <dt className="text-xs text-muted-foreground">Luas tanah / bangunan</dt>
+                        <dd className="text-sm font-semibold tabular-nums">
+                          {summary.landArea} m²
+                          {property.details?.buildingArea
+                            ? ` / ${property.details.buildingArea} m²`
+                            : ""}
+                        </dd>
+                      </div>
+                    )}
+                    {summary.limitPerM2 !== null && (
+                      <div className="flex items-center justify-between">
+                        <dt className="text-xs text-muted-foreground">Limit per m² tanah</dt>
+                        <dd className="text-sm font-semibold tabular-nums">
+                          {formatRupiah(summary.limitPerM2)}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
                   <Button asChild variant="outline" className="mt-6 h-11 w-full justify-between">
                     <Link to="/analisis/$assetId" params={{ assetId: property.id }}>
-                      Lanjut ke langkah 2 · Analisis aset
+                      Analisis aset ini
                       <ArrowUpRight />
                     </Link>
                   </Button>
@@ -381,9 +401,9 @@ function SelectAsset() {
       <div className="mt-9 flex items-start gap-3 border-t border-border pt-6 text-xs leading-6 text-muted-foreground">
         <FlaskConical className="mt-1 size-4 shrink-0 text-brand" />
         <p>
-          Rumah berlabel "Contoh" adalah ilustrasi simulasi. Angka pada properti katalog adalah
-          estimasi awal Pomah Living, bukan jaminan keuntungan; selalu verifikasi data lelang dan
-          kondisi fisik sebelum menawar.
+          Rumah berlabel "Contoh" adalah ilustrasi simulasi. Katalog hanya menampilkan data aset;
+          harga jual, RAB, dan batas tawar dihitung sendiri di halaman analisis. Selalu verifikasi
+          data lelang dan kondisi fisik sebelum menawar.
         </p>
       </div>
     </main>
