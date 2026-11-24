@@ -33,6 +33,10 @@ Isi `value` untuk `land_split`:
 - Tidak ada `delete` dari aplikasi.
 - Setiap insert/update dicatat ke `admin_audit_log` lewat trigger, seperti tabel admin lain.
 
+## Cara membuat tabel
+
+Jalankan `docs/app-settings-setup.sql` di SQL editor. Atau minta Lovable dengan prompt berikut.
+
 ## Prompt untuk Lovable (database saja)
 
 > Buat tabel Supabase `app_settings` dengan kolom `key text primary key`, `value jsonb not null`,
