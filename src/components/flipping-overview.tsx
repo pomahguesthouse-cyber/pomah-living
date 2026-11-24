@@ -38,7 +38,7 @@ export function FlippingOverview({ project, onNavigate }: { project: FlippingPro
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-brand">Project financial dashboard</p>
           <h2 id="overview-title" className="mt-1 text-xl font-semibold sm:text-2xl">Ringkasan proyek flipping</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Angka otomatis mengikuti perubahan asumsi dan RAB di bawah.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Perhitungan rinci (pajak, bunga, biaya jual) dengan titik awal dari analisis aset. Angka otomatis mengikuti perubahan asumsi dan RAB di bawah.</p>
         </div>
         <button type="button" className="no-print inline-flex items-center gap-1 text-sm font-semibold text-brand hover:underline" onClick={() => onNavigate("analysis")}>Edit asumsi <ArrowUpRight className="size-4" /></button>
       </div>
