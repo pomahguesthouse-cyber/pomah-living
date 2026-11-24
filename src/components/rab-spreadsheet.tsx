@@ -136,7 +136,17 @@ export function RabSpreadsheet({ project, onChange }: Props) {
         </p>
       )}
       <div className="max-w-full overflow-x-auto rounded-lg border border-border">
-        <table className="rab-table w-full min-w-[900px] border-collapse text-left text-xs">
+        <table className="rab-table w-full min-w-[960px] table-fixed border-collapse text-left text-xs">
+          <colgroup>
+            <col className="w-12" />
+            <col />
+            <col className="w-[150px]" />
+            <col className="w-24" />
+            <col className="w-[72px]" />
+            <col className="w-[160px]" />
+            <col className="w-[150px]" />
+            <col className="col-aksi w-14" />
+          </colgroup>
           <thead className="bg-muted">
             <tr>
               {["No.", ...header, "Aksi"].map((name) => (
@@ -159,7 +169,7 @@ export function RabSpreadsheet({ project, onChange }: Props) {
                 >
                   {index + 1}
                 </th>
-                <td className="min-w-[220px] border-r border-border p-1.5">
+                <td className="border-r border-border p-1.5">
                   <Input
                     className="h-9 border-transparent bg-transparent focus-visible:border-input"
                     aria-label={`Pekerjaan baris ${index + 1}`}
@@ -170,7 +180,7 @@ export function RabSpreadsheet({ project, onChange }: Props) {
                   />
                   <span className="print-value">{item.name}</span>
                 </td>
-                <td className="min-w-[130px] border-r border-border p-1.5">
+                <td className="border-r border-border p-1.5">
                   <select
                     className="h-9 w-full rounded-md border border-transparent bg-transparent px-1 focus:border-input"
                     aria-label={`Kelompok baris ${index + 1}`}
@@ -188,7 +198,7 @@ export function RabSpreadsheet({ project, onChange }: Props) {
                   </select>
                   <span className="print-value">{item.group}</span>
                 </td>
-                <td className="w-24 border-r border-border p-1.5">
+                <td className="border-r border-border p-1.5">
                   <FormattedNumberInput
                     className="h-9 border-transparent bg-transparent text-right tabular-nums"
                     aria-label={`Volume baris ${index + 1}`}
@@ -198,7 +208,7 @@ export function RabSpreadsheet({ project, onChange }: Props) {
                   />
                   <span className="print-value">{item.volume}</span>
                 </td>
-                <td className="w-24 border-r border-border p-1.5">
+                <td className="border-r border-border p-1.5">
                   <Input
                     className="h-9 border-transparent bg-transparent"
                     aria-label={`Satuan baris ${index + 1}`}
@@ -208,7 +218,7 @@ export function RabSpreadsheet({ project, onChange }: Props) {
                   />
                   <span className="print-value">{item.unit}</span>
                 </td>
-                <td className="min-w-[150px] border-r border-border p-1.5">
+                <td className="border-r border-border p-1.5">
                   <FormattedNumberInput
                     className="h-9 border-transparent bg-transparent text-right tabular-nums"
                     aria-label={`Harga satuan baris ${index + 1}`}
