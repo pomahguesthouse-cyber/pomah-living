@@ -4,6 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
+  CheckCircle2,
+  Circle,
   CircleAlert,
   FlaskConical,
   MapPin,
@@ -38,6 +40,7 @@ import {
 } from "@/lib/flipping";
 import { getProperty } from "@/lib/properties";
 import {
+  evaluateWizard,
   isProjectTab,
   nextTab,
   previousTab,
@@ -45,6 +48,7 @@ import {
   tabLabel,
   wizardSteps,
   type ProjectTab,
+  type StepEvaluation,
 } from "@/lib/project-wizard";
 import { formatRupiah } from "@/lib/simulation";
 import { useFlippingStore } from "@/stores/flipping-store";
@@ -281,6 +285,10 @@ function ProjectPage() {
   const upcoming = nextTab(tab);
   const earlier = previousTab(tab);
   const result = calculateFlipping(project.finance, project.rab);
+  const evaluations = evaluateWizard(project);
+  const readySteps = evaluations.filter((item) => item.status === "done").length;
+  const activeEvaluation = evaluations[activeWizardStep];
+  const openChecks = activeEvaluation?.checks.filter((check) => !check.ok) ?? [];
   const unresolved = project.risks.filter((risk) => !risk.verified).length;
   const image = demo ? (getProperty(id) ?? getProperty("cibinong"))?.image : undefined;
   const percent = (value: number | null) =>
@@ -506,10 +514,17 @@ function ProjectPage() {
               aria-label="Tahapan proyek flipping"
               data-testid="project-wizard"
             >
-              <p className="text-sm font-semibold">Tahapan proyek</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Ikuti dari kiri ke kanan. Semua perubahan tersimpan pada proyek yang sama.
-              </p>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold">Tahapan proyek</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Ikuti dari kiri ke kanan. Status dihitung otomatis dari data proyek.
+                  </p>
+                </div>
+                <strong className="text-sm tabular-nums" data-testid="wizard-ready">
+                  {readySteps}/{wizardSteps.length} tahap siap
+                </strong>
+              </div>
               <ol className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 {wizardSteps.map((step, index) => (
                   <li key={step.id}>
@@ -519,8 +534,11 @@ function ProjectPage() {
                       aria-current={activeWizardStep === index ? "step" : undefined}
                       className={`h-full w-full rounded-lg border p-3 text-left transition-colors ${activeWizardStep === index ? "border-brand bg-brand-soft" : "border-border bg-background hover:border-brand"}`}
                     >
-                      <span className="block text-sm font-semibold">
-                        {index + 1}. {step.title}
+                      <span className="flex items-start justify-between gap-2">
+                        <span className="text-sm font-semibold">
+                          {index + 1}. {step.title}
+                        </span>
+                        <StepStatusBadge evaluation={evaluations[index]} />
                       </span>
                       <span className="mt-1 block text-xs text-muted-foreground">
                         {step.detail}
@@ -529,6 +547,47 @@ function ProjectPage() {
                   </li>
                 ))}
               </ol>
+              {activeEvaluation && (
+                <div
+                  className={`mt-4 rounded-md p-3 text-xs ${activeEvaluation.status === "done" ? "bg-success-soft text-success" : activeEvaluation.status === "attention" ? "bg-danger-soft text-destructive" : "bg-muted text-foreground"}`}
+                  data-testid="wizard-checks"
+                >
+                  {openChecks.length === 0 ? (
+                    <p className="flex items-center gap-2 font-medium">
+                      <CheckCircle2 className="size-4" aria-hidden="true" />
+                      Tahap {wizardSteps[activeWizardStep]?.title.toLowerCase()} sudah lengkap.
+                    </p>
+                  ) : (
+                    <>
+                      <p className="font-medium">
+                        Yang perlu dilengkapi di tahap ini ({activeEvaluation.passed}/
+                        {activeEvaluation.checks.length} terpenuhi):
+                      </p>
+                      <ul className="mt-2 space-y-1">
+                        {openChecks.map((check) => (
+                          <li key={check.id} className="flex flex-wrap items-center gap-x-2">
+                            {check.critical ? (
+                              <CircleAlert className="size-3.5 shrink-0" aria-hidden="true" />
+                            ) : (
+                              <Circle className="size-3.5 shrink-0" aria-hidden="true" />
+                            )}
+                            <button
+                              type="button"
+                              className="font-medium underline-offset-2 hover:underline"
+                              onClick={() => goToTab(check.tab)}
+                            >
+                              {check.label}
+                            </button>
+                            {check.detail && (
+                              <span className="text-muted-foreground">· {check.detail}</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              )}
             </section>
             <Tabs value={tab} onValueChange={(value) => goToTab(value)} className="min-w-0">
               <div className="no-print max-w-full overflow-x-auto border-b border-border pb-2">
@@ -714,5 +773,26 @@ function ProjectPage() {
         </div>
       </form>
     </main>
+  );
+}
+
+function StepStatusBadge({ evaluation }: { evaluation: StepEvaluation | undefined }) {
+  if (!evaluation) return null;
+  if (evaluation.status === "done")
+    return (
+      <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-success">
+        <CheckCircle2 className="size-3.5" aria-hidden="true" /> Siap
+      </span>
+    );
+  if (evaluation.status === "attention")
+    return (
+      <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-destructive">
+        <CircleAlert className="size-3.5" aria-hidden="true" /> Perhatian
+      </span>
+    );
+  return (
+    <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+      {evaluation.passed}/{evaluation.checks.length}
+    </span>
   );
 }
