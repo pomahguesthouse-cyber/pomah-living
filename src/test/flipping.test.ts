@@ -4,6 +4,7 @@ import {
   formatProjectDate,
   isDemoProject,
   makeFlippingProject,
+  makeProjectFromAnalysis,
   rabTotal,
   readFlippingProject,
   scaledDemoRab,
@@ -152,5 +153,41 @@ describe("Projects seeded from asset analysis", () => {
   });
   it("scales the generic RAB to any target exactly", () => {
     expect(rabTotal(scaledDemoRab(53_210_000))).toBe(53_210_000);
+  });
+});
+
+describe("Projects created from a catalog analysis", () => {
+  const snapshot = {
+    name: "Rumah Cilodong",
+    location: "Cilodong, Depok",
+    auctionLimit: 270_000_000,
+    auctionDate: "2026-12-20",
+    landArea: 72,
+    buildingArea: 45,
+    legal: "SHM",
+    source: "Lelang BTN",
+    verification: { occupancy: true, access: true, documents: false },
+    values: { salePrice: 450_000_000, winningPrice: 285_000_000, renovationCosts: 65_000_000 },
+  };
+  it("carries the analysed prices and renovation budget into the project", () => {
+    const project = makeProjectFromAnalysis(snapshot);
+    expect(project.finance.purchase).toBe(285_000_000);
+    expect(project.finance.bphtbBase).toBe(285_000_000);
+    expect(project.finance.sale).toBe(450_000_000);
+    expect(rabTotal(project.rab)).toBe(65_000_000);
+    expect(project.property.limit).toBe(270_000_000);
+    expect(project.property.land).toBe(72);
+    expect(project.scenarios.map((scenario) => scenario.sale)).toEqual([
+      405_000_000, 450_000_000, 495_000_000,
+    ]);
+  });
+  it("marks only risks that were verified during analysis", () => {
+    const risks = makeProjectFromAnalysis(snapshot).risks;
+    expect(risks.find((risk) => risk.id === "occupancy")?.verified).toBe(true);
+    expect(risks.find((risk) => risk.id === "documents")?.verified).toBe(false);
+    expect(risks.find((risk) => risk.id === "structure")?.verified).toBe(false);
+  });
+  it("produces a payload that passes project validation", () => {
+    expect(() => readFlippingProject(makeProjectFromAnalysis(snapshot))).not.toThrow();
   });
 });

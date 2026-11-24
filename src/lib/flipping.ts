@@ -433,6 +433,71 @@ export function makeFlippingProject(id: string, name?: string, location?: string
     ],
   };
 }
+export type AnalysisSnapshot = {
+  name: string;
+  location: string;
+  auctionLimit: number;
+  auctionDate?: string | null;
+  landArea?: number | null;
+  buildingArea?: number | null;
+  legal?: string;
+  source: string;
+  verification: { occupancy: boolean; access: boolean; documents: boolean };
+  values: {
+    salePrice: number;
+    winningPrice: number;
+    renovationCosts: number;
+  };
+};
+
+/**
+ * Proyek baru dari hasil analisis aset: harga menang, harga jual, dan anggaran renovasi
+ * dibawa apa adanya; pajak, bunga, dan biaya jual memakai asumsi rinci bawaan proyek.
+ */
+export function makeProjectFromAnalysis(snapshot: AnalysisSnapshot): FlippingProject {
+  const base = makeFlippingProject("demo", snapshot.name, snapshot.location);
+  const { salePrice, winningPrice, renovationCosts } = snapshot.values;
+  const roundTo = (value: number) => Math.round(value / 5_000_000) * 5_000_000;
+  const verified = (ok: boolean) => (ok ? "Terverifikasi saat analisis" : "Belum diverifikasi");
+  return {
+    ...base,
+    property: {
+      ...base.property,
+      name: snapshot.name,
+      address: snapshot.location,
+      province: "",
+      type: "Rumah tapak",
+      land: snapshot.landArea ?? 0,
+      building: snapshot.buildingArea ?? 0,
+      legal: snapshot.legal || "Belum diketahui",
+      occupancy: verified(snapshot.verification.occupancy),
+      documents: verified(snapshot.verification.documents),
+      source: snapshot.source,
+      auctionDate: snapshot.auctionDate ?? "",
+      referenceDate: new Date().toISOString().slice(0, 10),
+      limit: snapshot.auctionLimit,
+    },
+    finance: {
+      ...base.finance,
+      purchase: winningPrice,
+      bphtbBase: winningPrice,
+      loanPrincipal: Math.round(winningPrice / 2),
+      sale: salePrice,
+    },
+    rab: renovationCosts > 0 ? scaledDemoRab(renovationCosts) : [],
+    risks: base.risks.map((risk) =>
+      (risk.id === "occupancy" && snapshot.verification.occupancy) ||
+      (risk.id === "documents" && snapshot.verification.documents)
+        ? { ...risk, verified: true }
+        : risk,
+    ),
+    scenarios: [
+      { name: "Pesimis", sale: roundTo(salePrice * 0.9), months: 9, renovationFactor: 1.2 },
+      { name: "Moderat", sale: salePrice, months: 6, renovationFactor: 1 },
+      { name: "Optimis", sale: roundTo(salePrice * 1.1), months: 4, renovationFactor: 0.95 },
+    ],
+  };
+}
 export function readFlippingProject(value: unknown) {
   return flippingSchema.parse(value);
 }

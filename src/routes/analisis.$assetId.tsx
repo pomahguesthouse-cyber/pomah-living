@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ArrowRight,
@@ -9,7 +9,9 @@ import {
   ClipboardCheck,
   ExternalLink,
   FlaskConical,
+  FolderPlus,
   ImageOff,
+  LogIn,
   MapPin,
   Pencil,
   SlidersHorizontal,
@@ -32,8 +34,11 @@ import {
   simulationFields,
   stressedScenario,
   validateAmount,
+  type SimulationValues,
 } from "@/lib/simulation";
 import { seedSimulation, useSimulationStore } from "@/stores/simulation-store";
+import { useSession } from "@/hooks/use-session";
+import { createProjectFromAnalysis } from "@/services/flipping-service";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/analisis/$assetId")({
@@ -445,6 +450,7 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
               </Button>
             </section>
           )}
+          {!property.isSample && <CreateProjectFromAsset property={property} values={values} />}
         </div>
         <SimulationResults
           values={values}
@@ -453,5 +459,80 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
         />
       </div>
     </main>
+  );
+}
+
+function CreateProjectFromAsset({
+  property,
+  values,
+}: {
+  property: AnalysisAsset;
+  values: SimulationValues | null;
+}) {
+  const { session, ready } = useSession();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function create() {
+    if (!values) return;
+    setBusy(true);
+    setError("");
+    try {
+      const id = await createProjectFromAnalysis({
+        name: property.name,
+        location: property.location,
+        auctionLimit: property.auctionLimit,
+        auctionDate: property.details?.auctionDate ?? null,
+        landArea: property.details?.landArea ?? null,
+        buildingArea: property.details?.buildingArea ?? null,
+        legal: property.details?.legal ?? "",
+        source: [property.sourceLabel, property.sourceUrl].filter(Boolean).join(" · "),
+        verification: property.verification,
+        values,
+      });
+      await navigate({ to: "/proyek/$id", params: { id } });
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Proyek gagal dibuat. Coba lagi.");
+      setBusy(false);
+    }
+  }
+  return (
+    <section
+      className="border-t border-border py-7"
+      aria-labelledby="create-project-title"
+      data-testid="create-project"
+    >
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-brand">
+        Langkah berikutnya
+      </p>
+      <h2 id="create-project-title" className="mt-1 text-base font-semibold">
+        Jadikan proyek flipping Anda
+      </h2>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">
+        Proyek baru tersimpan di akun Anda dengan harga menang, harga jual, dan anggaran renovasi
+        dari asumsi di atas. Di halaman proyek Anda bisa merinci pajak, bunga pendanaan, biaya jual,
+        RAB, timeline, dan risiko.
+      </p>
+      {!ready ? null : session ? (
+        <Button className="mt-4 h-11" disabled={busy || !values} onClick={() => void create()}>
+          <FolderPlus className="size-4" aria-hidden="true" />
+          {busy ? "Membuat proyek…" : "Buat proyek dari aset ini"}
+        </Button>
+      ) : (
+        <Button asChild className="mt-4 h-11">
+          <Link to="/auth" search={{ redirect: `/analisis/${property.id}` }}>
+            <LogIn className="size-4" aria-hidden="true" /> Masuk untuk membuat proyek
+          </Link>
+        </Button>
+      )}
+      {!values && (
+        <p className="mt-2 text-xs text-warning">Lengkapi asumsi perhitungan terlebih dahulu.</p>
+      )}
+      {error && (
+        <p role="alert" className="mt-2 text-xs text-destructive">
+          {error}
+        </p>
+      )}
+    </section>
   );
 }
