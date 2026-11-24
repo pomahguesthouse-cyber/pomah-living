@@ -193,7 +193,12 @@ function AnalyzeAsset() {
               ))}
             </div>
           </section>
-          {property.id === "cibinong" && <ConditionPhotoPilot />}
+          {property.id === "cibinong" && (
+            <ConditionPhotoPilot
+              currentRenovation={values?.renovationCosts}
+              onApply={(total) => setField(property.id, "renovationCosts", String(total))}
+            />
+          )}
           {property.id === "cibinong" && (
             <NearbyAskingPrices
               onUseMedian={(askingPrice) => {
