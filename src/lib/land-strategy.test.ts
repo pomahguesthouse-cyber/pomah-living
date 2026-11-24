@@ -5,6 +5,7 @@ import {
   defaultNewBuild,
   landCapacity,
   renovationStrategy,
+  splitOffer,
   splitStrategy,
   type LandRules,
   type NewBuildAssumptions,
@@ -104,5 +105,24 @@ describe("compareStrategies", () => {
       build,
     );
     expect(result.highestProfitId).toBeNull();
+  });
+});
+
+describe("splitOffer", () => {
+  it("tidak menawarkan bila tanah hanya muat satu rumah", () => {
+    const result = compareStrategies(baseScenario, { ...rules, landArea: 100 }, build);
+    expect(splitOffer(result)).toEqual({ tier: "none" });
+  });
+
+  it("menyarankan pecah kavling bila labanya lebih besar dari renovasi", () => {
+    const offer = splitOffer(compareStrategies(baseScenario, rules, build));
+    expect(offer).toMatchObject({ tier: "recommended", maxUnits: 2, best: { id: "pecah-2" } });
+  });
+
+  it("hanya memberi info bila pecah kavling muat tetapi kurang untung", () => {
+    const offer = splitOffer(
+      compareStrategies(baseScenario, rules, { ...build, salePerUnit: 350_000_000 }),
+    );
+    expect(offer.tier).toBe("info");
   });
 });

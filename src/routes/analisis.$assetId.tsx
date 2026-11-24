@@ -23,7 +23,12 @@ import { Switch } from "@/components/ui/switch";
 import { ConditionPhotoPilot } from "@/components/condition-photo-pilot";
 import { NearbyAskingPrices } from "@/components/nearby-asking-prices";
 import { SimulationResults } from "@/components/simulation-results";
-import { LandStrategyComparison } from "@/components/land-strategy-comparison";
+import {
+  LandSizeSection,
+  LandSplitOffer,
+  LandStrategyComparison,
+} from "@/components/land-strategy-comparison";
+import { useLandAnalysis } from "@/hooks/use-land-analysis";
 import { getProperty } from "@/lib/properties";
 import { listingToAsset, sampleToAsset, type AnalysisAsset } from "@/lib/listings";
 import { fetchListingBySlug, fetchListingPhotoUrls, listingKey } from "@/services/listing-service";
@@ -107,7 +112,7 @@ export const Route = createFileRoute("/analisis/$assetId")({
 
 function AnalyzeAsset() {
   const { property, slug } = Route.useLoaderData();
-  if (property) return <AssetAnalysisView property={property} />;
+  if (property) return <AssetAnalysisView key={property.id} property={property} />;
   return <ListingAnalysis slug={slug} />;
 }
 
@@ -147,7 +152,7 @@ function ListingAnalysis({ slug }: { slug: string }) {
         </Button>
       </main>
     );
-  return <AssetAnalysisView property={listing.data} />;
+  return <AssetAnalysisView key={listing.data.id} property={listing.data} />;
 }
 
 function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
@@ -173,6 +178,11 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
   const hasInputError = simulationFields.some(({ key }) => validateAmount(simulation.inputs[key]));
   const showAssumptionForm = assumptionsOpen || hasInputError;
   const verifiedCount = Object.values(simulation.verification).filter(Boolean).length;
+  const land = useLandAnalysis({
+    values,
+    initialLandArea: property.details?.landArea ?? null,
+    isSample: property.isSample,
+  });
   return (
     <main className="page-container reveal py-8 sm:py-10">
       <div className="mb-7 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -245,6 +255,7 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
               </p>
             </div>
           </div>
+          <LandSplitOffer land={land} />
           <section className="py-7" aria-labelledby="checklist-title">
             <div className="flex items-center justify-between gap-3">
               <h2 id="checklist-title" className="flex items-center gap-2 text-base font-semibold">
@@ -289,6 +300,7 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
               ))}
             </div>
           </section>
+          <LandSizeSection land={land} />
           {property.id === "cibinong" && (
             <ConditionPhotoPilot
               currentRenovation={values?.renovationCosts}
@@ -422,12 +434,7 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
               </div>
             )}
           </section>
-          <LandStrategyComparison
-            key={property.id}
-            values={values}
-            auctionLimit={property.auctionLimit}
-            initialLandArea={property.details?.landArea ?? (property.isSample ? 144 : null)}
-          />
+          <LandStrategyComparison land={land} auctionLimit={property.auctionLimit} />
           {property.notes && (
             <section className="border-t border-border py-7" aria-labelledby="notes-title">
               <h2 id="notes-title" className="text-base font-semibold">
