@@ -1,7 +1,12 @@
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { properties, type Property } from "@/lib/properties";
-import type { SimulationValues, Verification } from "@/lib/simulation";
+import {
+  defaultAnalysisDefaults,
+  startingValues,
+  type AnalysisDefaults,
+} from "@/lib/analysis-defaults";
+import type { Verification } from "@/lib/simulation";
 
 export type ListingRow = Database["public"]["Tables"]["pomah_listings"]["Row"];
 
@@ -41,7 +46,11 @@ export type AnalysisAsset = Omit<Property, "id"> & {
   details?: {
     auctionDate: string | null;
     landArea: number | null;
+    landWidth?: number | null;
+    landLength?: number | null;
     buildingArea: number | null;
+    bedrooms?: number | null;
+    bathrooms?: number | null;
     legal: string;
   };
 };
@@ -52,54 +61,49 @@ const rupiah = z
   .min(0, "Tidak boleh negatif.")
   .max(1_000_000_000_000, "Angka terlalu besar.");
 const optionalArea = z.number().min(0, "Tidak boleh negatif.").max(1_000_000).nullable();
+const optionalLength = z.number().min(0, "Tidak boleh negatif.").max(10_000).nullable();
 const optionalCount = z.number().int().min(0, "Tidak boleh negatif.").max(100).nullable();
 
 const reservedSlugs = new Set(properties.map((property) => property.id));
 
-export const listingFormSchema = z
-  .object({
-    slug: z
-      .string()
-      .min(3, "Minimal 3 karakter.")
-      .max(80)
-      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Gunakan huruf kecil, angka, dan tanda hubung.")
-      .refine((slug) => !reservedSlugs.has(slug as Property["id"]), "Slug dipakai aset contoh."),
-    name: z.string().trim().min(3, "Isi nama properti.").max(200),
-    address: z.string().trim().max(500),
-    regency_code: z.string().regex(/^\d{4}$/, "Isi 4 digit kode kabupaten/kota."),
-    source: z.enum(listingSources),
-    source_url: z
-      .string()
-      .trim()
-      .max(500)
-      .refine((url) => url === "" || /^https:\/\//.test(url), "Gunakan tautan https://.")
-      .transform((url) => (url === "" ? null : url)),
-    auction_limit: rupiah,
-    auction_date: z
-      .string()
-      .refine((date) => date === "" || /^\d{4}-\d{2}-\d{2}$/.test(date), "Format tanggal salah.")
-      .transform((date) => (date === "" ? null : date)),
-    land_area: optionalArea,
-    building_area: optionalArea,
-    bedrooms: optionalCount,
-    bathrooms: optionalCount,
-    legal: z.string().trim().max(100),
-    occupancy_verified: z.boolean(),
-    access_verified: z.boolean(),
-    documents_verified: z.boolean(),
-    est_sale_price: rupiah,
-    est_winning_price: rupiah,
-    est_purchase_costs: rupiah,
-    est_renovation: rupiah,
-    est_holding_sale: rupiah,
-    target_profit: rupiah,
-    notes: z.string().max(2000),
-    sort_order: z.number().int().min(-1000).max(1000),
-  })
-  .refine((value) => value.est_winning_price >= value.auction_limit, {
-    path: ["est_winning_price"],
-    message: "Harga menang tidak boleh di bawah nilai limit.",
-  });
+export const listingFormSchema = z.object({
+  slug: z
+    .string()
+    .min(3, "Minimal 3 karakter.")
+    .max(80)
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Gunakan huruf kecil, angka, dan tanda hubung.")
+    .refine((slug) => !reservedSlugs.has(slug as Property["id"]), "Slug dipakai aset contoh."),
+  name: z.string().trim().min(3, "Isi nama properti.").max(200),
+  address: z.string().trim().max(500),
+  regency_code: z.string().regex(/^\d{4}$/, "Isi 4 digit kode kabupaten/kota."),
+  source: z.enum(listingSources),
+  source_url: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((url) => url === "" || /^https:\/\//.test(url), "Gunakan tautan https://.")
+    .transform((url) => (url === "" ? null : url)),
+  auction_limit: rupiah,
+  auction_date: z
+    .string()
+    .refine((date) => date === "" || /^\d{4}-\d{2}-\d{2}$/.test(date), "Format tanggal salah.")
+    .transform((date) => (date === "" ? null : date)),
+  land_area: optionalArea,
+  /** Lebar muka (menghadap jalan) dan panjang tanah, m. Opsional; dipakai analisis pecah kavling. */
+  land_width: optionalLength,
+  land_length: optionalLength,
+  building_area: optionalArea,
+  bedrooms: optionalCount,
+  bathrooms: optionalCount,
+  legal: z.string().trim().max(100),
+  occupancy_verified: z.boolean(),
+  access_verified: z.boolean(),
+  documents_verified: z.boolean(),
+  notes: z.string().max(2000),
+  sort_order: z.number().int().min(-1000).max(1000),
+});
+// Katalog hanya berisi fakta aset. Kolom est_* lama di database tidak lagi diisi atau dibaca;
+// angka perhitungan dimulai dari standar analisis (src/lib/analysis-defaults.ts).
 export type ListingFormInput = z.input<typeof listingFormSchema>;
 export type ListingFormValues = z.output<typeof listingFormSchema>;
 
@@ -125,6 +129,8 @@ export function emptyListingForm(): ListingFormInput {
     auction_limit: 0,
     auction_date: "",
     land_area: null,
+    land_width: null,
+    land_length: null,
     building_area: null,
     bedrooms: null,
     bathrooms: null,
@@ -132,12 +138,6 @@ export function emptyListingForm(): ListingFormInput {
     occupancy_verified: false,
     access_verified: false,
     documents_verified: false,
-    est_sale_price: 0,
-    est_winning_price: 0,
-    est_purchase_costs: 0,
-    est_renovation: 0,
-    est_holding_sale: 0,
-    target_profit: 0,
     notes: "",
     sort_order: 0,
   };
@@ -156,6 +156,8 @@ export function listingToForm(row: ListingRow): ListingFormInput {
     auction_limit: row.auction_limit,
     auction_date: row.auction_date ?? "",
     land_area: row.land_area,
+    land_width: listingLandSize(row).width,
+    land_length: listingLandSize(row).length,
     building_area: row.building_area,
     bedrooms: row.bedrooms,
     bathrooms: row.bathrooms,
@@ -163,37 +165,24 @@ export function listingToForm(row: ListingRow): ListingFormInput {
     occupancy_verified: row.occupancy_verified,
     access_verified: row.access_verified,
     documents_verified: row.documents_verified,
-    est_sale_price: row.est_sale_price,
-    est_winning_price: row.est_winning_price ?? row.auction_limit,
-    est_purchase_costs: row.est_purchase_costs,
-    est_renovation: row.est_renovation,
-    est_holding_sale: row.est_holding_sale,
-    target_profit: row.target_profit,
     notes: row.notes,
     sort_order: row.sort_order,
   };
 }
 
-export function listingValues(
-  row: Pick<
-    ListingRow,
-    | "est_sale_price"
-    | "est_winning_price"
-    | "auction_limit"
-    | "est_purchase_costs"
-    | "est_renovation"
-    | "est_holding_sale"
-    | "target_profit"
-  >,
-): SimulationValues {
-  return {
-    salePrice: row.est_sale_price,
-    winningPrice: row.est_winning_price ?? row.auction_limit,
-    purchaseCosts: row.est_purchase_costs,
-    renovationCosts: row.est_renovation,
-    holdingAndSaleCosts: row.est_holding_sale,
-    targetProfit: row.target_profit,
-  };
+/**
+ * Lebar dan panjang tanah. Kolom land_width/land_length ditambahkan lewat
+ * docs/katalog-ukuran-tanah.sql dan belum ada di tipe Supabase, jadi dibaca dengan aman.
+ */
+export function listingLandSize(row: ListingRow): { width: number | null; length: number | null } {
+  const raw = row as ListingRow & { land_width?: unknown; land_length?: unknown };
+  const read = (value: unknown) =>
+    typeof value === "number" && value > 0
+      ? value
+      : typeof value === "string" && Number(value) > 0
+        ? Number(value)
+        : null;
+  return { width: read(raw.land_width), length: read(raw.land_length) };
 }
 
 export function listingVerification(
@@ -217,7 +206,11 @@ export function inspectionLabel(verification: Verification): string {
   return `Belum terverifikasi: ${missing.join(", ")}`;
 }
 
-export function listingToAsset(row: ListingRow, coverUrl?: string): AnalysisAsset {
+export function listingToAsset(
+  row: ListingRow,
+  coverUrl?: string,
+  defaults: AnalysisDefaults = defaultAnalysisDefaults,
+): AnalysisAsset {
   const verification = listingVerification(row);
   const source = (listingSources as readonly string[]).includes(row.source)
     ? (row.source as ListingSource)
@@ -229,7 +222,7 @@ export function listingToAsset(row: ListingRow, coverUrl?: string): AnalysisAsse
     regionCode: row.regency_code,
     image: coverUrl ?? "",
     auctionLimit: row.auction_limit,
-    initialValues: listingValues(row),
+    initialValues: startingValues(row.auction_limit, defaults),
     verification,
     inspection: inspectionLabel(verification),
     isSample: false,
@@ -242,7 +235,11 @@ export function listingToAsset(row: ListingRow, coverUrl?: string): AnalysisAsse
     details: {
       auctionDate: row.auction_date,
       landArea: row.land_area,
+      landWidth: listingLandSize(row).width,
+      landLength: listingLandSize(row).length,
       buildingArea: row.building_area,
+      bedrooms: row.bedrooms,
+      bathrooms: row.bathrooms,
       legal: row.legal,
     },
   };

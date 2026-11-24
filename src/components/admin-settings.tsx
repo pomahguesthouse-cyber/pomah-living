@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, Ruler, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AdminAnalysisDefaults } from "@/components/admin-analysis-defaults";
 import { FormattedNumberInput } from "@/components/formatted-number-input";
 import { defaultLandSettings, landSettingsSchema, type LandSettings } from "@/lib/land-settings";
 import { adminError } from "@/services/admin-service";
@@ -50,12 +51,15 @@ export function AdminSettings() {
   if (query.isPending)
     return <p className="mt-8 text-sm text-muted-foreground">Memuat pengaturan…</p>;
   return (
-    <SettingsForm
-      key={JSON.stringify(query.data?.settings)}
-      initial={query.data?.settings ?? defaultLandSettings}
-      fromDatabase={query.data?.source === "database"}
-      onSaved={() => client.invalidateQueries({ queryKey: landSettingsQueryKey })}
-    />
+    <>
+      <SettingsForm
+        key={JSON.stringify(query.data?.settings)}
+        initial={query.data?.settings ?? defaultLandSettings}
+        fromDatabase={query.data?.source === "database"}
+        onSaved={() => client.invalidateQueries({ queryKey: landSettingsQueryKey })}
+      />
+      <AdminAnalysisDefaults />
+    </>
   );
 }
 
@@ -108,7 +112,7 @@ function SettingsForm({
         <p className="mt-4 flex gap-2 rounded-md bg-warning-soft px-3 py-2 text-xs leading-5 text-warning">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           Pengaturan belum tersimpan di database, jadi platform memakai standar bawaan. Bila
-          penyimpanan gagal, tabel app_settings belum dibuat (lihat docs/spec-pengaturan-tanah.md).
+          penyimpanan gagal, tabel app_settings belum dibuat (jalankan docs/app-settings-setup.sql).
         </p>
       )}
       <div className="mt-6 grid gap-x-5 gap-y-5 sm:grid-cols-2">

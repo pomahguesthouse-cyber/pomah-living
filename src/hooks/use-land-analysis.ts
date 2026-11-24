@@ -20,12 +20,28 @@ export const strategySectionId = "perbandingan-strategi";
 type Options = {
   values: SimulationValues | null;
   initialLandArea: number | null;
+  /** Lebar muka dan panjang dari katalog, bila admin mengisinya. */
+  initialWidth?: number | null;
+  initialLength?: number | null;
   isSample: boolean;
 };
 
-function initialSize({ initialLandArea, isSample }: Options): LandSize {
+function initialSize({
+  initialLandArea,
+  initialWidth,
+  initialLength,
+  isSample,
+}: Options): LandSize {
+  if (initialWidth && initialWidth > 0 && initialLength && initialLength > 0)
+    return { mode: "dimensions", length: initialLength, width: initialWidth, area: 0, frontage: 0 };
   if (initialLandArea && initialLandArea > 0)
-    return { mode: "area", length: 0, width: 0, area: initialLandArea, frontage: 0 };
+    return {
+      mode: "area",
+      length: 0,
+      width: 0,
+      area: initialLandArea,
+      frontage: initialWidth && initialWidth > 0 ? initialWidth : 0,
+    };
   if (isSample) return { mode: "dimensions", length: 18, width: 8, area: 0, frontage: 0 };
   return { mode: "dimensions", length: 0, width: 0, area: 0, frontage: 0 };
 }

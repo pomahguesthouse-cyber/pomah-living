@@ -29,6 +29,14 @@ import {
   LandStrategyComparison,
 } from "@/components/land-strategy-comparison";
 import { useLandAnalysis } from "@/hooks/use-land-analysis";
+import {
+  defaultAnalysisDefaults,
+  followStandards,
+  quickRenovation,
+  renovationLevelLabels,
+  renovationLevels,
+} from "@/lib/analysis-defaults";
+import { analysisDefaultsQueryKey, fetchAnalysisDefaults } from "@/services/settings-service";
 import { getProperty } from "@/lib/properties";
 import { listingToAsset, sampleToAsset, type AnalysisAsset } from "@/lib/listings";
 import { fetchListingBySlug, fetchListingPhotoUrls, listingKey } from "@/services/listing-service";
@@ -41,6 +49,7 @@ import {
   simulationFields,
   stressedScenario,
   validateAmount,
+  type SimulationField,
   type SimulationValues,
 } from "@/lib/simulation";
 import { seedSimulation, useSimulationStore } from "@/stores/simulation-store";
@@ -117,14 +126,24 @@ function AnalyzeAsset() {
 }
 
 function ListingAnalysis({ slug }: { slug: string }) {
+  const defaults = useQuery({
+    queryKey: analysisDefaultsQueryKey,
+    queryFn: fetchAnalysisDefaults,
+    staleTime: 5 * 60_000,
+  });
   const listing = useQuery({
-    queryKey: listingKey(slug),
+    queryKey: [...listingKey(slug), "analysis-defaults", defaults.data?.settings],
+    enabled: defaults.isSuccess,
     queryFn: async () => {
       const row = await fetchListingBySlug(slug);
       if (!row) return null;
       const cover = row.cover_photo_path;
       const urls = cover ? await fetchListingPhotoUrls([cover]).catch(() => ({})) : {};
-      return listingToAsset(row, cover ? (urls as Record<string, string>)[cover] : undefined);
+      return listingToAsset(
+        row,
+        cover ? (urls as Record<string, string>)[cover] : undefined,
+        defaults.data?.settings,
+      );
     },
     retry: false,
   });
@@ -174,13 +193,43 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
   const setScenario = useSimulationStore((state) => state.setScenario);
   const salePriceInput = useRef<HTMLInputElement>(null);
   const values = parseInputs(simulation.inputs);
-  const [assumptionsOpen, setAssumptionsOpen] = useState(false);
+  const defaultsQuery = useQuery({
+    queryKey: analysisDefaultsQueryKey,
+    queryFn: fetchAnalysisDefaults,
+    staleTime: 5 * 60_000,
+  });
+  const analysisDefaults = defaultsQuery.data?.settings ?? defaultAnalysisDefaults;
+  /** Aset katalog: biaya yang belum diubah flipper ikut standar platform. */
+  const followsStandards = !property.isSample;
+  const updateField = (key: SimulationField, raw: string) => {
+    const previous = parseInputs(simulation.inputs);
+    const next = parseInputs({ ...simulation.inputs, [key]: raw });
+    setField(property.id, key, raw);
+    if (!followsStandards || !previous || !next) return;
+    const followed = followStandards(previous, next, analysisDefaults);
+    for (const field of ["purchaseCosts", "holdingAndSaleCosts", "targetProfit"] as const)
+      if (field !== key && followed[field] !== next[field])
+        setField(property.id, field, String(followed[field]));
+  };
+  const buildingArea = property.details?.buildingArea ?? null;
+  const [assumptionsOpen, setAssumptionsOpen] = useState(
+    !property.isSample && property.initialValues.salePrice <= 0,
+  );
+  const fillSalePrice = () => {
+    setAssumptionsOpen(true);
+    window.requestAnimationFrame(() => {
+      salePriceInput.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+      salePriceInput.current?.focus();
+    });
+  };
   const hasInputError = simulationFields.some(({ key }) => validateAmount(simulation.inputs[key]));
   const showAssumptionForm = assumptionsOpen || hasInputError;
   const verifiedCount = Object.values(simulation.verification).filter(Boolean).length;
   const land = useLandAnalysis({
     values,
     initialLandArea: property.details?.landArea ?? null,
+    initialWidth: property.details?.landWidth ?? null,
+    initialLength: property.details?.landLength ?? null,
     isSample: property.isSample,
   });
   return (
@@ -304,13 +353,13 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
           {property.id === "cibinong" && (
             <ConditionPhotoPilot
               currentRenovation={values?.renovationCosts}
-              onApply={(total) => setField(property.id, "renovationCosts", String(total))}
+              onApply={(total) => updateField("renovationCosts", String(total))}
             />
           )}
           {property.id === "cibinong" && (
             <NearbyAskingPrices
               onUseMedian={(askingPrice) => {
-                setField(property.id, "salePrice", String(askingPrice));
+                updateField("salePrice", String(askingPrice));
                 setAssumptionsOpen(true);
                 window.requestAnimationFrame(() => salePriceInput.current?.focus());
               }}
@@ -414,7 +463,7 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
                           aria-invalid={Boolean(error) || belowLimit}
                           aria-describedby={error || belowLimit ? `${key}-error` : undefined}
                           onChange={(event) =>
-                            setField(property.id, key, event.target.value.replace(/\./g, "").trim())
+                            updateField(key, event.target.value.replace(/\./g, "").trim())
                           }
                         />
                       </div>
@@ -431,6 +480,53 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
                     </div>
                   );
                 })}
+              </div>
+            )}
+            {followsStandards && (
+              <div className="mt-6 rounded-md border border-border p-4">
+                <p className="text-xs font-semibold">Perkiraan cepat renovasi</p>
+                {buildingArea ? (
+                  <>
+                    <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+                      Luas bangunan {buildingArea} m² × tarif per tingkat kerusakan. Ganti dengan
+                      RAB bila sudah survei.
+                    </p>
+                    <div
+                      className="mt-3 flex flex-wrap gap-2"
+                      role="group"
+                      aria-label="Tingkat kerusakan"
+                    >
+                      {renovationLevels.map((level) => {
+                        const total = quickRenovation(buildingArea, level, analysisDefaults);
+                        const active = values?.renovationCosts === total;
+                        return (
+                          <Button
+                            key={level}
+                            type="button"
+                            size="sm"
+                            variant={active ? "brand" : "outline"}
+                            aria-pressed={active}
+                            onClick={() => updateField("renovationCosts", String(total))}
+                          >
+                            {renovationLevelLabels[level]} · {formatRupiah(total)}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+                    Luas bangunan belum tercatat di katalog. Isi biaya renovasi dari RAB atau
+                    survei.
+                  </p>
+                )}
+                <p className="mt-3 border-t border-border pt-3 text-[11px] leading-5 text-muted-foreground">
+                  Angka awal mengikuti standar platform: harga menang = limit, biaya perolehan{" "}
+                  {analysisDefaults.purchaseCostPercent}% dari harga menang, kepemilikan dan jual{" "}
+                  {analysisDefaults.holdingSalePercent}% dari harga jual, target laba{" "}
+                  {analysisDefaults.targetProfitPercent}% dari modal. Biaya yang belum Anda ubah
+                  ikut menyesuaikan.
+                </p>
               </div>
             )}
           </section>
@@ -475,6 +571,7 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
           values={values}
           auctionLimit={property.auctionLimit}
           verification={simulation.verification}
+          onFillSalePrice={fillSalePrice}
         />
       </div>
     </main>
