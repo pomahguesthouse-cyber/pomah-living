@@ -307,8 +307,8 @@ function Index() {
               <img
                 src={`/images/flipping-stages/${image}.${image === "renovasi" || image === "akuisisi" ? "png" : "webp"}`}
                 alt=""
-                width={image === "akuisisi" ? 1484 : image === "renovasi" ? 1254 : 400}
-                height={image === "akuisisi" ? 1060 : image === "renovasi" ? 1254 : 360}
+                width={image === "akuisisi" ? 1484 : image === "renovasi" ? 4677 : 400}
+                height={image === "akuisisi" ? 1060 : image === "renovasi" ? 3673 : 360}
                 loading="lazy"
                 decoding="async"
                 className="mb-4 h-28 w-full object-contain object-left sm:h-36"
