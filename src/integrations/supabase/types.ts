@@ -89,6 +89,30 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          id: string | null
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string | null
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          id?: string | null
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       hero_slides: {
         Row: {
           button_href: string
@@ -208,6 +232,8 @@ export type Database = {
           est_winning_price: number | null
           id: string
           land_area: number | null
+          land_length: number | null
+          land_width: number | null
           legal: string
           name: string
           notes: string
@@ -241,6 +267,8 @@ export type Database = {
           est_winning_price?: number | null
           id?: string
           land_area?: number | null
+          land_length?: number | null
+          land_width?: number | null
           legal?: string
           name: string
           notes?: string
@@ -274,6 +302,8 @@ export type Database = {
           est_winning_price?: number | null
           id?: string
           land_area?: number | null
+          land_length?: number | null
+          land_width?: number | null
           legal?: string
           name?: string
           notes?: string
