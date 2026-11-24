@@ -374,21 +374,6 @@
   padding: 12px 8px;
   vertical-align: top;
 }
-.rab-table th:nth-child(1) {
-  width: 190px;
-}
-.rab-table th:nth-child(2) {
-  width: 140px;
-}
-.rab-table th:nth-child(3) {
-  width: 100px;
-}
-.rab-table th:nth-child(4) {
-  width: 75px;
-}
-.rab-table th:nth-child(5) {
-  width: 150px;
-}
 @media print {
   @page {
     size: A4;
@@ -447,6 +432,9 @@
   .rab-table {
     min-width: 0;
     font-size: 8pt;
+  }
+  .rab-table col.col-aksi {
+    width: 0;
   }
   .rab-table th,
   .rab-table td {
