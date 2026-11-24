@@ -18,6 +18,7 @@ import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { DemoPhotoGallery } from "@/components/demo-photo-gallery";
 import { PropertyPhotoWorkspace } from "@/components/property-photo-workspace";
 import { FlippingOverview } from "@/components/flipping-overview";
+import { PropertySummaryEditor } from "@/components/property-summary-editor";
 import { AssetAnalysis } from "@/components/asset-analysis";
 import { ProjectMarketAnalysis } from "@/components/project-market-analysis";
 import { Input } from "@/components/ui/input";
@@ -412,76 +413,10 @@ function ProjectPage() {
             </dl>
           </div>
         </section>
-        <details className="no-print border-b border-border py-4">
-          <summary className="cursor-pointer text-sm font-medium">Ubah ringkasan properti</summary>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            {(
-              [
-                ["name", "Nama proyek"],
-                ["address", "Alamat"],
-                ["province", "Provinsi"],
-                ["type", "Tipe rumah"],
-                ["legal", "Legalitas"],
-                ["occupancy", "Status hunian"],
-                ["documents", "Status dokumen"],
-                ["source", "Sumber lelang"],
-              ] as const
-            ).map(([field, label]) => (
-              <label className="text-xs" key={field}>
-                {label}
-                <Input
-                  className="mt-2"
-                  value={project.property[field]}
-                  maxLength={500}
-                  onChange={(e) =>
-                    update({
-                      ...project,
-                      property: { ...project.property, [field]: e.target.value },
-                    })
-                  }
-                />
-              </label>
-            ))}
-            {(
-              [
-                ["auctionDate", "Tanggal lelang"],
-                ["referenceDate", "Tanggal sumber data"],
-              ] as const
-            ).map(([field, label]) => (
-              <label className="text-xs" key={field}>
-                {label}
-                <Input
-                  type="date"
-                  className="mt-2"
-                  value={project.property[field]}
-                  onChange={(e) =>
-                    update({
-                      ...project,
-                      property: { ...project.property, [field]: e.target.value },
-                    })
-                  }
-                />
-              </label>
-            ))}
-            {(
-              [
-                ["land", "Luas tanah", "m²"],
-                ["building", "Luas bangunan", "m²"],
-                ["limit", "Nilai limit lelang", "Rp"],
-              ] as const
-            ).map(([field, label, unit]) => (
-              <NumberField
-                key={field}
-                label={label}
-                unit={unit}
-                value={project.property[field]}
-                onChange={(value) =>
-                  update({ ...project, property: { ...project.property, [field]: value } })
-                }
-              />
-            ))}
-          </div>
-        </details>
+        <PropertySummaryEditor
+          property={project.property}
+          onChange={(property) => update({ ...project, property })}
+        />
         <div className="risk-indicator mt-5 flex flex-wrap items-center justify-between gap-3 bg-warning-soft p-4 text-xs leading-6">
           <span className="flex items-center gap-2">
             <CircleAlert className="size-4 shrink-0 text-warning" />
