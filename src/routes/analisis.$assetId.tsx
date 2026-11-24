@@ -1,12 +1,14 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  ChevronUp,
   ClipboardCheck,
   FlaskConical,
   MapPin,
+  Pencil,
   SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -97,6 +99,9 @@ function AnalyzeAsset() {
   const setScenario = useSimulationStore((state) => state.setScenario);
   const salePriceInput = useRef<HTMLInputElement>(null);
   const values = parseInputs(simulation.inputs);
+  const [assumptionsOpen, setAssumptionsOpen] = useState(false);
+  const hasInputError = simulationFields.some(({ key }) => validateAmount(simulation.inputs[key]));
+  const showAssumptionForm = assumptionsOpen || hasInputError;
   const verifiedCount = Object.values(simulation.verification).filter(Boolean).length;
   return (
     <main className="page-container reveal py-8 sm:py-10">
@@ -203,7 +208,8 @@ function AnalyzeAsset() {
             <NearbyAskingPrices
               onUseMedian={(askingPrice) => {
                 setField(property.id, "salePrice", String(askingPrice));
-                salePriceInput.current?.focus();
+                setAssumptionsOpen(true);
+                window.requestAnimationFrame(() => salePriceInput.current?.focus());
               }}
             />
           )}
@@ -211,7 +217,7 @@ function AnalyzeAsset() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <h2 id="form-title" className="flex items-center gap-2 text-base font-semibold">
                 <SlidersHorizontal className="size-5 text-brand" />
-                Simulasi keuangan
+                Asumsi perhitungan
               </h2>
               {property.id === "cibinong" && (
                 <div className="flex gap-2" aria-label="Skenario Cibinong">
@@ -236,54 +242,94 @@ function AnalyzeAsset() {
                 </div>
               )}
             </div>
-            <div className="mt-6 grid gap-x-5 gap-y-5 sm:grid-cols-2">
-              {simulationFields.map(({ key, label }) => {
-                const input = simulation.inputs[key];
-                const error = validateAmount(input);
-                const belowLimit =
-                  key === "winningPrice" && !error && Number(input) < property.auctionLimit;
-                const displayedValue = input === "" || error ? input : formatInput(input);
-                return (
-                  <div key={key}>
-                    <label
-                      htmlFor={key}
-                      className="mb-2 block min-h-10 text-xs font-medium leading-5"
-                    >
-                      {label}
-                    </label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-sm text-muted-foreground">
-                        Rp
-                      </span>
-                      <Input
-                        id={key}
-                        ref={key === "salePrice" ? salePriceInput : null}
-                        className="sim-field"
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete="off"
-                        value={displayedValue}
-                        aria-invalid={Boolean(error) || belowLimit}
-                        aria-describedby={error || belowLimit ? `${key}-error` : undefined}
-                        onChange={(event) =>
-                          setField(property.id, key, event.target.value.replace(/\./g, "").trim())
-                        }
-                      />
-                    </div>
-                    {(error || belowLimit) && (
-                      <p
-                        id={`${key}-error`}
-                        role="alert"
-                        className="mt-1.5 text-[11px] leading-5 text-destructive"
-                      >
-                        {error ??
-                          `Harga menang tidak boleh di bawah nilai limit ${formatRupiah(property.auctionLimit)}.`}
-                      </p>
-                    )}
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+              Hasil di samping dihitung dari angka berikut. Ubah bila survei, RAB, atau harga
+              pembanding memberi angka yang lebih tepat.
+            </p>
+            {!showAssumptionForm && (
+              <dl
+                data-testid="assumption-summary"
+                className="mt-5 grid gap-x-5 gap-y-3 rounded-md border border-border p-4 text-sm sm:grid-cols-2"
+              >
+                {simulationFields.map(({ key, label }) => (
+                  <div key={key} className="flex items-baseline justify-between gap-3">
+                    <dt className="text-xs text-muted-foreground">{label}</dt>
+                    <dd className="font-semibold tabular-nums">
+                      {formatRupiah(Number(simulation.inputs[key]))}
+                    </dd>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </dl>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-4 h-10"
+              aria-expanded={showAssumptionForm}
+              aria-controls="assumption-form"
+              disabled={hasInputError}
+              onClick={() => setAssumptionsOpen((open) => !open)}
+            >
+              {showAssumptionForm ? (
+                <>
+                  <ChevronUp className="size-4" aria-hidden="true" /> Tutup asumsi
+                </>
+              ) : (
+                <>
+                  <Pencil className="size-4" aria-hidden="true" /> Ubah asumsi
+                </>
+              )}
+            </Button>
+            {showAssumptionForm && (
+              <div id="assumption-form" className="mt-6 grid gap-x-5 gap-y-5 sm:grid-cols-2">
+                {simulationFields.map(({ key, label }) => {
+                  const input = simulation.inputs[key];
+                  const error = validateAmount(input);
+                  const belowLimit =
+                    key === "winningPrice" && !error && Number(input) < property.auctionLimit;
+                  const displayedValue = input === "" || error ? input : formatInput(input);
+                  return (
+                    <div key={key}>
+                      <label
+                        htmlFor={key}
+                        className="mb-2 block min-h-10 text-xs font-medium leading-5"
+                      >
+                        {label}
+                      </label>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-sm text-muted-foreground">
+                          Rp
+                        </span>
+                        <Input
+                          id={key}
+                          ref={key === "salePrice" ? salePriceInput : null}
+                          className="sim-field"
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          value={displayedValue}
+                          aria-invalid={Boolean(error) || belowLimit}
+                          aria-describedby={error || belowLimit ? `${key}-error` : undefined}
+                          onChange={(event) =>
+                            setField(property.id, key, event.target.value.replace(/\./g, "").trim())
+                          }
+                        />
+                      </div>
+                      {(error || belowLimit) && (
+                        <p
+                          id={`${key}-error`}
+                          role="alert"
+                          className="mt-1.5 text-[11px] leading-5 text-destructive"
+                        >
+                          {error ??
+                            `Harga menang tidak boleh di bawah nilai limit ${formatRupiah(property.auctionLimit)}.`}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         </div>
         <SimulationResults
