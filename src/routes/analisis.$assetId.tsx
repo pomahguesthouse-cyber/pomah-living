@@ -714,7 +714,7 @@ function CreateProjectFromAsset({
       ) : (
         <Button className="mt-4 h-11" disabled={busy || !values} onClick={() => void create()}>
           <FolderPlus className="size-4" aria-hidden="true" />
-          {busy ? "Membuat proyek…" : "Buat proyek dari aset ini"}
+          {busy ? "Membuat proyek…" : "Flip aset ini"}
         </Button>
       )}
       {!values && (
