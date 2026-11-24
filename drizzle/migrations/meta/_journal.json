@@ -43,6 +43,13 @@
       "when": 1795482407906,
       "tag": "0005_create_pomah_listings",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795482702002,
+      "tag": "0006_restrict_listing_photo_reads",
+      "breakpoints": true
     }
   ]
 }

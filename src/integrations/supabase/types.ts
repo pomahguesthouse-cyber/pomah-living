@@ -421,6 +421,10 @@ export type Database = {
     }
     Functions: {
       is_pomah_admin: { Args: never; Returns: boolean }
+      is_published_listing_photo: {
+        Args: { object_name: string }
+        Returns: boolean
+      }
       pomah_admin_directory: {
         Args: {
           page_number?: number
