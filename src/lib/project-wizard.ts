@@ -2,42 +2,43 @@ import { calculateFlipping, rabTotal, type FlippingProject } from "@/lib/flippin
 import { analyzeScenario, scenarioInputs } from "@/lib/scenarios";
 
 export const projectTabs = [
-  { id: "asset", label: "Analisis aset" },
+  { id: "asset", label: "Kondisi aset" },
   { id: "market", label: "Harga pasar" },
   { id: "risks", label: "Dokumen & risiko" },
-  { id: "analysis", label: "Biaya perolehan & pendanaan" },
   { id: "rab", label: "RAB renovasi" },
+  { id: "scenarios", label: "Skenario & laba" },
+  { id: "analysis", label: "Biaya perolehan & pendanaan" },
   { id: "photos", label: "Foto & before-after" },
   { id: "timeline", label: "Timeline" },
   { id: "selling", label: "Biaya jual" },
-  { id: "scenarios", label: "Skenario & laba" },
 ] as const;
 export type ProjectTab = (typeof projectTabs)[number]["id"];
 
 export const wizardSteps = [
   {
+    // RAB dan skenario laba dihitung sebelum menawar, karena batas tawar bergantung padanya.
     id: "feasibility",
-    title: "Kelayakan aset",
-    detail: "Kondisi bangunan, harga pasar, dokumen dan risiko",
-    tabs: ["asset", "market", "risks"],
+    title: "Analisis aset",
+    detail: "Kondisi, harga pasar, risiko, RAB dan skenario laba sebelum menawar",
+    tabs: ["asset", "market", "risks", "rab", "scenarios"],
   },
   {
     id: "acquisition",
     title: "Akuisisi",
-    detail: "Harga beli, pajak, bea lelang, notaris dan pendanaan",
+    detail: "Harga beli, pajak, bea lelang, notaris, pengosongan dan pendanaan",
     tabs: ["analysis"],
   },
   {
     id: "renovation",
     title: "Renovasi",
-    detail: "RAB pekerjaan, foto kondisi dan jadwal pelaksanaan",
-    tabs: ["rab", "photos", "timeline"],
+    detail: "Foto kondisi dan jadwal pelaksanaan pekerjaan",
+    tabs: ["photos", "timeline"],
   },
   {
     id: "sale",
     title: "Penjualan",
-    detail: "Biaya jual, skenario harga dan laba bersih",
-    tabs: ["selling", "scenarios"],
+    detail: "Biaya jual, pemasaran dan serah terima",
+    tabs: ["selling"],
   },
 ] as const satisfies readonly {
   id: string;
@@ -113,6 +114,11 @@ function checksFor(step: WizardStepId, project: FlippingProject): StepCheck[] {
           item.condition === "Perlu pemeriksaan lanjutan",
       ).length;
       const openRisks = project.risks.filter((risk) => !risk.verified).length;
+      const contingency = project.rab
+        .filter((item) => item.group === "Contingency")
+        .reduce((sum, item) => sum + item.volume * item.price, 0);
+      const profit = calculateFlipping(finance, project.rab).profit;
+      const pessimistic = scenarioProfit(project, 0);
       return [
         {
           id: "assessment",
@@ -145,6 +151,32 @@ function checksFor(step: WizardStepId, project: FlippingProject): StepCheck[] {
             : {}),
           tab: "risks",
         },
+        { id: "rab", label: "RAB renovasi terisi", ok: rabTotal(project.rab) > 0, tab: "rab" },
+        {
+          id: "contingency",
+          label: "Ada cadangan biaya renovasi",
+          ok: contingency > 0 || finance.reserve > 0,
+          tab: "rab",
+        },
+        {
+          id: "scenarios",
+          label: "Harga jual tiap skenario diisi",
+          ok: project.scenarios.every((_, index) => scenarioInputs(project, index).sale > 0),
+          tab: "scenarios",
+        },
+        {
+          id: "profit",
+          label: "Proyeksi laba positif",
+          ok: profit > 0,
+          critical: finance.sale > 0 && profit <= 0,
+          tab: "scenarios",
+        },
+        {
+          id: "pessimistic",
+          label: "Skenario pesimis tidak rugi",
+          ok: pessimistic !== null && pessimistic >= 0,
+          tab: "scenarios",
+        },
       ];
     }
     case "acquisition":
@@ -172,17 +204,7 @@ function checksFor(step: WizardStepId, project: FlippingProject): StepCheck[] {
       ];
     case "renovation": {
       const undated = project.timeline.filter((item) => !item.date).length;
-      const contingency = project.rab
-        .filter((item) => item.group === "Contingency")
-        .reduce((sum, item) => sum + item.volume * item.price, 0);
       return [
-        { id: "rab", label: "RAB renovasi terisi", ok: rabTotal(project.rab) > 0, tab: "rab" },
-        {
-          id: "contingency",
-          label: "Ada cadangan biaya renovasi",
-          ok: contingency > 0 || finance.reserve > 0,
-          tab: "rab",
-        },
         {
           id: "timeline",
           label: "Jadwal timeline diisi",
@@ -192,37 +214,15 @@ function checksFor(step: WizardStepId, project: FlippingProject): StepCheck[] {
         },
       ];
     }
-    case "sale": {
-      const profit = calculateFlipping(finance, project.rab).profit;
-      const pessimistic = scenarioProfit(project, 0);
+    case "sale":
       return [
-        {
-          id: "scenarios",
-          label: "Harga jual tiap skenario diisi",
-          ok: project.scenarios.every((_, index) => scenarioInputs(project, index).sale > 0),
-          tab: "scenarios",
-        },
         {
           id: "selling",
           label: "Biaya jual diisi",
           ok: finance.sellerFeeRate > 0 || finance.sellerTaxRate > 0 || finance.marketing > 0,
           tab: "selling",
         },
-        {
-          id: "profit",
-          label: "Proyeksi laba positif",
-          ok: profit > 0,
-          critical: finance.sale > 0 && profit <= 0,
-          tab: "scenarios",
-        },
-        {
-          id: "pessimistic",
-          label: "Skenario pesimis tidak rugi",
-          ok: pessimistic !== null && pessimistic >= 0,
-          tab: "scenarios",
-        },
       ];
-    }
   }
 }
 

@@ -298,28 +298,29 @@ function Index() {
               width: 512,
               height: 288,
               title: "Analisis Aset Properti",
-              description: "Periksa kondisi rumah, legalitas, dan nilai limit lelang.",
+              description:
+                "Periksa kondisi, legalitas, dan RAB dari foto, lalu dapatkan batas tawar.",
             },
             {
               image: "akuisisi.png",
               width: 1484,
               height: 1060,
               title: "Akuisisi",
-              description: "Hitung batas tawar dan total biaya perolehan aset.",
+              description: "Menawar sesuai batas, lalu urus balik nama dan pengosongan.",
             },
             {
               image: "renovasi.png",
               width: 1484,
               height: 1060,
-              title: "Simulasi Renovasi",
-              description: "Susun RAB dan perkirakan biaya perbaikan rumah.",
+              title: "Renovasi",
+              description: "Kerjakan RAB dan pantau biaya aktual terhadap rencana.",
             },
             {
               image: "penjualan.png",
               width: 1484,
               height: 1060,
               title: "Penjualan",
-              description: "Uji target harga jual, titik impas, dan potensi laba.",
+              description: "Pasarkan dengan KPR BTN dan bandingkan laba aktual dengan estimasi.",
             },
           ].map(({ image, still, width, height, title, description }: StageCard) => (
             <div key={image} className="border-t border-border pt-4 sm:pt-5">
