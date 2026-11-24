@@ -16,7 +16,7 @@ export type LandSettings = z.infer<typeof landSettingsSchema>;
 export const defaultLandSettings: LandSettings = {
   minLotArea: 60,
   minFrontage: 6,
-  kdbPercent: 60,
+  kdbPercent: 100,
   maxFloors: 2,
   buildCostPerM2: 4_000_000,
 };

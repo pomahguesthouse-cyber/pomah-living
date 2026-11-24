@@ -46,7 +46,7 @@ export type NewBuildAssumptions = {
 export const defaultLandRules: Omit<LandRules, "landArea" | "frontage"> = {
   minLotArea: 60,
   minFrontage: 6,
-  kdbPercent: 60,
+  kdbPercent: 100,
   maxFloors: 2,
 };
 

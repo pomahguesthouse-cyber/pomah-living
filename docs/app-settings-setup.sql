@@ -46,7 +46,7 @@ create trigger app_settings_touch before update on public.app_settings
 insert into public.app_settings (key, value)
 values (
   'land_split',
-  '{"minLotArea":60,"minFrontage":6,"kdbPercent":60,"maxFloors":2,"buildCostPerM2":4000000}'
+  '{"minLotArea":60,"minFrontage":6,"kdbPercent":100,"maxFloors":2,"buildCostPerM2":4000000}'
 )
 on conflict (key) do nothing;
 

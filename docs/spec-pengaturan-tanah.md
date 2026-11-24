@@ -20,7 +20,7 @@ Isi `value` untuk `land_split`:
 {
   "minLotArea": 60,
   "minFrontage": 6,
-  "kdbPercent": 60,
+  "kdbPercent": 100,
   "maxFloors": 2,
   "buildCostPerM2": 4000000
 }
@@ -45,7 +45,7 @@ Jalankan `docs/app-settings-setup.sql` di SQL editor. Atau minta Lovable dengan 
 > `hero_slides`) boleh `insert` dan `update`; jangan izinkan `delete`. Tambahkan trigger
 > `updated_at`/`updated_by` dan trigger audit ke `admin_audit_log` seperti tabel `hero_slides`.
 > Isi satu baris awal: key `land_split`, value
-> `{"minLotArea":60,"minFrontage":6,"kdbPercent":60,"maxFloors":2,"buildCostPerM2":4000000}`.
+> `{"minLotArea":60,"minFrontage":6,"kdbPercent":100,"maxFloors":2,"buildCostPerM2":4000000}`.
 > Jangan ubah kode frontend; kodenya sudah ada di `src/services/settings-service.ts`.
 
 Setelah tabel dibuat dan tipe Supabase diperbarui, klien tanpa tipe di
