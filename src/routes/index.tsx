@@ -298,8 +298,8 @@ function Index() {
             },
             {
               image: "renovasi.png",
-              width: 4677,
-              height: 3673,
+              width: 1484,
+              height: 1060,
               title: "Simulasi Renovasi",
               description: "Susun RAB dan perkirakan biaya perbaikan rumah.",
             },
