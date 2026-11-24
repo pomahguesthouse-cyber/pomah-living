@@ -165,8 +165,8 @@ function Index() {
           </div>
         )}
         <h1 className="sr-only">{slide.title}</h1>
-        <div className="pointer-events-none absolute inset-x-0 bottom-[12%] z-[5] flex justify-center px-4 sm:bottom-[14%]">
-          <Button asChild className="pointer-events-auto min-h-16 rounded-full bg-white px-9 py-5 text-lg font-semibold tracking-tight text-slate-950 shadow-2xl ring-2 ring-white/80 transition-all hover:scale-105 hover:bg-emerald-50 hover:shadow-emerald-900/30 focus-visible:ring-4 focus-visible:ring-emerald-300 sm:min-h-20 sm:px-14 sm:text-2xl">
+        <div className="pointer-events-none absolute inset-x-0 bottom-[8%] z-[5] flex justify-start px-[5%] sm:bottom-[8%]">
+          <Button asChild className="pointer-events-auto min-h-12 rounded-full bg-white px-6 py-3 text-sm font-semibold tracking-tight text-slate-950 shadow-xl ring-2 ring-white/80 transition-all hover:scale-105 hover:bg-emerald-50 hover:shadow-emerald-900/30 focus-visible:ring-4 focus-visible:ring-emerald-300 sm:min-h-14 sm:px-8 sm:text-lg">
             <Link to="/pilih-aset">
               Start Flipping
               <ArrowRight className="ml-3 size-6" aria-hidden="true" />
