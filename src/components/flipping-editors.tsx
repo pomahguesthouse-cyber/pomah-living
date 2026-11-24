@@ -4,12 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { RabSpreadsheet } from "@/components/rab-spreadsheet";
 import { FormattedNumberInput } from "@/components/formatted-number-input";
-import {
-  calculateFlipping,
-  financeFields,
-  rabTotal,
-  type FlippingProject,
-} from "@/lib/flipping";
+import { calculateFlipping, financeFields, rabTotal, type FlippingProject } from "@/lib/flipping";
 import { formatRupiah } from "@/lib/simulation";
 
 type EditorProps = { project: FlippingProject; onChange: (project: FlippingProject) => void };
@@ -44,7 +39,13 @@ export function NumberField({
     </label>
   );
 }
-export function FinanceEditor({ project, onChange }: EditorProps) {
+const financeGroups = ["Akuisisi", "Holding", "Penjualan & cadangan"] as const;
+export function FinanceEditor({
+  project,
+  onChange,
+  groups = financeGroups,
+}: EditorProps & { groups?: readonly (typeof financeGroups)[number][] }) {
+  const showsAcquisition = groups.includes("Akuisisi");
   return (
     <div className="space-y-8">
       <p className="text-sm leading-6 text-muted-foreground">
@@ -52,7 +53,7 @@ export function FinanceEditor({ project, onChange }: EditorProps) {
         peraturan daerah, dasar pengenaan, NPOPTKP, ketentuan lelang, dan pihak yang wajib membayar.
         Konfirmasikan dengan pemerintah daerah dan PPAT.
       </p>
-      {["Akuisisi", "Holding", "Penjualan & cadangan"].map((group) => (
+      {groups.map((group) => (
         <section key={group}>
           <h3 className="mb-4 border-b border-border pb-3 text-base font-semibold">{group}</h3>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -72,10 +73,12 @@ export function FinanceEditor({ project, onChange }: EditorProps) {
           </div>
         </section>
       ))}
-      <div className="flex flex-wrap justify-between gap-2 border-y border-border py-4">
-        <span>Renovasi dari RAB (termasuk contingency)</span>
-        <strong>{formatRupiah(rabTotal(project.rab))}</strong>
-      </div>
+      {showsAcquisition && (
+        <div className="flex flex-wrap justify-between gap-2 border-y border-border py-4">
+          <span>Renovasi dari RAB (termasuk contingency)</span>
+          <strong>{formatRupiah(rabTotal(project.rab))}</strong>
+        </div>
+      )}
       <p className="text-xs leading-6 text-muted-foreground">
         Renovasi hanya dihitung dari RAB. Cadangan di luar RAB bersifat tambahan dan tidak boleh
         mengulang contingency. Pokok pinjaman bukan biaya tambahan; hanya bunga sederhana prorata

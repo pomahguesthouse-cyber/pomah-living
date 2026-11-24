@@ -37,6 +37,15 @@ import {
   type FlippingProject,
 } from "@/lib/flipping";
 import { getProperty } from "@/lib/properties";
+import {
+  isProjectTab,
+  nextTab,
+  previousTab,
+  stepIndexOfTab,
+  tabLabel,
+  wizardSteps,
+  type ProjectTab,
+} from "@/lib/project-wizard";
 import { formatRupiah } from "@/lib/simulation";
 import { useFlippingStore } from "@/stores/flipping-store";
 import { useSession } from "@/hooks/use-session";
@@ -138,8 +147,8 @@ function ProjectPage() {
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [revision, setRevision] = useState(0);
-  const [tab, setTab] = useState("asset");
-  const [activeWizardStep, setActiveWizardStep] = useState(0);
+  const [tab, setTab] = useState<ProjectTab>("asset");
+  const wizardRef = useRef<HTMLElement>(null);
   const form = useRef<HTMLFormElement>(null);
   const detail = useQuery({
     queryKey: ["flipping-project", userId, id],
@@ -263,27 +272,14 @@ function ProjectPage() {
         Memuat rincian proyek…
       </main>
     );
-  const stages = [
-    { id: "asset", label: "Analisis Aset" },
-    { id: "market", label: "Harga Pasar" },
-    { id: "risks", label: "Dokumen & Risiko" },
-    { id: "rab", label: "RAB Renovasi" },
-    { id: "analysis", label: "Analisis Investasi" },
-    { id: "scenarios", label: "Skenario" },
-    { id: "timeline", label: "Timeline" },
-    { id: "photos", label: "Foto & Before-After" },
-  ] as const;
-  const wizardSteps = [
-    { title: "1. Analisa aset", detail: "Data properti, harga pasar, dokumen dan biaya akuisisi", tabs: ["asset", "market", "risks", "analysis"] },
-    { title: "2. Simulasi renovasi", detail: "RAB pekerjaan, foto kondisi dan durasi pelaksanaan", tabs: ["rab", "photos", "timeline"] },
-    { title: "3. Simulasi penjualan", detail: "Harga jual, biaya penjualan, skenario dan laba bersih", tabs: ["scenarios", "analysis", "market"] },
-  ] as const;
-  const wizardTab = (step: number) => {
-    setActiveWizardStep(step);
-    setTab(step === 0 ? "asset" : step === 1 ? "rab" : "scenarios");
+  const activeWizardStep = stepIndexOfTab(tab);
+  const goToTab = (next: string, scroll = false) => {
+    if (!isProjectTab(next)) return;
+    setTab(next);
+    if (scroll) wizardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-  const reviewed = stages.filter(({ id }) => project.stageReviews?.[id]).length;
-  const progressPercent = Math.round((reviewed / stages.length) * 100);
+  const upcoming = nextTab(tab);
+  const earlier = previousTab(tab);
   const result = calculateFlipping(project.finance, project.rab);
   const unresolved = project.risks.filter((risk) => !risk.verified).length;
   const image = demo ? (getProperty(id) ?? getProperty("cibinong"))?.image : undefined;
@@ -478,7 +474,6 @@ function ProjectPage() {
             ))}
           </div>
         </details>
-        <FlippingOverview project={project} onNavigate={setTab} />
         <div className="risk-indicator mt-5 flex flex-wrap items-center justify-between gap-3 bg-warning-soft p-4 text-xs leading-6">
           <span className="flex items-center gap-2">
             <CircleAlert className="size-4 shrink-0 text-warning" />
@@ -491,7 +486,7 @@ function ProjectPage() {
             variant="link"
             size="sm"
             className="no-print"
-            onClick={() => setTab("risks")}
+            onClick={() => goToTab("risks", true)}
           >
             Periksa risiko
             <ArrowRight />
@@ -503,155 +498,58 @@ function ProjectPage() {
             penawaran.
           </p>
         )}
-        <section
-          aria-labelledby="flipping-progress-title"
-          className="no-print mt-6 rounded-lg border border-border bg-white p-4 sm:p-5"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 id="flipping-progress-title" className="text-sm font-semibold">
-                Progres peninjauan tahapan
-              </h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Tandai tahap setelah Anda meninjau isinya. Bukan verifikasi resmi atau progres
-                pekerjaan fisik.
-              </p>
-            </div>
-            <strong className="text-sm tabular-nums">
-              {reviewed}/{stages.length} tahap · {progressPercent}%
-            </strong>
-          </div>
-          <div
-            role="progressbar"
-            aria-label="Progres peninjauan"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progressPercent}
-            className="mt-4 h-2.5 overflow-hidden rounded-full bg-muted"
-          >
-            <div
-              className="h-full rounded-full bg-brand transition-all"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {stages.map((stage, index) => {
-              const checked = Boolean(project.stageReviews?.[stage.id]);
-              return (
-                <div
-                  key={stage.id}
-                  className="flex items-center gap-2 rounded-md border border-border p-2"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setTab(stage.id)}
-                    className="min-w-0 flex-1 text-left text-xs font-medium hover:underline"
-                    aria-label={`Buka tahap ${index + 1}: ${stage.label}`}
-                  >
-                    <span className="mr-1 text-muted-foreground">{index + 1}.</span>
-                    {stage.label}
-                  </button>
-                  <label className="flex shrink-0 cursor-pointer items-center gap-1 text-[11px]">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={(event) =>
-                        update({
-                          ...project,
-                          stageReviews: {
-                            ...project.stageReviews,
-                            [stage.id]: event.target.checked,
-                          },
-                        })
-                      }
-                      className="size-4 accent-green-700"
-                      aria-label={`Tandai ${stage.label} sudah ditinjau`}
-                    />
-                    <span>{checked ? "Ditinjau" : "Belum"}</span>
-                  </label>
-                </div>
-              );
-            })}
-          </div>
-        </section>
         <div className="mt-7 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_310px]">
           <div className="min-w-0">
-            <section className="no-print mb-6 rounded-xl border border-border bg-card p-4 sm:p-5" aria-label="Tahapan flipping">
-          <p className="text-sm font-semibold">Wizard flipping · Tiga tahap</p>
-          <p className="mt-1 text-xs text-muted-foreground">Gunakan modul yang sudah tersedia. Semua perubahan tetap pada proyek yang sama.</p>
-          <div className="mt-4 grid gap-2 sm:grid-cols-3">
-            {wizardSteps.map((step, index) => (
-              <button key={step.title} type="button" onClick={() => wizardTab(index)}
-                aria-current={activeWizardStep === index ? "step" : undefined}
-                className={`rounded-lg border p-3 text-left transition-colors ${activeWizardStep === index ? "border-brand bg-brand-soft" : "border-border bg-background hover:border-brand"}`}>
-                <span className="block text-sm font-semibold">{step.title}</span>
-                <span className="mt-1 block text-xs text-muted-foreground">{step.detail}</span>
-              </button>
-            ))}
-          </div>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-            <Button type="button" size="sm" variant="outline" disabled={activeWizardStep === 0} onClick={() => wizardTab(activeWizardStep - 1)}>← Tahap sebelumnya</Button>
-            <span className="text-xs text-muted-foreground">Tahap {activeWizardStep + 1} dari 3</span>
-            <Button type="button" size="sm" disabled={activeWizardStep === 2} onClick={() => wizardTab(activeWizardStep + 1)}>Tahap berikutnya →</Button>
-          </div>
-        </section>
-        <Tabs value={tab} onValueChange={setTab} className="min-w-0">
+            <section
+              ref={wizardRef}
+              className="no-print mb-6 scroll-mt-24 rounded-xl border border-border bg-card p-4 sm:p-5"
+              aria-label="Tahapan proyek flipping"
+              data-testid="project-wizard"
+            >
+              <p className="text-sm font-semibold">Tahapan proyek</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Ikuti dari kiri ke kanan. Semua perubahan tersimpan pada proyek yang sama.
+              </p>
+              <ol className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {wizardSteps.map((step, index) => (
+                  <li key={step.id}>
+                    <button
+                      type="button"
+                      onClick={() => goToTab(step.tabs[0])}
+                      aria-current={activeWizardStep === index ? "step" : undefined}
+                      className={`h-full w-full rounded-lg border p-3 text-left transition-colors ${activeWizardStep === index ? "border-brand bg-brand-soft" : "border-border bg-background hover:border-brand"}`}
+                    >
+                      <span className="block text-sm font-semibold">
+                        {index + 1}. {step.title}
+                      </span>
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        {step.detail}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </section>
+            <Tabs value={tab} onValueChange={(value) => goToTab(value)} className="min-w-0">
               <div className="no-print max-w-full overflow-x-auto border-b border-border pb-2">
-                <TabsList className="h-11 w-max justify-start gap-0 rounded-none bg-transparent p-0">
-                  {[
-                    [
-                      "asset",
-                      "Analisis Aset",
-                      "bg-orange-100 text-orange-900 data-[state=active]:!bg-orange-600 data-[state=active]:!text-white dark:bg-orange-950 dark:text-orange-200",
-                    ],
-                    [
-                      "market",
-                      "Harga pasar",
-                      "bg-cyan-100 text-cyan-900 data-[state=active]:!bg-cyan-700 data-[state=active]:!text-white dark:bg-cyan-950 dark:text-cyan-200",
-                    ],
-                    [
-                      "risks",
-                      "Dokumen & risiko",
-                      "bg-red-100 text-red-900 data-[state=active]:!bg-red-600 data-[state=active]:!text-white dark:bg-red-950 dark:text-red-200",
-                    ],
-                    [
-                      "rab",
-                      "RAB renovasi",
-                      "bg-green-100 text-green-900 data-[state=active]:!bg-green-700 data-[state=active]:!text-white dark:bg-green-950 dark:text-green-200",
-                    ],
-                    [
-                      "analysis",
-                      "Analisis investasi",
-                      "bg-blue-100 text-blue-900 data-[state=active]:!bg-blue-600 data-[state=active]:!text-white dark:bg-blue-950 dark:text-blue-200",
-                    ],
-                    [
-                      "scenarios",
-                      "Skenario",
-                      "bg-amber-100 text-amber-900 data-[state=active]:!bg-amber-600 data-[state=active]:!text-white dark:bg-amber-950 dark:text-amber-200",
-                    ],
-                    [
-                      "timeline",
-                      "Timeline",
-                      "bg-indigo-100 text-indigo-900 data-[state=active]:!bg-indigo-600 data-[state=active]:!text-white dark:bg-indigo-950 dark:text-indigo-200",
-                    ],
-                    [
-                      "photos",
-                      "Foto & before-after",
-                      "bg-purple-100 text-purple-900 data-[state=active]:!bg-purple-600 data-[state=active]:!text-white dark:bg-purple-950 dark:text-purple-200",
-                    ],
-                  ].filter(([value]) => (wizardSteps[activeWizardStep]?.tabs ?? []).some((item) => item === value)).map(([value = "", label, color]) => (
+                <TabsList className="h-11 w-max justify-start gap-1 rounded-none bg-transparent p-0">
+                  {wizardSteps[activeWizardStep]?.tabs.map((value) => (
                     <TabsTrigger
                       key={value}
                       value={value}
-                      className={`rounded-b-none rounded-t-lg border border-b-0 border-white/60 px-3 text-xs shadow-none first:rounded-tl-lg last:rounded-tr-lg ${color}`}
+                      className="rounded-b-none rounded-t-lg border border-b-0 border-border bg-muted px-3 text-xs text-muted-foreground shadow-none data-[state=active]:border-brand data-[state=active]:bg-brand data-[state=active]:text-white"
                     >
-                      {label}
+                      {tabLabel(value)}
                     </TabsTrigger>
                   ))}
                 </TabsList>
               </div>
               <TabsContent forceMount value="asset" className="project-tab mt-6">
-                <AssetAnalysis project={project} onChange={update} onNavigate={setTab} />
+                <AssetAnalysis
+                  project={project}
+                  onChange={update}
+                  onNavigate={(next) => goToTab(next)}
+                />
               </TabsContent>
               <TabsContent forceMount value="market" className="project-tab mt-6">
                 <ProjectMarketAnalysis
@@ -669,7 +567,18 @@ function ProjectPage() {
                 <RabEditor project={project} onChange={update} />
               </TabsContent>
               <TabsContent forceMount value="analysis" className="project-tab mt-6">
-                <FinanceEditor project={project} onChange={update} />
+                <FinanceEditor
+                  project={project}
+                  onChange={update}
+                  groups={["Akuisisi", "Holding"]}
+                />
+              </TabsContent>
+              <TabsContent forceMount value="selling" className="project-tab mt-6">
+                <FinanceEditor
+                  project={project}
+                  onChange={update}
+                  groups={["Penjualan & cadangan"]}
+                />
               </TabsContent>
               <TabsContent forceMount value="scenarios" className="project-tab mt-6">
                 <ScenarioEditor project={project} onChange={update} />
@@ -684,6 +593,28 @@ function ProjectPage() {
                 <PropertyPhotoWorkspace />
               </TabsContent>
             </Tabs>
+            <div className="no-print mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
+              {earlier ? (
+                <Button type="button" variant="outline" onClick={() => goToTab(earlier, true)}>
+                  <ArrowLeft /> {tabLabel(earlier)}
+                </Button>
+              ) : (
+                <span />
+              )}
+              <span className="text-xs text-muted-foreground">
+                Tahap {activeWizardStep + 1} dari {wizardSteps.length} ·{" "}
+                {wizardSteps[activeWizardStep]?.title}
+              </span>
+              {upcoming ? (
+                <Button type="button" onClick={() => goToTab(upcoming, true)}>
+                  Lanjut: {tabLabel(upcoming)} <ArrowRight />
+                </Button>
+              ) : (
+                <span className="text-xs font-medium text-brand-deep">
+                  Semua tahap telah dilalui
+                </span>
+              )}
+            </div>
           </div>
           <aside className="investment-summary result-panel min-w-0 p-5 lg:sticky lg:top-25">
             <p className="eyebrow text-brand">Ringkasan investasi</p>
@@ -745,6 +676,7 @@ function ProjectPage() {
             </p>
           </aside>
         </div>
+        <FlippingOverview project={project} onNavigate={(next) => goToTab(next, true)} />
         <div className="mt-8 border-t border-border pt-5 text-xs leading-6 text-muted-foreground">
           <p>
             Estimasi berdasarkan input, bukan nasihat hukum, pajak, atau investasi. Tarif dan pihak
