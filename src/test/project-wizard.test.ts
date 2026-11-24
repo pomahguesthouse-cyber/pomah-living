@@ -19,16 +19,20 @@ describe("Project wizard navigation", () => {
   });
   it("finds the step that owns a tab so navigation stays in sync", () => {
     expect(stepIndexOfTab("asset")).toBe(0);
+    // RAB dan skenario laba dihitung di tahap analisis, sebelum menawar.
+    expect(stepIndexOfTab("rab")).toBe(0);
+    expect(stepIndexOfTab("scenarios")).toBe(0);
     expect(stepIndexOfTab("analysis")).toBe(1);
     expect(stepIndexOfTab("timeline")).toBe(2);
-    expect(stepIndexOfTab("scenarios")).toBe(3);
+    expect(stepIndexOfTab("selling")).toBe(3);
   });
   it("walks tabs in wizard order across steps", () => {
-    expect(nextTab("risks")).toBe("analysis");
+    expect(nextTab("risks")).toBe("rab");
+    expect(nextTab("scenarios")).toBe("analysis");
     expect(nextTab("timeline")).toBe("selling");
-    expect(nextTab("scenarios")).toBeNull();
+    expect(nextTab("selling")).toBeNull();
     expect(previousTab("asset")).toBeNull();
-    expect(previousTab("rab")).toBe("analysis");
+    expect(previousTab("photos")).toBe("analysis");
   });
   it("rejects unknown tab ids", () => {
     expect(isProjectTab("rab")).toBe(true);
@@ -59,15 +63,17 @@ describe("Automatic step status", () => {
     );
     expect(acquisition?.status).toBe("done");
     expect(renovation?.checks.find((check) => check.id === "timeline")?.ok).toBe(false);
-    expect(sale?.checks.find((check) => check.id === "profit")?.ok).toBe(true);
+    expect(feasibility?.checks.find((check) => check.id === "profit")?.ok).toBe(true);
+    expect(sale?.checks.map((check) => check.id)).toEqual(["selling"]);
   });
 
   it("marks every step ready once checks, risks and dates are complete", () => {
+    // Skenario pesimis proyek contoh masih rugi, jadi tahap analisis belum lengkap.
     expect(evaluateWizard(ready()).map((step) => step.status)).toEqual([
-      "done",
-      "done",
-      "done",
       "todo",
+      "done",
+      "done",
+      "done",
     ]);
   });
 
@@ -80,9 +86,9 @@ describe("Automatic step status", () => {
     expect(result.status).toBe("attention");
   });
 
-  it("flags the sale step when the projection makes a loss", () => {
+  it("flags the analysis step when the projection makes a loss", () => {
     const project = ready();
-    const result = evaluateStep("sale", {
+    const result = evaluateStep("feasibility", {
       ...project,
       finance: { ...project.finance, sale: 300_000_000 },
     });
@@ -98,6 +104,6 @@ describe("Automatic step status", () => {
         index === 0 ? { ...scenario, sale: 520_000_000 } : scenario,
       ) as typeof project.scenarios,
     };
-    expect(evaluateStep("sale", safer).status).toBe("done");
+    expect(evaluateStep("feasibility", safer).status).toBe("done");
   });
 });
