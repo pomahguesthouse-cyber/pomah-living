@@ -39,6 +39,15 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+type StageCard = {
+  image: string;
+  still?: string;
+  width: number;
+  height: number;
+  title: string;
+  description: string;
+};
+
 const heroSlides = [
   {
     image: houseImage.url,
@@ -283,9 +292,11 @@ function Index() {
         <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-6 sm:mt-9 sm:gap-x-5 sm:gap-y-8 lg:grid-cols-4 lg:gap-x-9">
           {[
             {
-              image: "analisis-aset.png",
-              width: 1312,
-              height: 1199,
+              image: "analisis-aset-animasi.webp",
+              // Versi diam untuk pengunjung yang mematikan animasi di perangkatnya.
+              still: "analisis-aset-statis.webp",
+              width: 512,
+              height: 288,
               title: "Analisis Aset Properti",
               description: "Periksa kondisi rumah, legalitas, dan nilai limit lelang.",
             },
@@ -310,17 +321,25 @@ function Index() {
               title: "Penjualan",
               description: "Uji target harga jual, titik impas, dan potensi laba.",
             },
-          ].map(({ image, width, height, title, description }) => (
+          ].map(({ image, still, width, height, title, description }: StageCard) => (
             <div key={image} className="border-t border-border pt-4 sm:pt-5">
-              <img
-                src={`/images/flipping-stages/${image}`}
-                alt=""
-                width={width}
-                height={height}
-                loading="lazy"
-                decoding="async"
-                className="mb-3 h-20 w-full object-contain object-left sm:mb-4 sm:h-36"
-              />
+              <picture>
+                {still && (
+                  <source
+                    srcSet={`/images/flipping-stages/${still}`}
+                    media="(prefers-reduced-motion: reduce)"
+                  />
+                )}
+                <img
+                  src={`/images/flipping-stages/${image}`}
+                  alt=""
+                  width={width}
+                  height={height}
+                  loading="lazy"
+                  decoding="async"
+                  className="mb-3 h-20 w-full object-contain object-left sm:mb-4 sm:h-36"
+                />
+              </picture>
               <h3 className="text-sm font-semibold sm:text-base">{title}</h3>
               <p className="mt-1.5 max-w-xs text-xs leading-5 text-muted-foreground sm:mt-2 sm:text-sm sm:leading-6">
                 {description}
