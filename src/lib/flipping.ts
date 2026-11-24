@@ -1,5 +1,11 @@
 import { z } from "zod";
 import { getProperty } from "@/lib/properties";
+import {
+  cibinongBaseLines,
+  cibinongFindings,
+  defaultContingencyRate,
+  summarizeRab,
+} from "@/lib/condition-rab";
 
 const amount = z.number().finite().min(0).max(1_000_000_000_000);
 const rate = z.number().finite().min(0).max(100);
@@ -24,17 +30,31 @@ export const assetAssessmentSections = [
   { area: "Fasad dan tampilan jual", group: "Finishing" },
 ] as const;
 
-export const assetAssessmentSchema = z.array(z.object({
-  area: text,
-  group: z.enum(workGroups),
-  condition: z.enum(["Belum diperiksa", "Baik", "Perlu perbaikan ringan", "Perlu pemeriksaan lanjutan", "Perlu perbaikan besar"]),
-  finding: text,
-  recommendation: text,
-})).max(30);
+export const assetAssessmentSchema = z
+  .array(
+    z.object({
+      area: text,
+      group: z.enum(workGroups),
+      condition: z.enum([
+        "Belum diperiksa",
+        "Baik",
+        "Perlu perbaikan ringan",
+        "Perlu pemeriksaan lanjutan",
+        "Perlu perbaikan besar",
+      ]),
+      finding: text,
+      recommendation: text,
+    }),
+  )
+  .max(30);
 export type AssetAssessment = z.infer<typeof assetAssessmentSchema>[number];
 export function makeAssetAssessments(): AssetAssessment[] {
-  return assetAssessmentSections.map(({area, group}) => ({
-    area, group, condition: "Belum diperiksa", finding: "", recommendation: "",
+  return assetAssessmentSections.map(({ area, group }) => ({
+    area,
+    group,
+    condition: "Belum diperiksa",
+    finding: "",
+    recommendation: "",
   }));
 }
 export const financeSchema = z.object({
@@ -205,12 +225,114 @@ export function calculateFlipping(finance: Finance, rab: RabItem[], renovationFa
     breakEven: sellingRate < 1 ? fixedCost / (1 - sellingRate) : null,
   };
 }
+const genericDemoRab: RabItem[] = [
+  {
+    id: "prep",
+    name: "Pembersihan dan bongkar ringan",
+    group: "Persiapan",
+    volume: 1,
+    unit: "ls",
+    price: 5_000_000,
+  },
+  { id: "roof", name: "Perbaikan atap", group: "Struktur", volume: 20, unit: "m²", price: 600_000 },
+  {
+    id: "floor",
+    name: "Perbaikan lantai",
+    group: "Arsitektur",
+    volume: 50,
+    unit: "m²",
+    price: 300_000,
+  },
+  {
+    id: "mep",
+    name: "Perbaikan listrik dan sanitasi",
+    group: "MEP",
+    volume: 1,
+    unit: "ls",
+    price: 12_000_000,
+  },
+  {
+    id: "paint",
+    name: "Pengecatan dan finishing",
+    group: "Finishing",
+    volume: 100,
+    unit: "m²",
+    price: 180_000,
+  },
+  {
+    id: "reserve",
+    name: "Cadangan renovasi",
+    group: "Contingency",
+    volume: 1,
+    unit: "ls",
+    price: 8_000_000,
+  },
+];
+const conditionLineGroups: Record<string, RabItem["group"]> = {
+  "plafon-atap": "Struktur",
+  "plafon-gypsum": "Arsitektur",
+  "plafon-cat": "Finishing",
+  "dinding-aci": "Finishing",
+  "dinding-waterproof": "Finishing",
+  "dinding-cat": "Finishing",
+  "umum-cat": "Finishing",
+  "umum-lantai": "Arsitektur",
+  "umum-km": "MEP",
+  "umum-listrik": "MEP",
+  "umum-kusen": "Arsitektur",
+  "umum-dapur": "Arsitektur",
+  "umum-carport": "Persiapan",
+};
+/** RAB Cibinong dari temuan foto di halaman analisis, termasuk cadangan yang sama. */
+export function cibinongConditionRab(): RabItem[] {
+  const lines = [...cibinongFindings.flatMap((finding) => finding.lines), ...cibinongBaseLines];
+  const summary = summarizeRab(cibinongFindings, cibinongBaseLines);
+  return [
+    ...lines.map((line) => ({
+      id: line.id,
+      name: line.work,
+      group: conditionLineGroups[line.id] ?? "Arsitektur",
+      volume: line.volume,
+      unit: line.unit,
+      price: line.unitPrice,
+    })),
+    {
+      id: "reserve",
+      name: `Cadangan renovasi ${Math.round(defaultContingencyRate * 100)}%`,
+      group: "Contingency",
+      volume: 1,
+      unit: "ls",
+      price: summary.contingency,
+    },
+  ];
+}
+/** RAB umum yang diskalakan agar totalnya sama dengan biaya renovasi di analisis. */
+export function scaledDemoRab(target: number): RabItem[] {
+  const base = rabTotal(genericDemoRab);
+  const scaled = genericDemoRab.map((item) => ({
+    ...item,
+    price: Math.round((item.price * target) / base / 1000) * 1000,
+  }));
+  const drift = target - rabTotal(scaled);
+  return scaled.map((item) =>
+    item.id === "reserve" ? { ...item, price: Math.max(0, item.price + drift) } : item,
+  );
+}
+function demoRabFor(id: string): RabItem[] {
+  const asset = getProperty(id);
+  if (!asset) return genericDemoRab;
+  if (asset.id === "cibinong") return cibinongConditionRab();
+  return scaledDemoRab(asset.initialValues.renovationCosts);
+}
 export function isDemoProject(id: string) {
   return id === "demo" || Boolean(getProperty(id));
 }
 export function makeFlippingProject(id: string, name?: string, location?: string): FlippingProject {
   const asset = getProperty(id);
   const demo = isDemoProject(id);
+  const purchase = asset?.initialValues.winningPrice ?? 300_000_000;
+  const sale = asset?.initialValues.salePrice ?? 480_000_000;
+  const roundTo = (value: number) => Math.round(value / 5_000_000) * 5_000_000;
   return {
     version: 1,
     property: {
@@ -232,9 +354,9 @@ export function makeFlippingProject(id: string, name?: string, location?: string
       limit: asset?.auctionLimit ?? (demo ? 280_000_000 : 0),
     },
     finance: {
-      purchase: demo ? 300_000_000 : 0,
+      purchase: demo ? purchase : 0,
       auctionRate: demo ? 2 : 0,
-      bphtbBase: demo ? 300_000_000 : 0,
+      bphtbBase: demo ? purchase : 0,
       npoptkp: demo ? 80_000_000 : 0,
       bphtbRate: demo ? 5 : 0,
       notary: demo ? 8_000_000 : 0,
@@ -250,61 +372,10 @@ export function makeFlippingProject(id: string, name?: string, location?: string
       sellerTaxRate: demo ? 2.5 : 0,
       sellerFeeRate: demo ? 2 : 0,
       sellerFixed: 0,
-      sale: demo ? 480_000_000 : 0,
+      sale: demo ? sale : 0,
     },
     assetAssessments: makeAssetAssessments(),
-    rab: demo
-      ? [
-          {
-            id: "prep",
-            name: "Pembersihan dan bongkar ringan",
-            group: "Persiapan",
-            volume: 1,
-            unit: "ls",
-            price: 5_000_000,
-          },
-          {
-            id: "roof",
-            name: "Perbaikan atap",
-            group: "Struktur",
-            volume: 20,
-            unit: "m²",
-            price: 600_000,
-          },
-          {
-            id: "floor",
-            name: "Perbaikan lantai",
-            group: "Arsitektur",
-            volume: 50,
-            unit: "m²",
-            price: 300_000,
-          },
-          {
-            id: "mep",
-            name: "Perbaikan listrik dan sanitasi",
-            group: "MEP",
-            volume: 1,
-            unit: "ls",
-            price: 12_000_000,
-          },
-          {
-            id: "paint",
-            name: "Pengecatan dan finishing",
-            group: "Finishing",
-            volume: 100,
-            unit: "m²",
-            price: 180_000,
-          },
-          {
-            id: "reserve",
-            name: "Cadangan renovasi",
-            group: "Contingency",
-            volume: 1,
-            unit: "ls",
-            price: 8_000_000,
-          },
-        ]
-      : [],
+    rab: demo ? demoRabFor(id) : [],
     risks: [
       {
         id: "legal",
@@ -348,14 +419,14 @@ export function makeFlippingProject(id: string, name?: string, location?: string
     scenarios: [
       {
         name: "Pesimis",
-        sale: demo ? 430_000_000 : 0,
+        sale: demo ? roundTo(sale * 0.9) : 0,
         months: demo ? 9 : 0,
         renovationFactor: 1.2,
       },
-      { name: "Moderat", sale: demo ? 480_000_000 : 0, months: demo ? 6 : 0, renovationFactor: 1 },
+      { name: "Moderat", sale: demo ? sale : 0, months: demo ? 6 : 0, renovationFactor: 1 },
       {
         name: "Optimis",
-        sale: demo ? 530_000_000 : 0,
+        sale: demo ? roundTo(sale * 1.1) : 0,
         months: demo ? 4 : 0,
         renovationFactor: 0.95,
       },

@@ -6,6 +6,7 @@ import {
   makeFlippingProject,
   rabTotal,
   readFlippingProject,
+  scaledDemoRab,
 } from "@/lib/flipping";
 
 describe("Flipping investment rules", () => {
@@ -130,5 +131,26 @@ describe("Flipping investment rules", () => {
   it("formats dates in DD/MM/YYYY", () => {
     expect(formatProjectDate("2026-11-20")).toBe("20/11/2026");
     expect(formatProjectDate("")).toBe("Belum diisi");
+  });
+});
+
+describe("Projects seeded from asset analysis", () => {
+  it("uses Cibinong's analysis prices and photo-based RAB", () => {
+    const project = makeFlippingProject("cibinong");
+    expect(project.finance.purchase).toBe(300_000_000);
+    expect(project.finance.sale).toBe(480_000_000);
+    expect(rabTotal(project.rab)).toBe(70_361_500);
+    expect(project.rab.some((item) => item.id === "dinding-waterproof")).toBe(true);
+  });
+  it("matches each asset's renovation budget from the analysis", () => {
+    expect(rabTotal(makeFlippingProject("sawangan").rab)).toBe(60_000_000);
+    expect(rabTotal(makeFlippingProject("jatiasih").rab)).toBe(85_000_000);
+    expect(makeFlippingProject("jatiasih").finance.purchase).toBe(320_000_000);
+  });
+  it("keeps the generic demo unchanged", () => {
+    expect(rabTotal(makeFlippingProject("demo").rab)).toBe(70_000_000);
+  });
+  it("scales the generic RAB to any target exactly", () => {
+    expect(rabTotal(scaledDemoRab(53_210_000))).toBe(53_210_000);
   });
 });

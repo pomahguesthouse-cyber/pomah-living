@@ -331,6 +331,28 @@ function AnalyzeAsset() {
               </div>
             )}
           </section>
+          <section
+            className="border-t border-border py-7"
+            aria-labelledby="next-step-title"
+            data-testid="next-step"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-brand">
+              Langkah berikutnya
+            </p>
+            <h2 id="next-step-title" className="mt-1 text-base font-semibold">
+              Rencanakan proyek setelah menang lelang
+            </h2>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+              Angka di halaman ini adalah estimasi cepat untuk menentukan batas tawar. Halaman
+              proyek memakai harga beli, harga jual, dan RAB yang sama sebagai titik awal, lalu
+              merinci pajak, bunga pendanaan, biaya jual, timeline, dan risiko.
+            </p>
+            <Button asChild className="mt-4 h-11">
+              <Link to="/proyek/$id" params={{ id: property.id }}>
+                Lanjut ke perencanaan proyek <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </section>
         </div>
         <SimulationResults
           values={values}
