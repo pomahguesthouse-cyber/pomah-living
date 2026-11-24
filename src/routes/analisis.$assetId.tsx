@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { ConditionPhotoPilot } from "@/components/condition-photo-pilot";
 import { NearbyAskingPrices } from "@/components/nearby-asking-prices";
 import { SimulationResults } from "@/components/simulation-results";
+import { LandStrategyComparison } from "@/components/land-strategy-comparison";
 import { getProperty } from "@/lib/properties";
 import { listingToAsset, sampleToAsset, type AnalysisAsset } from "@/lib/listings";
 import { fetchListingBySlug, fetchListingPhotoUrls, listingKey } from "@/services/listing-service";
@@ -421,6 +422,12 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
               </div>
             )}
           </section>
+          <LandStrategyComparison
+            key={property.id}
+            values={values}
+            auctionLimit={property.auctionLimit}
+            initialLandArea={property.details?.landArea ?? (property.isSample ? 144 : null)}
+          />
           {property.notes && (
             <section className="border-t border-border py-7" aria-labelledby="notes-title">
               <h2 id="notes-title" className="text-base font-semibold">
