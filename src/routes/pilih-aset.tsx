@@ -103,7 +103,7 @@ function SelectAsset() {
           Pilih sumber aset properti
         </h2>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Kamu bisa memilih aset simulasi atau memasukkan aset sendiri dari tautan lelang BTN/DJKN
+          Pilih rumah dari katalog aset atau masukkan aset sendiri dari tautan lelang BTN/DJKN
           maupun secara manual.
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -112,10 +112,10 @@ function SelectAsset() {
             className="flex min-h-36 flex-col justify-between rounded-xl border border-border bg-background p-5 transition-colors hover:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
           >
             <span className="flex items-center gap-3 text-lg font-semibold">
-              <FlaskConical className="size-6 text-brand" /> Pilih aset contoh
+              <FlaskConical className="size-6 text-brand" /> Katalog aset
             </span>
             <span className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-              Gunakan aset simulasi yang tersedia <ArrowRight className="size-5 text-brand" />
+              Pilih dari daftar rumah yang tersedia <ArrowRight className="size-5 text-brand" />
             </span>
           </a>
           <Link
@@ -197,6 +197,13 @@ function SelectAsset() {
           </Button>
         </div>
       )}
+      <div className="mt-9">
+        <h2 className="text-xl font-semibold">Katalog aset</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Saat ini berisi rumah contoh untuk mencoba alur analisis. Properti yang ditambahkan admin
+          akan tampil di daftar ini.
+        </p>
+      </div>
       {demos.isError && (
         <div className="mt-5">
           <p role="alert">Demo publik gagal dimuat.</p>
@@ -224,7 +231,7 @@ function SelectAsset() {
       {canShowListings && visibleProperties.length === 0 && (
         <p className="mt-8 text-sm text-muted-foreground">Belum ada aset di wilayah pilihanmu.</p>
       )}
-      <div id="daftar-aset" className="mt-9 grid scroll-mt-8 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      <div id="daftar-aset" className="mt-6 grid scroll-mt-8 gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {canShowListings &&
           visibleProperties.map((property) => {
             const sample = demos.data?.find((item) => item.id === property.id);
@@ -245,7 +252,7 @@ function SelectAsset() {
                   />
                   <span className="absolute left-4 top-4 flex items-center gap-1.5 rounded bg-card/95 px-2.5 py-1.5 text-[10px] font-semibold text-brand-deep">
                     <FlaskConical className="size-3" />
-                    Data simulasi
+                    Contoh · data simulasi
                   </span>
                 </div>
                 <div className="p-5">
