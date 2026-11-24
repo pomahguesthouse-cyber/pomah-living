@@ -1,4 +1,5 @@
 import { calculateFlipping, rabTotal, type FlippingProject } from "@/lib/flipping";
+import { analyzeScenario, scenarioInputs } from "@/lib/scenarios";
 
 export const projectTabs = [
   { id: "asset", label: "Analisis aset" },
@@ -95,13 +96,8 @@ export type StepEvaluation = {
 };
 
 function scenarioProfit(project: FlippingProject, index: number) {
-  const scenario = project.scenarios[index];
-  if (!scenario) return null;
-  return calculateFlipping(
-    { ...project.finance, sale: scenario.sale, months: scenario.months },
-    project.rab,
-    scenario.renovationFactor,
-  ).profit;
+  if (!project.scenarios[index]) return null;
+  return analyzeScenario(project, index).result.profit;
 }
 
 function checksFor(step: WizardStepId, project: FlippingProject): StepCheck[] {
@@ -203,7 +199,7 @@ function checksFor(step: WizardStepId, project: FlippingProject): StepCheck[] {
         {
           id: "scenarios",
           label: "Harga jual tiap skenario diisi",
-          ok: project.scenarios.every((scenario) => scenario.sale > 0),
+          ok: project.scenarios.every((_, index) => scenarioInputs(project, index).sale > 0),
           tab: "scenarios",
         },
         {

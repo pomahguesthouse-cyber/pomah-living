@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { RabSpreadsheet } from "@/components/rab-spreadsheet";
 import { FormattedNumberInput } from "@/components/formatted-number-input";
-import { calculateFlipping, financeFields, rabTotal, type FlippingProject } from "@/lib/flipping";
+import { financeFields, rabTotal, type FlippingProject } from "@/lib/flipping";
+import { analyzeScenario, baseScenarioIndex } from "@/lib/scenarios";
 import { formatRupiah } from "@/lib/simulation";
 
 type EditorProps = { project: FlippingProject; onChange: (project: FlippingProject) => void };
@@ -210,72 +211,172 @@ export function TimelineEditor({ project, onChange }: EditorProps) {
     </section>
   );
 }
+const percentFormat = (value: number | null) =>
+  value === null ? "—" : `${value.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
+
+function ResultRow({
+  label,
+  value,
+  tone,
+  hint,
+}: {
+  label: string;
+  value: string;
+  tone?: "good" | "bad" | undefined;
+  hint?: string;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <dt className="min-w-0 text-muted-foreground">
+        {label}
+        {hint && <span className="block text-[10px] leading-4">{hint}</span>}
+      </dt>
+      <dd
+        className={`shrink-0 whitespace-nowrap text-right font-semibold tabular-nums ${tone === "bad" ? "text-destructive" : tone === "good" ? "text-brand-deep" : ""}`}
+      >
+        {value}
+      </dd>
+    </div>
+  );
+}
+
 export function ScenarioEditor({ project, onChange }: EditorProps) {
+  const analyses = project.scenarios.map((_, index) => analyzeScenario(project, index));
+  const base = analyses[baseScenarioIndex];
   return (
     <section>
       <h2 className="text-lg font-semibold">Skenario investasi</h2>
       <p className="mt-2 text-xs leading-6 text-muted-foreground">
-        Harga jual, durasi holding, dan pengali RAB berbeda per skenario. Akuisisi serta tarif lain
-        mengikuti analisis. Perbandingan bukan jaminan laba.
+        Bandingkan kemungkinan terburuk, normal, dan terbaik. Skenario Moderat memakai angka dasar
+        proyek (target harga jual dan lama proyek di tab Biaya jual dan Biaya perolehan). Hasil
+        perhitungan bukan jaminan laba.
       </p>
       <div className="mt-6 grid gap-5 xl:grid-cols-3">
         {project.scenarios.map((scenario, index) => {
-          const result = calculateFlipping(
-            { ...project.finance, sale: scenario.sale, months: scenario.months },
-            project.rab,
-            scenario.renovationFactor,
-          );
+          const analysis = analyses[index]!;
+          const { result } = analysis;
+          const isBase = index === baseScenarioIndex;
+          const loss = result.profit < 0;
           const change = (fields: Partial<typeof scenario>) =>
             onChange({
               ...project,
               scenarios: project.scenarios.map((s, i) => (i === index ? { ...s, ...fields } : s)),
             });
+          const diff = base && !isBase ? result.profit - base.result.profit : null;
           return (
-            <article key={scenario.name} className="min-w-0 rounded-md border border-border p-4">
-              <h3 className="mb-5 font-semibold">{scenario.name}</h3>
-              <div className="space-y-4">
-                <NumberField
-                  label={`Harga jual ${scenario.name}`}
-                  value={scenario.sale}
-                  onChange={(sale) => change({ sale })}
-                />
-                <NumberField
-                  label={`Durasi ${scenario.name}`}
-                  unit="bulan"
-                  value={scenario.months}
-                  onChange={(months) => change({ months })}
-                />
-                <NumberField
-                  label={`Renovasi ${scenario.name}`}
-                  unit="× RAB"
-                  value={scenario.renovationFactor}
-                  onChange={(renovationFactor) => change({ renovationFactor })}
-                />
+            <article
+              key={scenario.name}
+              className={`min-w-0 rounded-md border p-4 ${isBase ? "border-brand" : "border-border"}`}
+              data-testid={`scenario-${index}`}
+            >
+              <div className="mb-5 flex items-center justify-between gap-2">
+                <h3 className="font-semibold">{scenario.name}</h3>
+                {isBase && (
+                  <span className="rounded bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-deep">
+                    Angka dasar
+                  </span>
+                )}
               </div>
+              {isBase ? (
+                <dl className="space-y-3 text-sm">
+                  <ResultRow label="Harga jual" value={formatRupiah(analysis.inputs.sale)} />
+                  <ResultRow label="Lama proyek" value={`${analysis.inputs.months} bulan`} />
+                  <ResultRow
+                    label="Biaya renovasi"
+                    value={formatRupiah(analysis.renovationCost)}
+                    hint="100% dari RAB"
+                  />
+                </dl>
+              ) : (
+                <div className="space-y-4">
+                  <NumberField
+                    label="Harga jual"
+                    value={scenario.sale}
+                    onChange={(sale) => change({ sale })}
+                  />
+                  <NumberField
+                    label="Lama proyek"
+                    unit="bulan"
+                    value={scenario.months}
+                    onChange={(months) => change({ months })}
+                  />
+                  <div>
+                    <NumberField
+                      label="Biaya renovasi"
+                      unit="% dari RAB"
+                      value={Math.round(scenario.renovationFactor * 1000) / 10}
+                      onChange={(percent) =>
+                        change({ renovationFactor: Math.min(percent, 1000) / 100 })
+                      }
+                    />
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      = {formatRupiah(analysis.renovationCost)}
+                    </p>
+                  </div>
+                </div>
+              )}
               <dl className="mt-5 space-y-2 border-t border-border pt-4 text-xs">
-                <div>
-                  <dt>Total all-in</dt>
-                  <dd className="mt-1 font-semibold">{formatRupiah(result.allIn)}</dd>
-                </div>
-                <div>
-                  <dt>Laba / rugi bersih</dt>
-                  <dd
-                    className={
-                      result.profit >= 0
-                        ? "mt-1 font-semibold text-brand-deep"
-                        : "mt-1 font-semibold text-destructive"
-                    }
-                  >
-                    {formatRupiah(result.profit)}
-                  </dd>
-                </div>
-                <div>
-                  <dt>ROI</dt>
-                  <dd>
-                    {result.roi?.toLocaleString("id-ID", { maximumFractionDigits: 2 }) ?? "—"}%
-                  </dd>
-                </div>
+                <ResultRow label="Total modal" value={formatRupiah(result.allIn)} />
+                <ResultRow
+                  label={loss ? "Rugi bersih" : "Laba bersih"}
+                  value={formatRupiah(result.profit)}
+                  tone={loss ? "bad" : "good"}
+                  {...(diff !== null
+                    ? {
+                        hint: `${diff >= 0 ? "+" : "−"}${formatRupiah(Math.abs(diff))} dari Moderat`,
+                      }
+                    : {})}
+                />
+                <ResultRow
+                  label="ROI"
+                  value={percentFormat(result.roi)}
+                  tone={result.roi !== null && result.roi < 0 ? "bad" : undefined}
+                />
+                <ResultRow
+                  label="ROI per tahun"
+                  value={percentFormat(analysis.annualRoi)}
+                  tone={analysis.annualRoi !== null && analysis.annualRoi < 0 ? "bad" : undefined}
+                  hint="disetahunkan sesuai lama proyek"
+                />
+                <ResultRow
+                  label="Laba per bulan"
+                  value={
+                    analysis.profitPerMonth === null ? "—" : formatRupiah(analysis.profitPerMonth)
+                  }
+                  tone={
+                    analysis.profitPerMonth !== null && analysis.profitPerMonth < 0
+                      ? "bad"
+                      : undefined
+                  }
+                />
+                <ResultRow
+                  label="Titik impas harga jual"
+                  value={analysis.minSale === null ? "—" : formatRupiah(analysis.minSale)}
+                  {...(analysis.safetyMargin !== null && !loss
+                    ? { hint: `harga jual boleh turun ${percentFormat(analysis.safetyMargin)}` }
+                    : {})}
+                />
               </dl>
+              {loss && (
+                <div
+                  className="mt-4 rounded-md bg-danger-soft p-3 text-xs leading-5 text-destructive"
+                  data-testid={`scenario-advice-${index}`}
+                >
+                  <p className="font-semibold">Agar skenario ini tidak rugi:</p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                    <li>
+                      Harga beli maksimal <strong>{formatRupiah(analysis.maxPurchase)}</strong>
+                      {analysis.maxPurchase < project.property.limit &&
+                        " (di bawah nilai limit lelang, sulit dicapai)"}
+                    </li>
+                    {analysis.minSale !== null && (
+                      <li>
+                        atau harga jual minimal <strong>{formatRupiah(analysis.minSale)}</strong>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
             </article>
           );
         })}
