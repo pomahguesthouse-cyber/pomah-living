@@ -3,7 +3,8 @@ export type CasePhoto = {
   alt: string;
   width: number;
   height: number;
-  label: "Sebelum" | "Proses" | "Sesudah";
+  /** "Desain" untuk ilustrasi rencana hasil akhir, bukan foto. */
+  label: "Sebelum" | "Proses" | "Sesudah" | "Desain";
   caption: string;
   /** Bagian foto yang tetap terlihat saat dipotong, misalnya "center 25%". */
   focus?: string;
@@ -19,6 +20,8 @@ export type CaseStudy = {
   works: string[];
   /** Angka proyek dalam rupiah, sesuai yang dilaporkan pemilik proyek. */
   figures: { purchase: number; renovation: number; sale: number };
+  /** Proyek masih berjalan: harga jual dan laba masih estimasi. */
+  inProgress?: boolean;
 };
 
 export function caseStudyResult({ purchase, renovation, sale }: CaseStudy["figures"]) {
@@ -112,3 +115,76 @@ export const bedahanCibinong: CaseStudy = {
   ],
   figures: { purchase: 270_000_000, renovation: 100_000_000, sale: 430_000_000 },
 };
+
+const karadenanBase = "/images/proyek/karadenan-bogor";
+
+export const karadenanBogor: CaseStudy = {
+  id: "karadenan-bogor",
+  title: "Rumah Karadenan Bogor",
+  location: "Karadenan, Cibinong, Kabupaten Bogor",
+  summary:
+    "Rumah rusak berat dengan atap runtuh, dibangun ulang menjadi rumah dua lantai bergaya modern.",
+  inProgress: true,
+  photos: [
+    {
+      label: "Sebelum",
+      caption: "Tampak depan saat diperoleh",
+      src: `${karadenanBase}/sebelum-depan.webp`,
+      alt: "Rumah sebelum renovasi: dinding hijau kusam, atap seng rusak, jemuran dan tumpukan kayu di depan",
+      width: 1200,
+      height: 560,
+    },
+    {
+      label: "Sebelum",
+      caption: "Atap runtuh dan ruangan penuh puing",
+      src: `${karadenanBase}/sebelum-dalam.webp`,
+      alt: "Ruangan tanpa atap dengan rangka kayu patah, dinding merah kusam, dan perabot rusak berserakan",
+      width: 1200,
+      height: 560,
+    },
+    {
+      label: "Proses",
+      caption: "Pembongkaran dan perkuatan struktur",
+      src: `${karadenanBase}/bongkar.webp`,
+      alt: "Ruangan setelah dibongkar dengan penyangga bambu, besi tulangan, dan puing genteng di lantai",
+      width: 675,
+      height: 1200,
+      focus: "center 40%",
+    },
+    {
+      label: "Proses",
+      caption: "Lantai dua dan atap baru terpasang",
+      src: `${karadenanBase}/proses-1.webp`,
+      alt: "Rumah dua lantai dalam pengerjaan: dinding atas sudah dicat, lisplang kayu, tangga dan gerobak di depan",
+      width: 675,
+      height: 1200,
+      focus: "center 35%",
+    },
+    {
+      label: "Proses",
+      caption: "Fasad dan lampu plafon mulai terpasang",
+      src: `${karadenanBase}/proses-2.webp`,
+      alt: "Fasad lantai dua dengan panel kayu vertikal, jendela baru, dan lampu sorot plafon menyala",
+      width: 1200,
+      height: 900,
+    },
+    {
+      label: "Desain",
+      caption: "Ilustrasi desain akhir",
+      src: `${karadenanBase}/desain.webp`,
+      alt: "Ilustrasi rencana rumah dua lantai berwarna krem dengan panel kayu, pintu lengkung, dan pagar besi hitam",
+      width: 1200,
+      height: 900,
+    },
+  ],
+  works: [
+    "Bongkar dan perkuatan struktur",
+    "Penambahan lantai dua",
+    "Atap dan lisplang baru",
+    "Fasad panel kayu",
+    "Kusen aluminium",
+  ],
+  figures: { purchase: 88_000_000, renovation: 250_000_000, sale: 600_000_000 },
+};
+
+export const caseStudies: CaseStudy[] = [bedahanCibinong, karadenanBogor];
