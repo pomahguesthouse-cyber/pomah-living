@@ -6,7 +6,7 @@ import { categories, evaluateSurvey, masterSchema, type Criterion, type Survey }
 import { fetchCriteria, saveCriteria, prepurchaseKey } from "@/services/prepurchase-service";
 import { adminError } from "@/services/admin-service";
 
-export function PrepurchaseChecklist({ survey, onChange }: { survey?: Survey; onChange: (survey: Survey) => void }) {
+export function PrepurchaseChecklist({ survey, onChange }: { survey?: Survey | undefined; onChange: (survey: Survey) => void }) {
   const query = useQuery({ queryKey: prepurchaseKey, queryFn: fetchCriteria, enabled: !survey });
   const current = survey ?? (query.data ? { criteria: query.data, answers: {}, notes: "" } : undefined);
   if (!current) return <section className="rounded-xl border p-4"><h2 className="font-semibold">Checklist pra-pembelian</h2><p role="status">{query.isError ? "Master checklist gagal dimuat." : "Memuat checklist…"}</p>{query.isError && <Button type="button" onClick={() => void query.refetch()}>Coba lagi</Button>}</section>;
