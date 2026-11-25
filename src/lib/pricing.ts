@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { FlippingProject } from "@/lib/flipping";
+import { analyzeScenario, baseScenarioIndex } from "@/lib/scenarios";
 
 /**
  * Penetapan harga jual di tahap Analisis aset: flipper mengisi rumah pembanding, platform
@@ -165,4 +166,29 @@ export function withTargetSale(project: FlippingProject, sale: number): Flipping
     return scenario;
   }) as FlippingProject["scenarios"];
   return { ...project, finance: { ...project.finance, sale }, scenarios };
+}
+
+/** Hasil proyek bila dijual pada harga tertentu, tanpa mengubah target (skenario Moderat). */
+export function simulateSalePrice(project: FlippingProject, sale: number) {
+  const trial = { ...project, finance: { ...project.finance, sale: Math.max(0, sale) } };
+  const analysis = analyzeScenario(trial, baseScenarioIndex);
+  return {
+    sale: trial.finance.sale,
+    profit: analysis.result.profit,
+    roi: analysis.result.roi,
+    annualRoi: analysis.annualRoi,
+    /** Harga beli tertinggi agar tetap tidak rugi pada harga jual ini. */
+    maxPurchase: analysis.maxPurchase,
+  };
+}
+
+/** Perubahan harga jual yang dibandingkan di tabel kepekaan, persen dari target. */
+export const sensitivitySteps = [-10, -5, 0, 5, 10] as const;
+
+export function priceSensitivity(project: FlippingProject) {
+  const target = project.finance.sale;
+  return sensitivitySteps.map((step) => ({
+    step,
+    ...simulateSalePrice(project, roundTo(target * (1 + step / 100), 1_000_000)),
+  }));
 }

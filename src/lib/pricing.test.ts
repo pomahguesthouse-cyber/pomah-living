@@ -5,6 +5,8 @@ import {
   estimateFromComparable,
   followingScenarioSales,
   priceRange,
+  priceSensitivity,
+  simulateSalePrice,
   withTargetSale,
   type Comparable,
 } from "./pricing";
@@ -98,5 +100,24 @@ describe("withTargetSale", () => {
     const next = withTargetSale(edited, 500_000_000);
     expect(next.scenarios[0]?.sale).toBe(333_000_000);
     expect(next.scenarios[2]?.sale).toBe(followingScenarioSales(500_000_000).optimistic);
+  });
+});
+
+describe("simulasi harga jual", () => {
+  it("menghitung laba pada harga coba tanpa mengubah target", () => {
+    const project = makeFlippingProject("cibinong");
+    const base = simulateSalePrice(project, project.finance.sale);
+    const higher = simulateSalePrice(project, project.finance.sale + 10_000_000);
+    expect(project.finance.sale).toBe(makeFlippingProject("cibinong").finance.sale);
+    expect(higher.profit).toBeGreaterThan(base.profit);
+    expect(higher.profit - base.profit).toBeLessThan(10_000_000); // biaya jual ikut naik
+  });
+
+  it("tabel kepekaan berisi lima harga dengan target di tengah", () => {
+    const project = makeFlippingProject("cibinong");
+    const rows = priceSensitivity(project);
+    expect(rows.map((row) => row.step)).toEqual([-10, -5, 0, 5, 10]);
+    expect(rows[2]?.sale).toBe(Math.round(project.finance.sale / 1_000_000) * 1_000_000);
+    expect(rows[0]!.profit).toBeLessThan(rows[4]!.profit);
   });
 });

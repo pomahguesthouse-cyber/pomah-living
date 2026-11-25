@@ -65,7 +65,10 @@ export function FlippingOverview({ project, onNavigate }: { project: FlippingPro
         </div>
         <div className="rounded-xl border border-border bg-card p-5">
           <p className="text-xs font-semibold uppercase tracking-wider text-brand">Proyeksi exit</p>
-          <p className="mt-4 text-sm text-muted-foreground">Target harga jual</p>
+          <div className="mt-4 flex items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">Target harga jual</p>
+            <button type="button" className="no-print text-xs font-semibold text-brand hover:underline" onClick={() => onNavigate("market")}>Ubah / simulasi</button>
+          </div>
           <p className="mt-1 text-xl font-semibold tabular-nums">{formatRupiah(f.sale)}</p>
           <p className="mt-4 text-sm text-muted-foreground">Estimasi laba / rugi bersih</p>
           <p className={`mt-1 break-words text-2xl font-bold tabular-nums ${result.profit < 0 ? "text-destructive" : "text-brand-deep"}`}>{formatRupiah(result.profit)}</p>

@@ -64,6 +64,9 @@ import {
 import { fetchPublishedDemos, publishedDemoKey } from "@/services/flipping-demo-service";
 
 export const Route = createFileRoute("/proyek/$id")({
+  // ?tab=market membuka langsung tab tertentu, misalnya dari halaman analisis aset.
+  validateSearch: (search: Record<string, unknown>): { tab?: ProjectTab } =>
+    typeof search["tab"] === "string" && isProjectTab(search["tab"]) ? { tab: search["tab"] } : {},
   loader: ({ params }) => {
     if (
       !isDemoProject(params.id) &&
@@ -152,7 +155,8 @@ function ProjectPage() {
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [revision, setRevision] = useState(0);
-  const [tab, setTab] = useState<ProjectTab>("asset");
+  const initialTab = Route.useSearch().tab;
+  const [tab, setTab] = useState<ProjectTab>(initialTab ?? "asset");
   const wizardRef = useRef<HTMLElement>(null);
   const form = useRef<HTMLFormElement>(null);
   const detail = useQuery({
