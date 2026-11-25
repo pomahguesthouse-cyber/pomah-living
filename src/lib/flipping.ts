@@ -1,3 +1,4 @@
+import { surveySchema } from "@/lib/prepurchase";
 import { z } from "zod";
 import { pricingSchema } from "@/lib/pricing";
 import { formatTanggal } from "@/lib/format-date";
@@ -108,6 +109,7 @@ export const flippingSchema = z.object({
   }),
   finance: financeSchema,
   assetAssessments: assetAssessmentSchema.default(makeAssetAssessments),
+  prepurchase: surveySchema.optional(),
   // Manual review markers: not evidence of legal, technical, or financial verification.
   stageReviews: z.record(z.string(), z.boolean()).optional(),
   rab: z
