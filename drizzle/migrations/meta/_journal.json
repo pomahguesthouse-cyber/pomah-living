@@ -57,6 +57,13 @@
       "when": 1795484092985,
       "tag": "0007_allow_owner_delete_projects",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795564784938,
+      "tag": "0008_restrict_app_settings_public_read",
+      "breakpoints": true
     }
   ]
 }
