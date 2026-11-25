@@ -1,3 +1,4 @@
+import { evaluateSurvey } from "@/lib/prepurchase";
 import { calculateFlipping, rabTotal, type FlippingProject } from "@/lib/flipping";
 import { defaultPricing, minStrongComparables, priceRange } from "@/lib/pricing";
 import { analyzeScenario, scenarioInputs } from "@/lib/scenarios";
@@ -106,6 +107,7 @@ function checksFor(step: WizardStepId, project: FlippingProject): StepCheck[] {
   const { finance, property } = project;
   switch (step) {
     case "feasibility": {
+      const survey = project.prepurchase ? evaluateSurvey(project.prepurchase) : undefined;
       const unchecked = project.assetAssessments.filter(
         (item) => item.condition === "Belum diperiksa",
       ).length;
@@ -121,6 +123,14 @@ function checksFor(step: WizardStepId, project: FlippingProject): StepCheck[] {
       const profit = calculateFlipping(finance, project.rab).profit;
       const pessimistic = scenarioProfit(project, 0);
       return [
+        {
+          id: "prepurchase",
+          label: "Checklist pra-pembelian selesai tanpa risiko kritis",
+          ok: Boolean(survey?.complete && !survey.critical.length),
+          critical: Boolean(survey?.critical.length),
+          detail: survey?.recommendation ?? "Survei belum diisi",
+          tab: "asset",
+        },
         {
           id: "assessment",
           label: "Kondisi bangunan diperiksa",

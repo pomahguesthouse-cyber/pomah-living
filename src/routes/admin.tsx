@@ -1,3 +1,4 @@
+import { AdminPrepurchase } from "@/components/prepurchase-checklist";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -184,6 +185,7 @@ function AdminWorkspace({ userId, role }: { userId: string; role: string }) {
     { value: "users", label: "Pengguna & mitra", icon: Users },
     { value: "audit", label: "Riwayat audit", icon: History },
     { value: "settings", label: "Pengaturan", icon: Settings },
+    ...(role === "super_admin" ? [{ value: "prepurchase", label: "Master Checklist", icon: ShieldCheck }] : []),
   ];
   return (
     <main className="page-container py-8 sm:py-12">
@@ -365,6 +367,7 @@ function AdminWorkspace({ userId, role }: { userId: string; role: string }) {
       )}
       {tab === "listings" && <AdminListings userId={userId} />}
       {tab === "settings" && <AdminSettings />}
+      {tab === "prepurchase" && role === "super_admin" && <AdminPrepurchase />}
       {tab === "flipping" && <AdminFlippingDemos userId={userId} />}
       {tab === "slides" && (
         <section className="mt-8 space-y-5" aria-label="Manajemen slide">
