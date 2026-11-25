@@ -1,3 +1,4 @@
+import { PrepurchaseChecklist } from "@/components/prepurchase-checklist";
 import { useEffect, useRef, useState } from "react";
 import { parseSource } from "@/lib/source-link";
 import { formatArea } from "@/lib/area-format";
@@ -556,6 +557,8 @@ function ProjectPage() {
                 </TabsList>
               </div>
               <TabsContent forceMount value="asset" className="project-tab mt-6">
+                <PrepurchaseChecklist survey={project.prepurchase} onChange={(prepurchase) => update({ ...project, prepurchase })} />
+                <div className="mt-6" />
                 <AssetAnalysis
                   project={project}
                   onChange={update}
