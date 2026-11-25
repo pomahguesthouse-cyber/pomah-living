@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { parseSource } from "@/lib/source-link";
 import { formatArea } from "@/lib/area-format";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   CheckCircle2,
   Circle,
   CircleAlert,
@@ -405,13 +407,13 @@ function ProjectPage() {
                 ["Legalitas", project.property.legal],
                 ["Status hunian", project.property.occupancy],
                 ["Status dokumen", project.property.documents],
-                ["Sumber lelang", project.property.source],
+                ["Sumber lelang", <SourceValue key="source" source={project.property.source} />],
                 ["Tanggal lelang (rencana)", formatProjectDate(project.property.auctionDate)],
                 ["Tanggal data / sumber", formatProjectDate(project.property.referenceDate)],
                 ["Nilai limit", formatRupiah(project.property.limit)],
                 ["Harga beli asumsi", formatRupiah(project.finance.purchase)],
               ].map(([label, value]) => (
-                <div key={label}>
+                <div key={String(label)}>
                   <dt className="text-muted-foreground">{label}</dt>
                   <dd className="mt-1 break-words font-medium leading-5">{value}</dd>
                 </div>
@@ -729,5 +731,26 @@ function StepStatusBadge({ evaluation }: { evaluation: StepEvaluation | undefine
     <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
       {evaluation.passed}/{evaluation.checks.length}
     </span>
+  );
+}
+
+/** Sumber lelang ringkas: label, lalu tautan yang bisa diklik dengan nama situsnya. */
+function SourceValue({ source }: { source: string }) {
+  const { label, url, host } = parseSource(source);
+  if (!source.trim()) return <>Belum diisi</>;
+  return (
+    <>
+      <span className="line-clamp-2">{label}</span>
+      {url && (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-0.5 inline-flex items-center gap-1 font-medium text-brand underline underline-offset-2"
+        >
+          {host} <ArrowUpRight className="size-3" aria-hidden="true" />
+        </a>
+      )}
+    </>
   );
 }
