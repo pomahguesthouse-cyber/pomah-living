@@ -15,6 +15,7 @@ import {
   Layers,
   CalendarDays,
   ChevronDown,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-session";
@@ -291,6 +292,7 @@ function SelectAsset() {
             );
             const days = daysUntilAuction(property.details?.auctionDate ?? null);
             const location = shortLocation(property.location, property.regionCode);
+            const legal = property.details?.legal.trim() ?? "";
             return (
               <article className="property-card" key={property.id}>
                 <div className="relative">
@@ -353,6 +355,20 @@ function SelectAsset() {
                         {days === 0 ? "Lelang hari ini" : `Lelang ${days} hari lagi`}
                       </span>
                     )}
+                    <span
+                      data-testid={`card-legal-${property.id}`}
+                      title="Status kepemilikan"
+                      className={cn(
+                        "inline-flex max-w-full items-center gap-1 rounded border px-2 py-1 text-[11px]",
+                        legal
+                          ? "border-brand/40 font-semibold text-brand-deep"
+                          : "border-dashed border-border text-muted-foreground",
+                      )}
+                    >
+                      <FileText className="size-3.5 shrink-0" aria-hidden="true" />
+                      <span className="sr-only">Status kepemilikan: </span>
+                      <span className="truncate">{legal || "Kepemilikan belum diketahui"}</span>
+                    </span>
                   </div>
                   <dl className="mt-4 space-y-2 border-t border-border pt-4">
                     <div className="flex items-center justify-between">
