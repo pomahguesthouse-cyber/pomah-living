@@ -4,12 +4,10 @@ import type { Tables, Json } from "@/integrations/supabase/types";
 
 function readSample(row: Tables<"pomah_flipping_demos">): DemoSample {
   const payload = row.payload;
-  const photos =
-    payload && typeof payload === "object" && !Array.isArray(payload)
-      ? payload["demoPhotos"]
-      : undefined;
+  const record = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
   return demoSampleSchema.parse({
-    photos,
+    photos: record["demoPhotos"],
+    hidden: record["demoHidden"] === true,
     id: row.id,
     description: row.description,
     project: row.payload,
@@ -41,6 +39,8 @@ export async function fetchAdminDemos() {
           ? { ...readSample(published), revision: 0 }
           : fixtureDemo(id),
       publishedRevision: published?.revision ?? 0,
+      /** Status yang dilihat publik: tersembunyi bila versi publik ditandai dihapus. */
+      publicHidden: published ? readSample(published).hidden : false,
     };
   });
 }
@@ -54,7 +54,9 @@ export async function saveDemoSample(
     id: valid.id,
     published,
     description: valid.description,
-    payload: JSON.parse(JSON.stringify({ ...valid.project, demoPhotos: valid.photos })) as Json,
+    payload: JSON.parse(
+      JSON.stringify({ ...valid.project, demoPhotos: valid.photos, demoHidden: valid.hidden }),
+    ) as Json,
   };
   const result =
     expectedRevision === 0
@@ -72,4 +74,19 @@ export async function saveDemoSample(
   }
   if (result.error) throw result.error;
   return readSample(result.data);
+}
+
+/**
+ * "Hapus" demo = sembunyikan dari publik. Id demo tetap di basis data (tanpa izin DELETE) dan
+ * contoh bawaan kode akan muncul lagi bila barisnya hilang, jadi status disimpan di payload lalu
+ * langsung dipublikasikan.
+ */
+export async function setDemoHidden(
+  sample: DemoSample,
+  hidden: boolean,
+  publishedRevision: number,
+) {
+  const draft = await saveDemoSample({ ...sample, hidden }, false, sample.revision);
+  const published = await saveDemoSample(draft, true, publishedRevision);
+  return { draft, published };
 }

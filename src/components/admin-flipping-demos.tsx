@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Save, Send, RefreshCw } from "lucide-react";
+import { Eye, EyeOff, Pencil, RefreshCw, RotateCcw, Save, Send, Trash2 } from "lucide-react";
 import { AdminDemoPhotos } from "@/components/admin-demo-photos";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { demoSampleSchema, type DemoSample } from "@/lib/flipping-demos";
 import {
   fetchAdminDemos,
   saveDemoSample,
+  setDemoHidden,
   publishedDemoKey,
 } from "@/services/flipping-demo-service";
 import { adminError } from "@/services/admin-service";
@@ -31,6 +32,7 @@ export function AdminFlippingDemos({ userId }: { userId: string }) {
   const [view, setView] = useState("finance");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const client = useQueryClient();
   if (query.isPending)
     return (
       <p className="mt-8" role="status">
@@ -47,29 +49,59 @@ export function AdminFlippingDemos({ userId }: { userId: string }) {
       </div>
     );
   const entry = query.data.find((item) => item.sample.id === selected);
+  async function toggleHidden(item: AdminDemo, hidden: boolean) {
+    const name = item.sample.project.property.name;
+    if (
+      hidden &&
+      !window.confirm(
+        `Hapus demo "${name}" dari halaman publik? Demo bisa dipulihkan kembali dari halaman ini.`,
+      )
+    )
+      return;
+    setBusy(true);
+    setMessage("");
+    try {
+      await setDemoHidden(item.sample, hidden, item.publishedRevision);
+      await client.invalidateQueries({ queryKey: publishedDemoKey });
+      await client.invalidateQueries({ queryKey: ["admin", userId, "flipping-demos"] });
+      await client.invalidateQueries({ queryKey: ["admin", userId, "audit"] });
+      setMessage(hidden ? `Demo "${name}" dihapus dari publik.` : `Demo "${name}" dipulihkan.`);
+    } catch (cause) {
+      setMessage(adminError(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <section className="mt-8 space-y-6" aria-label="Flipping Demo">
-      <h2 className="text-xl font-semibold">Flipping Demo</h2>
+      <div>
+        <h2 className="text-xl font-semibold">Flipping Demo</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Proyek contoh yang tampil di halaman Pilih aset dan bisa dibuka tanpa login.
+        </p>
+      </div>
       {message && (
         <p role="status" className="text-sm text-success">
           {message}
         </p>
       )}
-      <label className="block text-sm">
-        Proyek contoh
-        <select
-          className="mt-2 block h-10 w-full rounded-md border border-input bg-background px-3 sm:max-w-md"
-          value={selected}
-          disabled={busy}
-          onChange={(event) => setSelected(event.target.value)}
-        >
-          {query.data.map(({ sample }) => (
-            <option key={sample.id} value={sample.id}>
-              {sample.project.property.name} · {sample.id}
-            </option>
-          ))}
-        </select>
-      </label>
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {query.data.map((item) => (
+          <DemoCard
+            key={item.sample.id}
+            item={item}
+            active={item.sample.id === selected}
+            busy={busy}
+            onEdit={() => setSelected(item.sample.id)}
+            onToggle={(hidden) => void toggleHidden(item, hidden)}
+          />
+        ))}
+      </ul>
+      {entry && (
+        <h3 className="border-t border-border pt-6 text-lg font-semibold">
+          Edit demo: {entry.sample.project.property.name}
+        </h3>
+      )}
       {entry && (
         <DemoEditor
           key={`${selected}:${entry.sample.revision}:${entry.publishedRevision}`}
@@ -84,6 +116,89 @@ export function AdminFlippingDemos({ userId }: { userId: string }) {
         />
       )}
     </section>
+  );
+}
+type AdminDemo = Awaited<ReturnType<typeof fetchAdminDemos>>[number];
+function DemoCard({
+  item,
+  active,
+  busy,
+  onEdit,
+  onToggle,
+}: {
+  item: AdminDemo;
+  active: boolean;
+  busy: boolean;
+  onEdit: () => void;
+  onToggle: (hidden: boolean) => void;
+}) {
+  const { sample, publishedRevision, publicHidden } = item;
+  const totals = calculateFlipping(sample.project.finance, sample.project.rab);
+  const status = publicHidden
+    ? { label: "Dihapus dari publik", tone: "bg-muted text-muted-foreground" }
+    : publishedRevision > 0
+      ? { label: "Dipublikasikan", tone: "bg-brand-soft text-brand-deep" }
+      : { label: "Contoh bawaan", tone: "bg-warning-soft text-foreground" };
+  return (
+    <li
+      className={`flex flex-col rounded-xl border p-4 ${
+        active ? "border-brand ring-1 ring-brand" : "border-border"
+      } ${publicHidden ? "opacity-70" : ""}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${status.tone}`}>
+          {status.label}
+        </span>
+        <span className="text-[11px] text-muted-foreground">{sample.id}</span>
+      </div>
+      <h3 className="mt-3 font-semibold leading-snug">{sample.project.property.name}</h3>
+      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{sample.description}</p>
+      <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <dt className="text-muted-foreground">Harga jual</dt>
+          <dd className="font-medium">{formatRupiah(sample.project.finance.sale)}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Laba</dt>
+          <dd className={`font-medium ${totals.profit < 0 ? "text-destructive" : ""}`}>
+            {formatRupiah(totals.profit)}
+          </dd>
+        </div>
+      </dl>
+      <div className="mt-auto flex flex-wrap gap-2 pt-4">
+        <Button size="sm" variant={active ? "default" : "outline"} disabled={busy} onClick={onEdit}>
+          <Pencil /> Edit
+        </Button>
+        {!publicHidden && (
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/proyek/$id" params={{ id: sample.id }} target="_blank">
+              <Eye /> Lihat
+            </Link>
+          </Button>
+        )}
+        {publicHidden ? (
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => onToggle(false)}>
+            <RotateCcw /> Pulihkan
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-destructive hover:text-destructive"
+            disabled={busy}
+            onClick={() => onToggle(true)}
+            aria-label={`Hapus demo ${sample.project.property.name}`}
+          >
+            <Trash2 /> Hapus
+          </Button>
+        )}
+      </div>
+      {publicHidden && (
+        <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
+          <EyeOff className="size-3" aria-hidden="true" /> Tidak tampil di halaman publik.
+        </p>
+      )}
+    </li>
   );
 }
 function DemoEditor({

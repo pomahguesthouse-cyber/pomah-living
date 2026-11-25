@@ -28,6 +28,8 @@ export const demoSampleSchema = z
     project: flippingSchema,
     revision: z.number().int().min(0),
     photos: z.array(demoPhotoSchema).max(maxDemoPhotos).default([]),
+    /** Demo yang dihapus admin disembunyikan dari publik; id demo tetap sehingga bisa dipulihkan. */
+    hidden: z.boolean().default(false),
   })
   .refine(
     (sample) =>

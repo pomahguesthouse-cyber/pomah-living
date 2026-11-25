@@ -278,6 +278,15 @@ function ProjectPage() {
         </Button>
       </main>
     );
+  if (demo && sample?.hidden)
+    return (
+      <main className="page-container py-14">
+        <p role="status">Demo ini sudah tidak tersedia.</p>
+        <Button asChild className="mt-4">
+          <Link to="/pilih-aset">Lihat katalog aset</Link>
+        </Button>
+      </main>
+    );
   if (!project || (demo && (!sample || hydratedKey !== key)))
     return (
       <main className="page-container py-14" role="status">

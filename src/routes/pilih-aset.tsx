@@ -97,9 +97,15 @@ function SelectAsset() {
     staleTime: 60_000,
   });
   const catalog: AnalysisAsset[] = [...(listings.data ?? []), ...properties.map(sampleToAsset)];
+  const hiddenDemos = new Set(
+    (demos.data ?? []).filter((item) => item.hidden).map((item) => item.id as string),
+  );
+  const shownCatalog = catalog.filter(
+    (property) => !(property.isSample && hiddenDemos.has(property.id)),
+  );
   const visibleProperties = isFiltering
-    ? catalog.filter((property) => matchesPreferredRegions(property.regionCode, preferences))
-    : catalog;
+    ? shownCatalog.filter((property) => matchesPreferredRegions(property.regionCode, preferences))
+    : shownCatalog;
   const canShowListings =
     ready && (!id || regions.isSuccess) && demos.isSuccess && !listings.isPending;
 
@@ -211,21 +217,23 @@ function SelectAsset() {
           </li>
         </ol>
       </section>
-      <section className="mt-7 flex flex-wrap items-center justify-between gap-4 border-y border-border py-5">
-        <div>
-          <h2 className="text-base font-semibold">
-            {featuredDemo?.project.property.name ?? "Proyek flipping demo"}
-          </h2>
-          <p className="mt-1 text-xs leading-6 text-muted-foreground">
-            {featuredDemo?.description ?? "Contoh fiktif, tersedia tanpa login."}
-          </p>
-        </div>
-        <Button asChild>
-          <Link to="/proyek/$id" params={{ id: "demo" }}>
-            Buka proyek demo <ArrowRight />
-          </Link>
-        </Button>
-      </section>
+      {!featuredDemo?.hidden && (
+        <section className="mt-7 flex flex-wrap items-center justify-between gap-4 border-y border-border py-5">
+          <div>
+            <h2 className="text-base font-semibold">
+              {featuredDemo?.project.property.name ?? "Proyek flipping demo"}
+            </h2>
+            <p className="mt-1 text-xs leading-6 text-muted-foreground">
+              {featuredDemo?.description ?? "Contoh fiktif, tersedia tanpa login."}
+            </p>
+          </div>
+          <Button asChild>
+            <Link to="/proyek/$id" params={{ id: "demo" }}>
+              Buka proyek demo <ArrowRight />
+            </Link>
+          </Button>
+        </section>
+      )}
       {id && preferences.length > 0 && (
         <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
           <span>{isFiltering ? "Sesuai preferensi wilayah" : "Semua wilayah"}</span>
