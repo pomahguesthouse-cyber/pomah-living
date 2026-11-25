@@ -320,6 +320,21 @@ export type Database = {
         }
         Relationships: []
       }
+      pomah_prepurchase_master: {
+        Row: {
+          criteria: Json
+          id: number
+        }
+        Insert: {
+          criteria: Json
+          id: number
+        }
+        Update: {
+          criteria?: Json
+          id?: number
+        }
+        Relationships: []
+      }
       pomah_project_details: {
         Row: {
           payload: Json
@@ -450,6 +465,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_prepurchase: { Args: never; Returns: boolean }
       is_pomah_admin: { Args: never; Returns: boolean }
       is_published_listing_photo: {
         Args: { object_name: string }
