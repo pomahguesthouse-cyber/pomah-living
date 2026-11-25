@@ -516,9 +516,11 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
                     </div>
                   </>
                 ) : (
-                  <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
-                    Luas bangunan belum tercatat di katalog. Isi biaya renovasi dari RAB atau
-                    survei.
+                  <p className="mt-1 flex gap-2 rounded-md bg-warning-soft p-2 text-[11px] leading-5 text-warning">
+                    <CircleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                    Luas bangunan belum tercatat di katalog, jadi perkiraan cepat renovasi tidak
+                    bisa dihitung. Isi biaya renovasi dari RAB atau survei, dan lengkapi luas
+                    bangunan di proyek setelah aset ini di-flip.
                   </p>
                 )}
                 <p className="mt-3 border-t border-border pt-3 text-[11px] leading-5 text-muted-foreground">

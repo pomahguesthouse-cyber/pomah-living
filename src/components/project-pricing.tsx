@@ -79,6 +79,17 @@ export function ProjectPricing({ project, demo, onChange }: Props) {
           pembanding yang sudah siap huni di sekitar aset ({asset.land || "–"} m² tanah,{" "}
           {asset.building || "–"} m² bangunan); platform menyesuaikannya ke luas aset.
         </p>
+        {(asset.land <= 0 || asset.building <= 0) && (
+          <Warning>
+            {asset.building <= 0 && asset.land <= 0
+              ? "Luas tanah dan luas bangunan aset belum diisi"
+              : asset.building <= 0
+                ? "Luas bangunan aset belum diisi"
+                : "Luas tanah aset belum diisi"}
+            : penyesuaian pembanding hanya memakai luas yang ada. Lengkapi di Ringkasan properti di
+            atas.
+          </Warning>
+        )}
       </div>
 
       <div className="space-y-3">

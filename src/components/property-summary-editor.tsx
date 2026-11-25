@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { formatArea } from "@/lib/area-format";
 import { DateInput } from "@/components/date-input";
 import { Input } from "@/components/ui/input";
 import { NumberField } from "@/components/flipping-editors";
@@ -77,9 +78,8 @@ export function PropertySummaryEditor({
 
   const preview = [
     property.address || "Alamat belum diisi",
-    property.land || property.building
-      ? `LT ${property.land.toLocaleString("id-ID")} m² · LB ${property.building.toLocaleString("id-ID")} m²`
-      : null,
+    `Tanah ${formatArea(property.land, "belum diisi")}`,
+    `Bangunan ${formatArea(property.building, "belum diisi")}`,
     property.limit ? `Limit ${formatRupiah(property.limit)}` : null,
   ].filter(Boolean);
 

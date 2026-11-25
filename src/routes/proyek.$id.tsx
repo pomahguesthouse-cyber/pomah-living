@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { formatArea } from "@/lib/area-format";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -399,7 +400,8 @@ function ProjectPage() {
               {[
                 ["Provinsi", project.property.province || "Belum diisi"],
                 ["Tipe", project.property.type || "Belum diisi"],
-                ["LT / LB", `${project.property.land} / ${project.property.building} m²`],
+                ["Luas tanah", formatArea(project.property.land, "Belum diisi")],
+                ["Luas bangunan", formatArea(project.property.building, "Belum diisi")],
                 ["Legalitas", project.property.legal],
                 ["Status hunian", project.property.occupancy],
                 ["Status dokumen", project.property.documents],
