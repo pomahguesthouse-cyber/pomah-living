@@ -58,6 +58,7 @@ import {
   findProjectsForListing,
   projectsForListingKey,
 } from "@/services/flipping-service";
+import { formatTanggal } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/analisis/$assetId")({
@@ -679,7 +680,7 @@ function CreateProjectFromAsset({
                 >
                   {project.name}
                 </Link>{" "}
-                · diperbarui {new Date(project.updated_at).toLocaleDateString("id-ID")}
+                · diperbarui {formatTanggal(new Date(project.updated_at))}
               </li>
             ))}
           </ul>

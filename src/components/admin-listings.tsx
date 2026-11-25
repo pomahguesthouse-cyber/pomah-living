@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DateInput } from "@/components/date-input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
@@ -42,6 +43,7 @@ import { catalogSummary } from "@/lib/catalog-summary";
 import { defaultLandSettings } from "@/lib/land-settings";
 import { formatRupiah } from "@/lib/simulation";
 import { fetchLandSettings, landSettingsQueryKey } from "@/services/settings-service";
+import { formatTanggal } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 import { adminError } from "@/services/admin-service";
 import {
@@ -248,8 +250,7 @@ export function AdminListings({ userId }: { userId: string }) {
                     {inspectionLabel(listingVerification(row))}
                   </p>
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    /analisis/{row.slug} · diperbarui{" "}
-                    {new Date(row.updated_at).toLocaleDateString("id-ID")}
+                    /analisis/{row.slug} · diperbarui {formatTanggal(new Date(row.updated_at))}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -704,10 +705,9 @@ function ListingEditor({
             </Field>
             {money("auction_limit", "Nilai limit lelang")}
             <Field label="Tanggal lelang" error={showError("auction_date")}>
-              <Input
-                type="date"
+              <DateInput
                 value={form.auction_date ?? ""}
-                onChange={(event) => set("auction_date", event.target.value)}
+                onChange={(value) => set("auction_date", value)}
               />
             </Field>
             {optionalNumber("land_area", "Luas tanah (m²)")}

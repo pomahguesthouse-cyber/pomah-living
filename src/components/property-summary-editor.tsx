@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { DateInput } from "@/components/date-input";
 import { Input } from "@/components/ui/input";
 import { NumberField } from "@/components/flipping-editors";
 import type { FlippingProject } from "@/lib/flipping";
@@ -51,14 +52,18 @@ export function PropertySummaryEditor({
     return (
       <label className={`block min-w-0 space-y-2 text-xs font-medium ${options.className ?? ""}`}>
         <span className="block leading-5">{label}</span>
-        <Input
-          type={options.type ?? "text"}
-          value={property[key]}
-          maxLength={500}
-          list={listId}
-          autoComplete="off"
-          onChange={(event) => set(key, event.target.value)}
-        />
+        {options.type === "date" ? (
+          <DateInput value={property[key]} onChange={(value) => set(key, value)} />
+        ) : (
+          <Input
+            type="text"
+            value={property[key]}
+            maxLength={500}
+            list={listId}
+            autoComplete="off"
+            onChange={(event) => set(key, event.target.value)}
+          />
+        )}
         {options.list && (
           <datalist id={listId}>
             {options.list.map((option) => (

@@ -1,9 +1,10 @@
 import { calculateFlipping, rabTotal, type FlippingProject } from "@/lib/flipping";
+import { defaultPricing, minStrongComparables, priceRange } from "@/lib/pricing";
 import { analyzeScenario, scenarioInputs } from "@/lib/scenarios";
 
 export const projectTabs = [
   { id: "asset", label: "Kondisi aset" },
-  { id: "market", label: "Harga pasar" },
+  { id: "market", label: "Harga jual" },
   { id: "risks", label: "Dokumen & risiko" },
   { id: "rab", label: "RAB renovasi" },
   { id: "scenarios", label: "Skenario & laba" },
@@ -19,7 +20,7 @@ export const wizardSteps = [
     // RAB dan skenario laba dihitung sebelum menawar, karena batas tawar bergantung padanya.
     id: "feasibility",
     title: "Analisis aset",
-    detail: "Kondisi, harga pasar, risiko, RAB dan skenario laba sebelum menawar",
+    detail: "Kondisi, harga jual, risiko, RAB dan skenario laba sebelum menawar",
     tabs: ["asset", "market", "risks", "rab", "scenarios"],
   },
   {
@@ -140,6 +141,16 @@ function checksFor(step: WizardStepId, project: FlippingProject): StepCheck[] {
           id: "sale",
           label: "Target harga jual diisi",
           ok: finance.sale > 0,
+          tab: "market",
+        },
+        {
+          id: "comparables",
+          label: "Harga jual didukung minimal 3 pembanding kuat",
+          ok:
+            (priceRange(
+              { land: property.land, building: property.building },
+              project.pricing ?? defaultPricing,
+            ).range?.strongCount ?? 0) >= minStrongComparables,
           tab: "market",
         },
         {

@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { DateInput } from "@/components/date-input";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { format, subYears } from "date-fns";
@@ -256,14 +257,13 @@ function AccountDetailsForm({
         </label>
         <label className="space-y-1 text-sm">
           <span>Tanggal lahir (minimal 18 tahun)</span>
-          <Input
+          <DateInput
             name="birth_date"
-            type="date"
-            autoComplete="bday"
             max={maxBirthDate}
             value={birthDate}
-            onChange={(event) => setBirthDate(event.target.value)}
+            onChange={setBirthDate}
             required
+            aria-label="Tanggal lahir"
           />
         </label>
         <label className="space-y-1 text-sm">
