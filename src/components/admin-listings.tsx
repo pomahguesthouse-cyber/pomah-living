@@ -15,6 +15,7 @@ import {
   Star,
   Trash2,
   Undo2,
+  CircleAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ import { catalogSummary } from "@/lib/catalog-summary";
 import { defaultLandSettings } from "@/lib/land-settings";
 import { formatRupiah } from "@/lib/simulation";
 import { fetchLandSettings, landSettingsQueryKey } from "@/services/settings-service";
+import { formatArea } from "@/lib/area-format";
 import { formatTanggal } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 import { adminError } from "@/services/admin-service";
@@ -245,8 +247,8 @@ export function AdminListings({ userId }: { userId: string }) {
                   <p className="mt-1 text-xs text-muted-foreground">
                     {regionName(row.regency_code) ?? row.regency_code} · limit{" "}
                     {formatRupiah(row.auction_limit)}
-                    {row.land_area ? ` · LT ${row.land_area} m²` : ""}
-                    {row.building_area ? ` · LB ${row.building_area} m²` : ""} ·{" "}
+                    {` · tanah ${formatArea(row.land_area, "–")}`}
+                    {` · bangunan ${formatArea(row.building_area, "–")}`} ·{" "}
                     {inspectionLabel(listingVerification(row))}
                   </p>
                   <p className="mt-1 text-[11px] text-muted-foreground">
@@ -714,6 +716,14 @@ function ListingEditor({
             {optionalNumber("land_width", "Lebar muka tanah (m, menghadap jalan)")}
             {optionalNumber("land_length", "Panjang tanah (m)")}
             {optionalNumber("building_area", "Luas bangunan (m²)")}
+            {!(Number(form.building_area) > 0) && (
+              <p className="flex gap-2 rounded-md bg-warning-soft p-2 text-[11px] leading-5 text-warning sm:col-span-2">
+                <CircleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                Luas bangunan belum diisi: perkiraan cepat renovasi dan penyesuaian pembanding per
+                m² bangunan tidak bisa dihitung. Data impor lelang.go.id tidak membawa luas
+                bangunan; isi dari pengumuman lelang atau survei.
+              </p>
+            )}
             {optionalNumber("bedrooms", "Kamar tidur")}
             {optionalNumber("bathrooms", "Kamar mandi")}
             <Field label="Legalitas" error={showError("legal")}>
@@ -896,8 +906,12 @@ function ListingEditor({
             </div>
             <div className="flex justify-between gap-3">
               <dt className="text-muted-foreground">Luas tanah</dt>
+              <dd className="tabular-nums">{formatArea(summary.landArea, "–")}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Luas bangunan</dt>
               <dd className="tabular-nums">
-                {summary.landArea === null ? "–" : `${summary.landArea} m²`}
+                {formatArea(Number(form.building_area) || null, "–")}
               </dd>
             </div>
             <div className="flex justify-between gap-3">

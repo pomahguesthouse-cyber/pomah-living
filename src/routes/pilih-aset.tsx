@@ -28,6 +28,7 @@ import {
   fetchPublishedListings,
   publishedListingsKey,
 } from "@/services/listing-service";
+import { formatArea, formatLandArea } from "@/lib/area-format";
 import { catalogSummary, daysUntilAuction } from "@/lib/catalog-summary";
 import { defaultLandSettings } from "@/lib/land-settings";
 import { formatRupiah } from "@/lib/simulation";
@@ -360,17 +361,29 @@ function SelectAsset() {
                         {formatRupiah(property.auctionLimit)}
                       </dd>
                     </div>
-                    {summary.landArea !== null && (
-                      <div className="flex items-center justify-between">
-                        <dt className="text-xs text-muted-foreground">Luas tanah / bangunan</dt>
-                        <dd className="text-sm font-semibold tabular-nums">
-                          {summary.landArea} m²
-                          {property.details?.buildingArea
-                            ? ` / ${property.details.buildingArea} m²`
-                            : ""}
-                        </dd>
-                      </div>
-                    )}
+                    <div className="flex items-center justify-between">
+                      <dt className="text-xs text-muted-foreground">Luas tanah</dt>
+                      <dd className="text-sm font-semibold tabular-nums">
+                        {formatLandArea(
+                          summary.landArea,
+                          property.details?.landWidth,
+                          property.details?.landLength,
+                        )}
+                      </dd>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <dt className="text-xs text-muted-foreground">Luas bangunan</dt>
+                      <dd
+                        className={cn(
+                          "text-sm tabular-nums",
+                          property.details?.buildingArea
+                            ? "font-semibold"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {formatArea(property.details?.buildingArea)}
+                      </dd>
+                    </div>
                     {summary.limitPerM2 !== null && (
                       <div className="flex items-center justify-between">
                         <dt className="text-xs text-muted-foreground">Limit per m² tanah</dt>
