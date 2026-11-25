@@ -1,4 +1,5 @@
 import { CircleAlert, CheckCircle2 } from "lucide-react";
+import { DateInput } from "@/components/date-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -167,17 +168,14 @@ export function TimelineEditor({ project, onChange }: EditorProps) {
             </h3>
             <label className="text-xs">
               Tanggal rencana
-              <Input
-                type="date"
+              <DateInput
                 className="mt-2"
                 aria-label={`Tanggal ${stage.name}`}
                 value={stage.date}
-                onChange={(e) =>
+                onChange={(date) =>
                   onChange({
                     ...project,
-                    timeline: project.timeline.map((s) =>
-                      s.id === stage.id ? { ...s, date: e.target.value } : s,
-                    ),
+                    timeline: project.timeline.map((s) => (s.id === stage.id ? { ...s, date } : s)),
                   })
                 }
               />

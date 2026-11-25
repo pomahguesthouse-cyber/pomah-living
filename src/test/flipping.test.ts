@@ -130,7 +130,7 @@ describe("Flipping investment rules", () => {
     ).toThrow();
   });
   it("formats dates in DD/MM/YYYY", () => {
-    expect(formatProjectDate("2026-11-20")).toBe("20/11/2026");
+    expect(formatProjectDate("2026-11-20")).toBe("20 November 2026");
     expect(formatProjectDate("")).toBe("Belum diisi");
   });
 });

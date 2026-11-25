@@ -20,7 +20,7 @@ import { PropertyPhotoWorkspace } from "@/components/property-photo-workspace";
 import { FlippingOverview } from "@/components/flipping-overview";
 import { PropertySummaryEditor } from "@/components/property-summary-editor";
 import { AssetAnalysis } from "@/components/asset-analysis";
-import { ProjectMarketAnalysis } from "@/components/project-market-analysis";
+import { ProjectPricing } from "@/components/project-pricing";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -366,8 +366,8 @@ function ProjectPage() {
             <FlaskConical className="mt-1 size-4 shrink-0 text-brand" />
             <p>
               DEMO — Seluruh properti, alamat, foto, tanggal lelang, sumber, dan angka contoh adalah
-              fiktif. Sumber: simulasi internal Pomah Living. Tanggal contoh: 20/11/2026. Bukan
-              penawaran lelang atau jaminan profit.
+              fiktif. Sumber: simulasi internal Pomah Living. Tanggal contoh: 20 November 2026.
+              Bukan penawaran lelang atau jaminan profit.
             </p>
           </div>
         )}
@@ -546,13 +546,7 @@ function ProjectPage() {
                 />
               </TabsContent>
               <TabsContent forceMount value="market" className="project-tab mt-6">
-                <ProjectMarketAnalysis
-                  project={project}
-                  demo={demo}
-                  onUseTarget={(sale) =>
-                    update({ ...project, finance: { ...project.finance, sale } })
-                  }
-                />
+                <ProjectPricing project={project} demo={demo} onChange={update} />
               </TabsContent>
               <TabsContent forceMount value="risks" className="project-tab mt-6">
                 <RiskEditor project={project} onChange={update} />

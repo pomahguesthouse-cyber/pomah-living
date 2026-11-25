@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { pricingSchema } from "@/lib/pricing";
+import { formatTanggal } from "@/lib/format-date";
 import { getProperty } from "@/lib/properties";
 import {
   cibinongBaseLines,
@@ -141,6 +143,8 @@ export const flippingSchema = z.object({
       }),
     )
     .length(3),
+  // Pembanding harga jual dan diskon negosiasi; opsional agar proyek lama tetap terbaca.
+  pricing: pricingSchema.optional(),
 });
 export type FlippingProject = z.infer<typeof flippingSchema>;
 export type Finance = FlippingProject["finance"];
@@ -189,7 +193,8 @@ export const financeFields: { key: keyof Finance; label: string; unit: string; g
     unit: "Rp",
     group: "Penjualan & cadangan",
   },
-  { key: "sale", label: "Target harga jual", unit: "Rp", group: "Penjualan & cadangan" },
+  // Ditetapkan di tab Harga jual (tahap Analisis aset), bukan bersama biaya jual.
+  { key: "sale", label: "Target harga jual", unit: "Rp", group: "Harga jual" },
 ];
 export function rabTotal(items: RabItem[]) {
   return items.reduce((sum, item) => sum + item.volume * item.price, 0);
@@ -513,6 +518,5 @@ export function readFlippingProject(value: unknown) {
   return flippingSchema.parse(value);
 }
 export function formatProjectDate(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  return match ? `${match[3]}/${match[2]}/${match[1]}` : "Belum diisi";
+  return formatTanggal(value, { fallback: "Belum diisi" });
 }

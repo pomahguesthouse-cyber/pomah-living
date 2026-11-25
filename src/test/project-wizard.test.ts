@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeFlippingProject } from "@/lib/flipping";
+import { emptyComparable } from "@/lib/pricing";
 import {
   evaluateStep,
   evaluateWizard,
@@ -52,6 +53,15 @@ describe("Automatic step status", () => {
       })),
       risks: project.risks.map((risk) => ({ ...risk, verified: true })),
       timeline: project.timeline.map((item) => ({ ...item, date: "2027-01-15" })),
+      pricing: {
+        negotiationPercent: 7,
+        comparables: [470, 480, 490].map((price) => ({
+          ...emptyComparable(`c${price}`),
+          landArea: project.property.land,
+          buildingArea: project.property.building,
+          askingPrice: price * 1_000_000,
+        })),
+      },
     };
   };
 
