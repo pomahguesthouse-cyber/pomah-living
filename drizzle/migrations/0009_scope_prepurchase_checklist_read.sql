@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Read checklist" ON public.pomah_prepurchase_master;
+CREATE POLICY "Read canonical checklist" ON public.pomah_prepurchase_master FOR SELECT TO anon, authenticated USING (id = 1 OR public.can_manage_prepurchase());

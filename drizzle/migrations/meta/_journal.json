@@ -64,6 +64,13 @@
       "when": 1795564784938,
       "tag": "0008_restrict_app_settings_public_read",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795584892939,
+      "tag": "0009_scope_prepurchase_checklist_read",
+      "breakpoints": true
     }
   ]
 }
