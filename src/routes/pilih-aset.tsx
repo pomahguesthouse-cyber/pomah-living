@@ -147,7 +147,15 @@ function SelectAsset() {
             className="flex min-h-36 flex-col justify-between rounded-xl border border-border bg-background p-5 transition-colors hover:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
           >
             <span className="flex items-center gap-3 text-lg font-semibold">
-              <FlaskConical className="size-6 text-brand" /> Katalog aset
+              <img
+                src="/icons/katalog-aset.png"
+                alt=""
+                aria-hidden="true"
+                width={31}
+                height={28}
+                className="h-7 w-auto shrink-0"
+              />{" "}
+              Katalog aset
             </span>
             <span className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
               Pilih dari daftar rumah yang tersedia <ArrowRight className="size-5 text-brand" />
