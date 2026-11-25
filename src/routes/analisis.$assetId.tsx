@@ -304,6 +304,7 @@ function AssetAnalysisView({ property }: { property: AnalysisAsset }) {
               </p>
             </div>
           </div>
+          {!property.isSample && <ExistingProjectNotice listingSlug={property.id} />}
           <LandSplitOffer land={land} />
           <section className="py-7" aria-labelledby="checklist-title">
             <div className="flex items-center justify-between gap-3">
@@ -746,5 +747,41 @@ function HouseFlipIcon() {
       height={24}
       className="h-6 w-auto shrink-0"
     />
+  );
+}
+
+/**
+ * Bila flipper sudah punya proyek untuk aset ini, angka resmi ada di proyek. Halaman ini
+ * tetap bisa dipakai untuk coba-coba, tetapi tidak mengubah proyek.
+ */
+function ExistingProjectNotice({ listingSlug }: { listingSlug: string }) {
+  const { session } = useSession();
+  const userId = session?.user.id;
+  const existing = useQuery({
+    queryKey: projectsForListingKey(userId ?? "signed-out", listingSlug),
+    queryFn: () => findProjectsForListing(userId ?? "", listingSlug),
+    enabled: Boolean(userId),
+    retry: false,
+  });
+  const project = existing.data?.[0];
+  if (!project) return null;
+  return (
+    <aside
+      className="mt-5 flex flex-col gap-3 rounded-lg border border-brand bg-brand-soft p-4 sm:flex-row sm:items-center sm:justify-between"
+      aria-label="Proyek untuk aset ini"
+    >
+      <div>
+        <p className="text-sm font-semibold">Anda sudah punya proyek untuk aset ini</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          Harga jual dan perhitungan resmi ada di proyek &quot;{project.name}&quot;. Angka di
+          halaman ini hanya untuk coba-coba dan tidak mengubah proyek.
+        </p>
+      </div>
+      <Button asChild size="sm" variant="brand" className="shrink-0">
+        <Link to="/proyek/$id" params={{ id: project.id }} search={{ tab: "market" }}>
+          Buka proyek → Harga jual <ArrowRight className="size-4" />
+        </Link>
+      </Button>
+    </aside>
   );
 }

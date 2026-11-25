@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ArrowUpRight, Plus, Tag, Trash2, TriangleAlert } from "lucide-react";
 import { DateInput } from "@/components/date-input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ import {
   emptyComparable,
   followingScenarioSales,
   priceRange,
+  priceSensitivity,
+  simulateSalePrice,
   withTargetSale,
   type Comparable,
   type ComparableCondition,
@@ -399,6 +402,8 @@ export function ProjectPricing({ project, demo, onChange }: Props) {
           </p>
         </div>
       </div>
+
+      <PriceSimulator key={target} project={project} onCommit={setTarget} />
     </section>
   );
 }
@@ -439,5 +444,158 @@ function Warning({ children }: { children: React.ReactNode }) {
       <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
       {children}
     </p>
+  );
+}
+
+const percent = (value: number | null) =>
+  value === null ? "–" : `${value.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
+
+/** Coba harga jual lain tanpa mengubah target; tetapkan bila sudah yakin. */
+function PriceSimulator({
+  project,
+  onCommit,
+}: {
+  project: FlippingProject;
+  onCommit: (sale: number) => void;
+}) {
+  const target = project.finance.sale;
+  const [trial, setTrial] = useState(target);
+  const result = simulateSalePrice(project, trial);
+  const mortgage = trial > 0 ? calculateMortgage(trial) : null;
+  const rows = target > 0 ? priceSensitivity(project) : [];
+  const delta = target > 0 ? ((trial - target) / target) * 100 : null;
+  const min = Math.max(0, Math.round((target || 500_000_000) * 0.7));
+  const max = Math.round((target || 500_000_000) * 1.3);
+  return (
+    <div className="rounded-lg border border-border bg-card p-5" aria-labelledby="simulator-title">
+      <h3 id="simulator-title" className="text-sm font-semibold">
+        Simulasi harga jual
+      </h3>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+        Coba harga lain untuk melihat dampaknya. Target dan skenario tidak berubah sampai Anda
+        menekan &quot;Tetapkan sebagai target&quot;.
+      </p>
+      <div className="mt-4 grid gap-5 lg:grid-cols-[3fr_2fr]">
+        <div>
+          <label htmlFor="trial-sale" className="mb-1 block text-[11px] text-muted-foreground">
+            Coba harga
+          </label>
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+              Rp
+            </span>
+            <FormattedNumberInput
+              id="trial-sale"
+              className="h-11 pl-10 text-base font-semibold"
+              value={trial}
+              onValueChange={(value) => setTrial(Math.max(0, value))}
+            />
+          </div>
+          <input
+            type="range"
+            aria-label="Geser harga coba"
+            className="mt-3 w-full accent-brand"
+            min={min}
+            max={max}
+            step={1_000_000}
+            value={Math.min(max, Math.max(min, trial))}
+            onChange={(event) => setTrial(Number(event.target.value))}
+          />
+          <div className="flex justify-between text-[10px] text-muted-foreground">
+            <span>{juta(min)}</span>
+            <span>{juta(max)}</span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="brand"
+              disabled={trial <= 0 || trial === target}
+              onClick={() => onCommit(trial)}
+            >
+              Tetapkan sebagai target
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={trial === target}
+              onClick={() => setTrial(target)}
+            >
+              Kembali ke target ({juta(target)})
+            </Button>
+          </div>
+        </div>
+        <dl className="space-y-2 text-xs">
+          <Row label="Selisih dari target">
+            {delta === null ? "–" : `${delta > 0 ? "+" : ""}${percent(delta)}`}
+          </Row>
+          <Row label="Estimasi laba">
+            <span className={result.profit < 0 ? "text-destructive" : "text-brand-deep"}>
+              {formatRupiah(result.profit)}
+            </span>
+          </Row>
+          <Row label="ROI / ROI per tahun">
+            {percent(result.roi)} / {percent(result.annualRoi)}
+          </Row>
+          <Row label="Harga beli maksimal agar tidak rugi">
+            {formatRupiah(Math.round(result.maxPurchase))}
+          </Row>
+          {mortgage && (
+            <Row label="Cicilan KPR / penghasilan pembeli">
+              {juta(mortgage.monthlyPayment)} / ≥ {juta(mortgage.minimumIncome)}
+            </Row>
+          )}
+        </dl>
+      </div>
+
+      {rows.length > 0 && (
+        <div className="mt-5 overflow-x-auto">
+          <table className="w-full min-w-[300px] text-left text-xs">
+            <caption className="mb-2 text-left text-[11px] font-semibold">
+              Kepekaan terhadap harga jual
+            </caption>
+            <thead className="text-muted-foreground">
+              <tr className="border-b border-border">
+                <th className="py-2 pr-3 font-medium">Perubahan</th>
+                <th className="py-2 pr-3 text-right font-medium">Harga jual</th>
+                <th className="py-2 pr-3 text-right font-medium">Laba</th>
+                <th className="py-2 text-right font-medium">ROI per tahun</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr
+                  key={row.step}
+                  className={cn(
+                    "cursor-pointer border-b border-border last:border-0 hover:bg-muted/60",
+                    row.step === 0 && "font-semibold",
+                  )}
+                  onClick={() => setTrial(row.sale)}
+                >
+                  <td className="py-2 pr-3">
+                    {row.step === 0 ? "Target" : `${row.step > 0 ? "+" : ""}${row.step}%`}
+                  </td>
+                  <td className="py-2 pr-3 text-right tabular-nums">{juta(row.sale)}</td>
+                  <td
+                    className={cn(
+                      "py-2 pr-3 text-right tabular-nums",
+                      row.profit < 0 ? "text-destructive" : "text-brand-deep",
+                    )}
+                  >
+                    {row.profit < 0 ? "−" : ""}
+                    {juta(Math.abs(row.profit))}
+                  </td>
+                  <td className="py-2 text-right tabular-nums">{percent(row.annualRoi)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-2 text-[10px] text-muted-foreground">
+            Klik baris untuk mencobanya di atas.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
