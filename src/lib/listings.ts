@@ -201,7 +201,9 @@ export function listingToAsset(
   coverUrl?: string,
   defaults: AnalysisDefaults = defaultAnalysisDefaults,
 ): AnalysisAsset {
-  const verification = listingVerification(row);
+  // Pemeriksaan awal (penghunian, akses, dokumen) dilakukan flipper sendiri di halaman
+  // analisis; status dari admin tidak lagi dipakai.
+  const verification: Verification = { occupancy: false, access: false, documents: false };
   const source = (listingSources as readonly string[]).includes(row.source)
     ? (row.source as ListingSource)
     : "lainnya";

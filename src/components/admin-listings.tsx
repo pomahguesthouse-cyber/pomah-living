@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { FormattedNumberInput } from "@/components/formatted-number-input";
 import { importAuctionPhotos, importAuctionUrl } from "@/lib/import-auction";
@@ -32,8 +31,6 @@ import {
   listingSources,
   listingStatusLabels,
   listingToForm,
-  inspectionLabel,
-  listingVerification,
   maxListingPhotos,
   slugify,
   type ListingFormInput,
@@ -248,8 +245,7 @@ export function AdminListings({ userId }: { userId: string }) {
                     {regionName(row.regency_code) ?? row.regency_code} · limit{" "}
                     {formatRupiah(row.auction_limit)}
                     {` · tanah ${formatArea(row.land_area, "–")}`}
-                    {` · bangunan ${formatArea(row.building_area, "–")}`} ·{" "}
-                    {inspectionLabel(listingVerification(row))}
+                    {` · bangunan ${formatArea(row.building_area, "–")}`}
                   </p>
                   <p className="mt-1 text-[11px] text-muted-foreground">
                     /analisis/{row.slug} · diperbarui {formatTanggal(new Date(row.updated_at))}
@@ -757,24 +753,6 @@ function ListingEditor({
                   onChange={(event) => set("notes", event.target.value)}
                 />
               </Field>
-            </div>
-          </fieldset>
-
-          <fieldset className="rounded-xl border border-border bg-card p-5">
-            <legend className="px-1 text-sm font-semibold">Pemeriksaan awal</legend>
-            <div className="divide-y divide-border">
-              {(
-                [
-                  ["occupancy_verified", "Status penghunian terverifikasi"],
-                  ["access_verified", "Akses fisik terverifikasi"],
-                  ["documents_verified", "Dokumen terverifikasi"],
-                ] as const
-              ).map(([key, label]) => (
-                <label key={key} className="flex items-center justify-between gap-3 py-3 text-sm">
-                  {label}
-                  <Switch checked={form[key]} onCheckedChange={(checked) => set(key, checked)} />
-                </label>
-              ))}
             </div>
           </fieldset>
 

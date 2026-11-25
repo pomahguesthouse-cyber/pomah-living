@@ -73,7 +73,8 @@ describe("Catalog listings", () => {
       targetProfit: 43_740_000,
     });
     expect(asset.details?.landArea).toBe(72);
-    expect(asset.inspection).toBe("Belum terverifikasi: dokumen");
+    // Pemeriksaan awal dilakukan flipper sendiri; status admin di database diabaikan.
+    expect(asset.verification).toEqual({ occupancy: false, access: false, documents: false });
     expect(asset.sourceLabel).toBe("Lelang BTN");
   });
   it("round-trips a row through the admin form", () => {
@@ -88,7 +89,9 @@ describe("Catalog listings", () => {
     expect(parsed.auction_date).toBeNull();
   });
   it("reads optional land dimensions safely", () => {
-    expect(listingLandSize({ ...row, land_width: 8, land_length: "18" } as unknown as typeof row)).toEqual({
+    expect(
+      listingLandSize({ ...row, land_width: 8, land_length: "18" } as unknown as typeof row),
+    ).toEqual({
       width: 8,
       length: 18,
     });

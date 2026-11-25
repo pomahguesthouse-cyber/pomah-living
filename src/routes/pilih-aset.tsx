@@ -4,8 +4,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   ArrowUpRight,
-  CheckCircle2,
-  CircleAlert,
   Building2,
   FlaskConical,
   FilePlus,
@@ -16,6 +14,7 @@ import {
   TrendingUp,
   Layers,
   CalendarDays,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-session";
@@ -29,6 +28,7 @@ import {
   publishedListingsKey,
 } from "@/services/listing-service";
 import { formatArea, formatLandArea } from "@/lib/area-format";
+import { shortLocation } from "@/lib/asset-location";
 import { catalogSummary, daysUntilAuction } from "@/lib/catalog-summary";
 import { defaultLandSettings } from "@/lib/land-settings";
 import { formatRupiah } from "@/lib/simulation";
@@ -290,6 +290,7 @@ function SelectAsset() {
               landSettings,
             );
             const days = daysUntilAuction(property.details?.auctionDate ?? null);
+            const location = shortLocation(property.location, property.regionCode);
             return (
               <article className="property-card" key={property.id}>
                 <div className="relative">
@@ -317,38 +318,29 @@ function SelectAsset() {
                 </div>
                 <div className="p-5">
                   <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <MapPin className="size-3.5" />
-                    {property.location}
+                    <MapPin className="size-3.5 shrink-0" />
+                    {location}
                   </p>
                   <h2 className="mt-2 text-xl font-semibold">
                     {sample?.project.property.name ?? property.name}
                   </h2>
+                  {/* Alamat pendek seperti aset contoh sudah tampil utuh di atas. */}
+                  {property.location.trim().length > 40 && (
+                    <details className="group mt-2 text-xs">
+                      <summary className="inline-flex cursor-pointer list-none items-center gap-1 font-medium text-brand [&::-webkit-details-marker]:hidden">
+                        Alamat lengkap
+                        <ChevronDown
+                          className="size-3.5 transition-transform group-open:rotate-180"
+                          aria-hidden="true"
+                        />
+                      </summary>
+                      <p className="mt-1.5 leading-5 text-muted-foreground">{property.location}</p>
+                    </details>
+                  )}
                   {sample && (
                     <p className="mt-2 text-xs text-muted-foreground">{sample.description}</p>
                   )}
                   <div className="mt-4 flex flex-wrap gap-1.5">
-                    <span
-                      data-testid={`card-inspection-${property.id}`}
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium",
-                        property.verification.occupancy &&
-                          property.verification.access &&
-                          property.verification.documents
-                          ? "bg-success-soft text-success"
-                          : "bg-warning-soft text-warning",
-                      )}
-                    >
-                      {property.verification.occupancy &&
-                      property.verification.access &&
-                      property.verification.documents ? (
-                        <CheckCircle2 className="size-3.5" />
-                      ) : (
-                        <CircleAlert className="size-3.5" />
-                      )}
-                      {property.isSample
-                        ? property.inspection
-                        : `${property.inspection} (dicek admin)`}
-                    </span>
                     {summary.potentialUnits >= 2 && (
                       <span className="inline-flex items-center gap-1 rounded bg-brand-soft px-2 py-1 text-[11px] font-medium text-brand-deep">
                         <Layers className="size-3.5" />
