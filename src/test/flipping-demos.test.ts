@@ -63,3 +63,17 @@ describe("Shared demo revisions", () => {
     );
   });
 });
+
+describe("Demo yang dihapus admin", () => {
+  it("contoh bawaan tidak tersembunyi", () => {
+    expect(fixtureDemo("demo").hidden).toBe(false);
+  });
+
+  it("status tersembunyi ikut tersimpan saat divalidasi ulang", () => {
+    const hidden = demoSampleSchema.parse({ ...fixtureDemo("cibinong"), hidden: true });
+    expect(hidden.hidden).toBe(true);
+    const legacy: Partial<ReturnType<typeof fixtureDemo>> = { ...fixtureDemo("cibinong") };
+    delete legacy.hidden;
+    expect(demoSampleSchema.parse(legacy).hidden).toBe(false);
+  });
+});
