@@ -45,6 +45,8 @@ const row: ListingRow = {
   created_by: null,
   created_at: "2026-11-24T00:00:00Z",
   updated_at: "2026-11-24T00:00:00Z",
+  land_width: null,
+  land_length: null,
 };
 
 const validForm = () => ({
@@ -86,7 +88,7 @@ describe("Catalog listings", () => {
     expect(parsed.auction_date).toBeNull();
   });
   it("reads optional land dimensions safely", () => {
-    expect(listingLandSize({ ...row, land_width: 8, land_length: "18" } as typeof row)).toEqual({
+    expect(listingLandSize({ ...row, land_width: 8, land_length: "18" } as unknown as typeof row)).toEqual({
       width: 8,
       length: 18,
     });
