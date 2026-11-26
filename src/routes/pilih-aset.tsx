@@ -181,6 +181,17 @@ function SelectAsset() {
           </Link>
         </div>
       </section>
+      <section className="mt-7 rounded-2xl border border-border bg-card p-5 sm:p-7">
+        <p className="eyebrow text-brand">Tahap setelah survei</p>
+        <h2 className="mt-2 text-xl font-semibold">Checklist Hasil Survei</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Setelah survei lapangan, isi pemeriksaan legalitas, bangunan, akses tol, stasiun,
+          dan potensi investasi. Bisa menyimpan draft saat survei melalui HP.
+        </p>
+        <Button asChild className="mt-4">
+          <a href="/checklist-survei?propertyId=demo">Isi checklist survei demo <ArrowRight /></a>
+        </Button>
+      </section>
       <section
         aria-labelledby="wizard-next-steps"
         className="mt-7 rounded-2xl border border-border bg-card p-5 sm:p-7"
