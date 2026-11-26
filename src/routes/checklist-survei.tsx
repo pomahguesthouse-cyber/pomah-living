@@ -69,16 +69,16 @@ function ChecklistSurvei() {
       <p className="mt-2 text-sm">Terisi {completed}/{criteria.length} · {survey.finalized ? "Final" : "Draft tersimpan di database"}</p>
       <label className="mt-3 flex gap-2"><input type="checkbox" checked={survey.surveyCompleted} disabled={!ready || !userId || saving || survey.finalized} onChange={e => update({ ...survey, surveyCompleted: e.target.checked })}/> Survei lapangan selesai</label>
     </section>
-    <div className="space-y-4">{criteria.map(([key, group, label]) => {
+    <div className="grid gap-2 sm:grid-cols-2">{criteria.map(([key, group, label]) => {
       const answer = survey.answers[key] || { status: "belum", notes: "" };
       const change = (next: Answer) => update({ ...survey, answers: { ...survey.answers, [key]: next } });
       return <section key={key} className="rounded-xl border p-4">
         <p className="text-xs uppercase text-muted-foreground">{group}</p>
-        <h2 className="mt-1 font-semibold">{label}</h2>
-        <select aria-label={"Penilaian " + label} className="mt-3 w-full rounded-md border bg-background p-2" disabled={!userId || saving || survey.finalized} value={answer.status} onChange={e => change({ ...answer, status: e.target.value })}>
+        <h2 className="mt-0.5 text-sm font-semibold leading-5">{label}</h2>
+        <select aria-label={"Penilaian " + label} className="mt-2 w-full rounded-md border bg-background px-2 py-1.5 text-sm" disabled={!userId || saving || survey.finalized} value={answer.status} onChange={e => change({ ...answer, status: e.target.value })}>
           <option value="belum">Belum diperiksa</option><option value="baik">Baik / sesuai</option><option value="perlu-perbaikan">Perlu perbaikan / perhatian</option><option value="tidak-sesuai">Tidak sesuai</option>
         </select>
-        <textarea aria-label={"Catatan " + label} placeholder={key === "tol" || key === "stasiun" ? "Isi jarak dalam km dan sumber pengukuran" : "Catatan temuan survei"} className="mt-2 w-full rounded-md border bg-background p-2" rows={2} disabled={survey.finalized} value={answer.notes} onChange={e => change({ ...answer, notes: e.target.value })}/>
+        <textarea aria-label={"Catatan " + label} placeholder={key === "tol" || key === "stasiun" ? "Isi jarak dalam km dan sumber pengukuran" : "Catatan temuan survei"} className="mt-1.5 w-full resize-y rounded-md border bg-background px-2 py-1.5 text-sm" rows={1} disabled={survey.finalized} value={answer.notes} onChange={e => change({ ...answer, notes: e.target.value })}/>
       </section>;
     })}</div>
     {!userId && <p className="mt-4 text-sm text-destructive">Login sebagai Flipper untuk menyimpan checklist.</p>}
