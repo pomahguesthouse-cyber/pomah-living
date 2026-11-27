@@ -557,13 +557,14 @@ function ProjectPage() {
                 </TabsList>
               </div>
               <TabsContent forceMount value="asset" className="project-tab mt-6">
-                <PrepurchaseChecklist survey={project.prepurchase} onChange={(prepurchase) => update({ ...project, prepurchase })} />
-                <div className="mt-6" />
-                <AssetAnalysis
-                  project={project}
-                  onChange={update}
-                  onNavigate={(next) => goToTab(next)}
-                />
+                <PrepurchaseChecklist survey={project.prepurchase} onChange={(prepurchase) => update({ ...project, prepurchase })}>
+                  <details className="rounded-lg border border-border bg-card p-3">
+                    <summary className="cursor-pointer text-sm font-semibold">2. Analisis kerusakan bangunan</summary>
+                    <div className="mt-3">
+                      <AssetAnalysis project={project} onChange={update} onNavigate={(next) => goToTab(next)} />
+                    </div>
+                  </details>
+                </PrepurchaseChecklist>
               </TabsContent>
               <TabsContent forceMount value="market" className="project-tab mt-6">
                 <ProjectPricing project={project} demo={demo} onChange={update} />
