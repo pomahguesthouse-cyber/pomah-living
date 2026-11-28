@@ -6,10 +6,10 @@ import { categories, evaluateSurvey, masterSchema, type Criterion, type Survey }
 import { fetchCriteria, saveCriteria, prepurchaseKey } from "@/services/prepurchase-service";
 import { adminError } from "@/services/admin-service";
 
-export function PrepurchaseChecklist({ survey, onChange, children }: { survey?: Survey | undefined; onChange: (survey: Survey) => void; children?: ReactNode }) {
+export function PrepurchaseChecklist({ survey, onChange, children, photos }: { survey?: Survey | undefined; onChange: (survey: Survey) => void; children?: ReactNode; photos?: ReactNode }) {
   const query = useQuery({ queryKey: prepurchaseKey, queryFn: fetchCriteria, enabled: !survey });
   const current = survey ?? (query.data ? { criteria: query.data, answers: {}, notes: "" } : undefined);
-  if (!current) return <><section className="rounded-xl border p-4"><h2 className="font-semibold">Checklist pra-pembelian</h2><p role="status">{query.isError ? "Master checklist gagal dimuat." : "Memuat checklist…"}</p>{query.isError && <Button type="button" onClick={() => void query.refetch()}>Coba lagi</Button>}</section>{children}</>;
+  if (!current) return <>{photos}<section className="rounded-xl border p-4"><h2 className="font-semibold">Checklist pra-pembelian</h2><p role="status">{query.isError ? "Master checklist gagal dimuat." : "Memuat checklist…"}</p>{query.isError && <Button type="button" onClick={() => void query.refetch()}>Coba lagi</Button>}</section>{children}</>;
   const result = evaluateSurvey(current);
   const groups = [
     { title: "Lokasi dan lingkungan", matches: (row: Criterion) => row.category === "Kelayakan dasar" && row.id !== "water" && !/legal|sertifikat|penghuni|sengketa|struktur|bangunan|atap|listrik|sanitasi/i.test(row.label) },
@@ -21,15 +21,17 @@ export function PrepurchaseChecklist({ survey, onChange, children }: { survey?: 
   const grouped = groups.map((group, index) => ({ ...group, rows: current.criteria.filter(row => groups.findIndex(candidate => candidate.matches(row)) === index) }));
   return <div className="space-y-3">
     <details open className="rounded-lg border border-border bg-card p-3">
-      <summary className="cursor-pointer text-sm font-semibold">1. Checklist pra-pembelian</summary>
-      <p className="my-2 text-xs text-muted-foreground">Isi setelah survei lapangan. Jawaban yang belum diketahui tidak dianggap aman.</p>
+      <summary className="cursor-pointer text-sm font-semibold">2. Hasil survei lapangan</summary>
+      <p className="my-2 text-xs text-muted-foreground">Isi foto, kondisi aset dan temuan setelah survei lapangan. Jawaban yang belum diketahui tidak dianggap aman.</p>
+      {photos}
+      <h3 className="mt-3 text-sm font-semibold">Checklist kondisi aset</h3>
       {grouped.map(group => <details key={group.title} className="border-t py-2"><summary className="cursor-pointer text-sm font-medium">{group.title} · {group.rows.filter(row => current.answers[row.id]).length}/{group.rows.length}</summary>
         {group.rows.length === 0 && <p className="mt-1 text-xs text-muted-foreground">Belum ada kriteria pada master checklist. Periksa juga dokumen dan analisis aset.</p>}
         {group.rows.map(row => <label key={row.id} className="grid items-center gap-1 py-1 text-xs sm:grid-cols-2"><span>{row.label}{row.critical ? " · Risiko kritis" : ""}</span><select className="min-w-0 rounded-md border bg-background px-2 py-1 text-xs" value={current.answers[row.id] ?? ""} onChange={e => onChange({...current, answers: {...current.answers, [row.id]: e.target.value}})}><option value="">Belum diverifikasi</option>{row.options.map(option => <option key={option.label} value={option.label}>{option.label}</option>)}</select></label>)}
       </details>)}
       <label className="block text-xs">Catatan survei<textarea className="mt-1 w-full rounded-md border bg-background p-2" rows={2} maxLength={4000} value={current.notes} onChange={e => onChange({...current, notes: e.target.value})} /></label>
+      <div className="mt-3">{children}</div>
     </details>
-    {children}
     <details open className="rounded-lg border border-border bg-card p-3"><summary className="cursor-pointer text-sm font-semibold">3. Kesimpulan kelayakan aset</summary><div className="mt-2" aria-live="polite"><p className="font-semibold">{result.recommendation}</p><p className="text-sm">Skor {result.complete ? "" : "sementara "}: {result.score ?? "—"}/100 · {result.answered}/{current.criteria.length} terisi</p>{result.critical.length > 0 && <p className="text-sm text-destructive">Risiko kritis: {result.critical.join(", ")}</p>}{result.unknownCritical.length > 0 && <p className="text-sm">Risiko kritis belum diperiksa: {result.unknownCritical.join(", ")}</p>}<p className="mt-2 text-xs text-muted-foreground">Skor hanya berdasarkan checklist, bukan jaminan kelayakan pembelian. Verifikasi legalitas, struktur dan risiko teknis secara terpisah.</p></div></details>
   </div>;
 }
