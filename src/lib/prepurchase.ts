@@ -25,7 +25,8 @@ const risk = (id: string, label: string, critical = false) => make(id, label, "R
 export const defaultCriteria: Criterion[] = [
   make("location","Jenis lingkungan","Kelayakan dasar",[["Perumahan",100],["Non-perumahan",75],["Perkampungan",75]]),
   make("road","Lebar jalan","Kelayakan dasar",[["Kurang dari 3 m",25],["3–5 m",75],["Lebih dari 5 m",100]],false,2),
-  make("water","Kualitas air","Kelayakan dasar",[["Bersih",100],["Perlu filter",60],["Bermasalah",0]],false,2),
+  make("water-source","Sumber air","Kelayakan dasar",[["Sumur",0],["PAM/PDAM",0],["Sumur dan PAM/PDAM",0],["Lainnya",0]]),
+  make("water","Kondisi air bersih","Kelayakan dasar",[["Jernih",100],["Keruh",40],["Berbau",20],["Perlu filter",60]],false,2),
   advantage("corner","Posisi hook / rumah sudut"),
   advantage("park","Menghadap taman"),
   advantage("main-road","Jalan utama"),
@@ -39,6 +40,17 @@ export const defaultCriteria: Criterion[] = [
   risk("waste","Dekat tempat pembuangan sampah"),
   risk("noise","Dekat sumber kebisingan / polusi"),
 ];
+// Upgrade existing master defaults without replacing administrator-defined options.
+export function withWaterUtilities(rows: Criterion[]): Criterion[] {
+  const source = defaultCriteria.find(row => row.id === "water-source")!;
+  const water = defaultCriteria.find(row => row.id === "water")!;
+  const updated = rows.map(row => row.id === "water" ? { ...row, label: water.label, options: row.options.map(o => o.label === "Bersih" && !row.options.some(x => x.label === "Jernih") ? {...o, label:"Jernih"} : o) } : row);
+  if (!updated.some(row => row.id === "water-source") && updated.length < 100) {
+    const index = updated.findIndex(row => row.id === "water");
+    updated.splice(index < 0 ? updated.length : index, 0, source);
+  }
+  return updated;
+}
 export function evaluateSurvey(survey: Survey) {
   let points = 0, weight = 0, answered = 0;
   const critical: string[] = [], unknownCritical: string[] = [];
@@ -46,6 +58,8 @@ export function evaluateSurvey(survey: Survey) {
     const answer = row.options.find(o => o.label === survey.answers[row.id]);
     if (!answer) { if (row.critical) unknownCritical.push(row.label); continue; }
     answered++;
+    // Sumber air is descriptive: never changes the feasibility score.
+    if (row.id === "water-source") continue;
     weight += row.weight;
     points += answer.score * row.weight;
     if (row.critical && answer.score < 100) critical.push(row.label);
