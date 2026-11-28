@@ -558,15 +558,19 @@ function ProjectPage() {
                 </TabsList>
               </div>
               <TabsContent forceMount value="asset" className="project-tab mt-6">
-                <PrepurchaseChecklist survey={project.prepurchase} onChange={(prepurchase) => update({ ...project, prepurchase })}>
+                <details open className="mb-3 rounded-lg border border-border bg-card p-3">
+                  <summary className="cursor-pointer text-sm font-semibold">1. Analisis awal (sebelum survei)</summary>
+                  <p className="mt-2 text-xs text-muted-foreground">Periksa data properti dan harga limit pada ringkasan aset di atas. Tinjau harga pasar dan dokumen awal sebelum menjadwalkan survei.</p>
+                  <div className="mt-2 flex flex-wrap gap-2"><Button type="button" variant="outline" size="sm" onClick={() => goToTab("market")}>Harga pasar</Button><Button type="button" variant="outline" size="sm" onClick={() => goToTab("risks")}>Dokumen & risiko</Button></div>
+                </details>
+                <PrepurchaseChecklist survey={project.prepurchase} onChange={(prepurchase) => update({ ...project, prepurchase })} photos={!demo && userId && tab === "asset" ? <PrivateProjectPhotos key={id+":before"} projectId={id} userId={userId} stage="before" /> : undefined}>
                   <details className="rounded-lg border border-border bg-card p-3">
-                    <summary className="cursor-pointer text-sm font-semibold">2. Analisis kerusakan bangunan</summary>
+                    <summary className="cursor-pointer text-sm font-semibold">Kondisi fisik dan kerusakan bangunan</summary>
                     <div className="mt-3">
                       <AssetAnalysis project={project} onChange={update} onNavigate={(next) => goToTab(next)} />
                     </div>
                   </details>
                 </PrepurchaseChecklist>
-                {!demo && userId && tab === "asset" && <PrivateProjectPhotos key={id+":before"} projectId={id} userId={userId} stage="before" />}
               </TabsContent>
               <TabsContent forceMount value="market" className="project-tab mt-6">
                 <ProjectPricing project={project} demo={demo} onChange={update} />
