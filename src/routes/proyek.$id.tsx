@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { DemoPhotoGallery } from "@/components/demo-photo-gallery";
+import { PrivateProjectPhotos } from "@/components/private-project-photos";
 import { PropertyPhotoWorkspace } from "@/components/property-photo-workspace";
 import { FlippingOverview } from "@/components/flipping-overview";
 import { PropertySummaryEditor } from "@/components/property-summary-editor";
@@ -565,6 +566,7 @@ function ProjectPage() {
                     </div>
                   </details>
                 </PrepurchaseChecklist>
+                {!demo && userId && tab === "asset" && <PrivateProjectPhotos key={id+":before"} projectId={id} userId={userId} stage="before" />}
               </TabsContent>
               <TabsContent forceMount value="market" className="project-tab mt-6">
                 <ProjectPricing project={project} demo={demo} onChange={update} />
@@ -583,6 +585,7 @@ function ProjectPage() {
                 />
               </TabsContent>
               <TabsContent forceMount value="selling" className="project-tab mt-6">
+                {!demo && userId && tab === "selling" && <PrivateProjectPhotos key={id+":after"} projectId={id} userId={userId} stage="after" />}
                 <FinanceEditor
                   project={project}
                   onChange={update}
@@ -599,7 +602,7 @@ function ProjectPage() {
                 {tab === "photos" && sample && sample.photos.length > 0 && (
                   <DemoPhotoGallery photos={sample.photos} />
                 )}
-                <PropertyPhotoWorkspace />
+                {demo ? <PropertyPhotoWorkspace /> : userId && tab === "photos" && <PrivateProjectPhotos key={id+":progress"} projectId={id} userId={userId} stage="progress" />}
               </TabsContent>
             </Tabs>
             <div className="no-print mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
